@@ -26,11 +26,11 @@ function randomTx(pair: string): TxRecord {
   const type = Math.random() > 0.5 ? 'buy' : 'sell'
   const fromAmount = parseFloat((1 + Math.random() * 50).toFixed(2))
   const rates: Record<string, number> = {
-    'USDC/EURC': 0.924, 'EURC/USDC': 1.082,
-    'USDC/cirBTC': 0.0000105, 'cirBTC/USDC': 95238,
-    'EURC/cirBTC': 0.0000114, 'cirBTC/EURC': 87912,
-    'ETH/USDC':    3300,      'USDC/ETH':    0.000303,
-    'SOL/USDC':    161,       'USDC/SOL':    0.00621,
+    'USDC/EURC':   0.8592,    'EURC/USDC':   1.1639,
+    'USDC/cirBTC': 0.00001279,'cirBTC/USDC': 78200,
+    'EURC/cirBTC': 0.00001489,'cirBTC/EURC': 67183,
+    'ETH/USDC':    2293,      'USDC/ETH':    0.000436,
+    'SOL/USDC':    90.5,      'USDC/SOL':    0.01105,
   }
   const rate = rates[pair] ?? 1
   const toAmount = parseFloat((fromAmount * rate).toFixed(6))

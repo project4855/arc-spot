@@ -25,12 +25,13 @@ export interface UserBorrow {
   valueUSD: number
 }
 
+// Prices updated 2026-05-17: ETH $2,293 · SOL $90.5 · BTC $78,200 · EURC $1.1639
 const BASE_ASSETS: LendingAsset[] = [
-  { symbol: 'USDC',   name: 'USD Coin',      icon: '💵', price: 1,      supplyAPY: 5.20, borrowAPY: 8.10, totalSupplied: 12_500_000, totalBorrowed: 8_200_000, utilization: 0.656, collateralFactor: 0.90 },
-  { symbol: 'EURC',   name: 'Euro Coin',     icon: '💶', price: 1.082,  supplyAPY: 4.80, borrowAPY: 7.50, totalSupplied:  6_800_000, totalBorrowed: 4_100_000, utilization: 0.603, collateralFactor: 0.88 },
-  { symbol: 'cirBTC', name: 'Circle Bitcoin',icon: '₿',  price: 95238,  supplyAPY: 2.10, borrowAPY: 4.30, totalSupplied:  3_200_000, totalBorrowed: 1_500_000, utilization: 0.469, collateralFactor: 0.75 },
-  { symbol: 'ETH',    name: 'Ethereum',      icon: 'Ξ',  price: 3300,   supplyAPY: 3.50, borrowAPY: 6.20, totalSupplied:  8_700_000, totalBorrowed: 5_600_000, utilization: 0.644, collateralFactor: 0.82 },
-  { symbol: 'SOL',    name: 'Solana',        icon: '◎',  price: 161,    supplyAPY: 6.10, borrowAPY: 9.80, totalSupplied:  2_100_000, totalBorrowed: 1_400_000, utilization: 0.667, collateralFactor: 0.70 },
+  { symbol: 'USDC',   name: 'USD Coin',      icon: '💵', price: 1,       supplyAPY: 5.20, borrowAPY: 8.10, totalSupplied: 12_500_000, totalBorrowed: 8_200_000, utilization: 0.656, collateralFactor: 0.90 },
+  { symbol: 'EURC',   name: 'Euro Coin',     icon: '💶', price: 1.1639,  supplyAPY: 4.80, borrowAPY: 7.50, totalSupplied:  6_800_000, totalBorrowed: 4_100_000, utilization: 0.603, collateralFactor: 0.88 },
+  { symbol: 'cirBTC', name: 'Circle Bitcoin',icon: '₿',  price: 78200,   supplyAPY: 2.10, borrowAPY: 4.30, totalSupplied:  3_200_000, totalBorrowed: 1_500_000, utilization: 0.469, collateralFactor: 0.75 },
+  { symbol: 'ETH',    name: 'Ethereum',      icon: 'Ξ',  price: 2293,    supplyAPY: 3.50, borrowAPY: 6.20, totalSupplied:  8_700_000, totalBorrowed: 5_600_000, utilization: 0.644, collateralFactor: 0.82 },
+  { symbol: 'SOL',    name: 'Solana',        icon: '◎',  price: 90.5,    supplyAPY: 6.10, borrowAPY: 9.80, totalSupplied:  2_100_000, totalBorrowed: 1_400_000, utilization: 0.667, collateralFactor: 0.70 },
 ]
 
 export function useLending() {

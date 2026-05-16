@@ -66,18 +66,18 @@ function genCandles(base: number, count = 60): Candle[] {
 }
 
 const PAIR_MID: Record<string, number> = {
-  'USDC/EURC':   0.924,
-  'EURC/USDC':   1.082,
-  'USDC/cirBTC': 0.0000105,
-  'cirBTC/USDC': 95238,
-  'EURC/cirBTC': 0.0000114,
-  'cirBTC/EURC': 87912,
-  'ETH/USDC':    3300,
-  'USDC/ETH':    0.000303,
-  'ETH/EURC':    3050,
-  'SOL/USDC':    161,
-  'USDC/SOL':    0.00621,
-  'SOL/EURC':    148.7,
+  'USDC/EURC':   0.8592,       // 1 USDC = 0.8592 EURC  (EUR/USD 1.1639)
+  'EURC/USDC':   1.1639,       // 1 EURC = 1.1639 USDC
+  'USDC/cirBTC': 0.00001279,   // 1 USDC = 1/78200 BTC
+  'cirBTC/USDC': 78200,        // BTC ~$78,200
+  'EURC/cirBTC': 0.00001489,   // 1 EURC = 1.164/78200 BTC
+  'cirBTC/EURC': 67183,        // 1 BTC = 78200/1.164 EURC
+  'ETH/USDC':    2293,         // ETH ~$2,293
+  'USDC/ETH':    0.000436,     // 1 USDC = 1/2293 ETH
+  'ETH/EURC':    1970,         // 1 ETH = 2293/1.164 EURC
+  'SOL/USDC':    90.5,         // SOL ~$90.5
+  'USDC/SOL':    0.01105,      // 1 USDC = 1/90.5 SOL
+  'SOL/EURC':    77.75,        // 1 SOL = 90.5/1.164 EURC
 }
 
 export function useMarketData(pair: string) {

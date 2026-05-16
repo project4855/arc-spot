@@ -60,6 +60,19 @@ export default function LendingPanel() {
   return (
     <div className="flex flex-col gap-4">
 
+      {/* ── Demo banner ── */}
+      <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-yellow-500/10 border border-yellow-500/30">
+        <span className="text-yellow-400 text-lg mt-0.5">🔸</span>
+        <div>
+          <p className="text-yellow-400 font-semibold text-sm">Simulated Demo — Not on-chain</p>
+          <p className="text-yellow-500/70 text-xs mt-0.5">
+            Lending &amp; Borrowing chưa được triển khai trên Arc Testnet.
+            Dữ liệu APY, số dư và giao dịch bên dưới là mô phỏng (demo) để minh họa tính năng.
+            Khi Arc Testnet hỗ trợ lending protocol, tính năng này sẽ hoạt động thật.
+          </p>
+        </div>
+      </div>
+
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-[#0d0e12] border border-gray-800 rounded-2xl p-4">

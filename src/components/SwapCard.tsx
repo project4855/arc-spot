@@ -15,13 +15,14 @@ const TOKENS = [
   { symbol: 'SOL',    name: 'Solana',          icon: '◎',  decimals: 9 },
 ]
 
-// Fallback display rates (Circle Kit returns real rates on-chain)
+// Fallback display rates — updated 2026-05-17
+// ETH $2,293 · SOL $90.5 · BTC $78,200 · EURC $1.1639
 const DISPLAY_RATES: Record<string, Record<string, number>> = {
-  USDC:   { EURC: 0.924,   cirBTC: 0.0000105, ETH: 0.000303, SOL: 0.00621 },
-  EURC:   { USDC: 1.082,   cirBTC: 0.0000114, ETH: 0.000328, SOL: 0.00672 },
-  cirBTC: { USDC: 95238,   EURC: 87912,        ETH: 28.9,     SOL: 592 },
-  ETH:    { USDC: 3300,    EURC: 3050,         cirBTC: 0.0346, SOL: 20.5 },
-  SOL:    { USDC: 161,     EURC: 148.7,        cirBTC: 0.00169, ETH: 0.0488 },
+  USDC:   { EURC: 0.8592,    cirBTC: 0.00001279, ETH: 0.000436, SOL: 0.01105 },
+  EURC:   { USDC: 1.1639,    cirBTC: 0.00001489, ETH: 0.000508, SOL: 0.01287 },
+  cirBTC: { USDC: 78200,     EURC: 67183,         ETH: 34.12,    SOL: 864.4 },
+  ETH:    { USDC: 2293,      EURC: 1970,          cirBTC: 0.02931, SOL: 25.34 },
+  SOL:    { USDC: 90.5,      EURC: 77.75,         cirBTC: 0.001157, ETH: 0.03947 },
 }
 
 function getRate(from: string, to: string): number {
