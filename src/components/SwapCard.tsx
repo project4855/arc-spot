@@ -28,12 +28,27 @@ function getRate(from: string, to: string): number {
 const KIT_KEY = import.meta.env.VITE_CIRCLE_KIT_KEY as string | undefined
 const isRealMode = !!KIT_KEY
 
+export interface SwapRecord {
+  id: string
+  time: string
+  type: 'buy' | 'sell'
+  fromToken: string
+  toToken: string
+  fromAmount: number
+  toAmount: number
+  price: number
+  wallet: string
+  txHash: string
+  status: 'confirmed' | 'pending'
+}
+
 interface SwapCardProps {
   fromTokenProp?: string
   toTokenProp?: string
+  onSwapComplete?: (tx: SwapRecord) => void
 }
 
-export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC' }: SwapCardProps) {
+export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC', onSwapComplete }: SwapCardProps) {
   const { address, isConnected, chainId } = useAccount()
   const isArc = chainId === arcTestnet.id
 
@@ -86,6 +101,25 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC' 
     setError(null)
     setTxHash(null)
 
+    const buildRecord = (hash: string): SwapRecord => {
+      const now = new Date()
+      const fa = parseFloat(fromAmount)
+      const r = getRate(fromToken, toToken)
+      return {
+        id: Date.now().toString(),
+        time: `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`,
+        type: 'buy',
+        fromToken,
+        toToken,
+        fromAmount: fa,
+        toAmount: parseFloat((fa * r).toFixed(6)),
+        price: r,
+        wallet: address ? `${address.slice(0,6)}...${address.slice(-4)}` : '0x????',
+        txHash: hash,
+        status: 'confirmed',
+      }
+    }
+
     try {
       if (isRealMode) {
         // ── Real on-chain swap via Circle App Kit ──
@@ -106,10 +140,13 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC' 
         // result contains transaction details
         const hash = (result as unknown as { txHash?: string })?.txHash ?? JSON.stringify(result)
         setTxHash(hash)
+        onSwapComplete?.(buildRecord(hash))
       } else {
         // ── Demo simulation (no Circle Kit Key set) ──
         await new Promise((r) => setTimeout(r, 1500))
+        const demoHash = '0x' + Math.random().toString(16).slice(2, 10) + Math.random().toString(16).slice(2, 10)
         setTxHash('demo')
+        onSwapComplete?.(buildRecord(demoHash))
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Swap failed. Please try again.'

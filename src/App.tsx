@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Navbar from './components/Navbar'
-import SwapCard from './components/SwapCard'
+import SwapCard, { type SwapRecord } from './components/SwapCard'
 import StatsBar from './components/StatsBar'
 import NetworkBadge from './components/NetworkBadge'
 import OrderBook from './components/OrderBook'
@@ -13,6 +13,10 @@ type Pair = typeof PAIRS[number]
 export default function App() {
   const [pair, setPair] = useState<Pair>('USDC/EURC')
   const [fromToken, toToken] = pair.split('/') as [string, string]
+  const [myTxs, setMyTxs] = useState<SwapRecord[]>([])
+  const handleSwapComplete = useCallback((tx: SwapRecord) => {
+    setMyTxs((prev) => [tx, ...prev].slice(0, 50))
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#0a0b0e] flex flex-col">
@@ -77,12 +81,12 @@ export default function App() {
           {/* Left: Chart + Transactions */}
           <div className="flex flex-col gap-4">
             <PriceChart pair={pair} />
-            <TransactionHistory pair={pair} />
+            <TransactionHistory pair={pair} myTxs={myTxs} />
           </div>
 
           {/* Center: Swap card */}
           <div>
-            <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} />
+            <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
           </div>
 
           {/* Right: Order book */}
