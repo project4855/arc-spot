@@ -28,9 +28,9 @@ export default function Navbar() {
           href="https://faucet.circle.com"
           target="_blank"
           rel="noreferrer"
-          className="hover:text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all text-xs font-medium"
         >
-          Faucet
+          <span>💧</span> Get Free USDC
         </a>
       </div>
 

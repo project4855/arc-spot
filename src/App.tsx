@@ -31,6 +31,21 @@ export default function App() {
         {/* Network badge (shows only when connected) */}
         <NetworkBadge />
 
+        {/* Faucet banner */}
+        <a
+          href="https://faucet.circle.com"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 w-full max-w-md px-4 py-3 rounded-2xl bg-green-500/10 border border-green-500/25 hover:border-green-500/50 hover:bg-green-500/15 transition-all group"
+        >
+          <span className="text-2xl">💧</span>
+          <div className="flex-1 text-left">
+            <p className="text-green-400 font-semibold text-sm">Get Free Testnet USDC</p>
+            <p className="text-green-500/70 text-xs mt-0.5">faucet.circle.com → select Arc Testnet</p>
+          </div>
+          <span className="text-green-500 text-sm group-hover:translate-x-0.5 transition-transform">→</span>
+        </a>
+
         {/* Swap card */}
         <div id="swap" className="w-full max-w-md">
           <SwapCard />
