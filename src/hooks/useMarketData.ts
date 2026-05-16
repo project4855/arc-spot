@@ -30,8 +30,9 @@ export interface Candle {
 function genOrders(mid: number, side: 'ask' | 'bid', count = 12): OrderLevel[] {
   const levels: OrderLevel[] = []
   let runningTotal = 0
+  const tick = Math.max(0.000001, mid * 0.0002) // relative tick ~0.02% of mid
   for (let i = 0; i < count; i++) {
-    const offset = (i + 1) * (0.0001 + Math.random() * 0.0003)
+    const offset = (i + 1) * (tick * (1 + Math.random() * 3))
     const price = side === 'ask' ? mid + offset : mid - offset
     const amount = parseFloat((0.5 + Math.random() * 9.5).toFixed(2))
     runningTotal += amount
@@ -65,12 +66,18 @@ function genCandles(base: number, count = 60): Candle[] {
 }
 
 const PAIR_MID: Record<string, number> = {
-  'USDC/EURC': 0.924,
-  'EURC/USDC': 1.082,
+  'USDC/EURC':   0.924,
+  'EURC/USDC':   1.082,
   'USDC/cirBTC': 0.0000105,
   'cirBTC/USDC': 95238,
   'EURC/cirBTC': 0.0000114,
   'cirBTC/EURC': 87912,
+  'ETH/USDC':    3300,
+  'USDC/ETH':    0.000303,
+  'ETH/EURC':    3050,
+  'SOL/USDC':    161,
+  'USDC/SOL':    0.00621,
+  'SOL/EURC':    148.7,
 }
 
 export function useMarketData(pair: string) {

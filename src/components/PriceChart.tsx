@@ -5,6 +5,12 @@ import {
 } from 'recharts'
 import { useMarketData } from '../hooks/useMarketData'
 
+function fmtPrice(p: number) {
+  if (p >= 1000) return p.toFixed(2)
+  if (p >= 1)    return p.toFixed(4)
+  return p.toFixed(6)
+}
+
 interface Props {
   pair: string
 }
@@ -23,10 +29,10 @@ function CustomTooltip({ active, payload, label }: {
     <div className="bg-[#1a1d24] border border-gray-700 rounded-xl p-3 text-xs shadow-xl">
       <p className="text-gray-400 mb-2">{label}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-        <span className="text-gray-500">Open</span><span className="text-white font-mono">{d.open.toFixed(6)}</span>
-        <span className="text-green-400">High</span><span className="text-white font-mono">{d.high.toFixed(6)}</span>
-        <span className="text-red-400">Low</span><span className="text-white font-mono">{d.low.toFixed(6)}</span>
-        <span className="text-gray-500">Close</span><span className="text-white font-mono">{d.close.toFixed(6)}</span>
+        <span className="text-gray-500">Open</span><span className="text-white font-mono">{fmtPrice(d.open)}</span>
+        <span className="text-green-400">High</span><span className="text-white font-mono">{fmtPrice(d.high)}</span>
+        <span className="text-red-400">Low</span><span className="text-white font-mono">{fmtPrice(d.low)}</span>
+        <span className="text-gray-500">Close</span><span className="text-white font-mono">{fmtPrice(d.close)}</span>
         <span className="text-gray-500">Volume</span><span className="text-violet-400 font-mono">{Number(d.volume).toLocaleString()}</span>
       </div>
     </div>
@@ -53,7 +59,7 @@ export default function PriceChart({ pair }: Props) {
         <div className="flex items-center gap-3">
           <h3 className="text-white font-semibold text-sm">{pair}</h3>
           <span className={`text-lg font-bold font-mono ${isUp ? 'text-green-400' : 'text-red-400'}`}>
-            {lastPrice.toFixed(6)}
+            {fmtPrice(lastPrice)}
           </span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             isUp ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
@@ -103,7 +109,7 @@ export default function PriceChart({ pair }: Props) {
             axisLine={false}
             tickLine={false}
             width={72}
-            tickFormatter={(v) => v.toFixed(4)}
+            tickFormatter={(v) => fmtPrice(v)}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area

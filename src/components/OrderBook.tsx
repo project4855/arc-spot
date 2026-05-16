@@ -4,6 +4,12 @@ interface Props {
   pair: string
 }
 
+function fmtPrice(p: number) {
+  if (p >= 1000) return p.toFixed(2)
+  if (p >= 1)    return p.toFixed(4)
+  return p.toFixed(6)
+}
+
 export default function OrderBook({ pair }: Props) {
   const { asks, bids, lastPrice, priceChange } = useMarketData(pair)
   const [, quoteCurrency] = pair.split('/')
@@ -33,7 +39,7 @@ export default function OrderBook({ pair }: Props) {
               className="absolute inset-y-0 right-0 bg-red-500/10"
               style={{ width: `${(ask.total / maxTotal) * 100}%` }}
             />
-            <span className="text-red-400 font-mono relative z-10">{ask.price.toFixed(6)}</span>
+            <span className="text-red-400 font-mono relative z-10">{fmtPrice(ask.price)}</span>
             <span className="text-gray-300 text-center font-mono relative z-10">{ask.amount.toFixed(2)}</span>
             <span className="text-gray-500 text-right font-mono relative z-10">{ask.total.toFixed(2)}</span>
           </div>
@@ -43,7 +49,7 @@ export default function OrderBook({ pair }: Props) {
       {/* Mid price */}
       <div className={`flex items-center justify-center gap-2 py-1.5 rounded-lg ${isUp ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
         <span className={`text-base font-bold font-mono ${isUp ? 'text-green-400' : 'text-red-400'}`}>
-          {lastPrice.toFixed(6)}
+          {fmtPrice(lastPrice)}
         </span>
         <span className={`text-xs ${isUp ? 'text-green-500' : 'text-red-500'}`}>
           {isUp ? '▲' : '▼'} {Math.abs(priceChange).toFixed(4)}%
@@ -58,7 +64,7 @@ export default function OrderBook({ pair }: Props) {
               className="absolute inset-y-0 right-0 bg-green-500/10"
               style={{ width: `${(bid.total / maxTotal) * 100}%` }}
             />
-            <span className="text-green-400 font-mono relative z-10">{bid.price.toFixed(6)}</span>
+            <span className="text-green-400 font-mono relative z-10">{fmtPrice(bid.price)}</span>
             <span className="text-gray-300 text-center font-mono relative z-10">{bid.amount.toFixed(2)}</span>
             <span className="text-gray-500 text-right font-mono relative z-10">{bid.total.toFixed(2)}</span>
           </div>
@@ -70,7 +76,7 @@ export default function OrderBook({ pair }: Props) {
         <span>Spread</span>
         <span className="text-gray-400">
           {asks[0] && bids[0]
-            ? (asks[0].price - bids[0].price).toFixed(6)
+            ? fmtPrice(asks[0].price - bids[0].price)
             : '—'}
         </span>
       </div>
