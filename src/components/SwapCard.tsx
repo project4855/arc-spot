@@ -178,25 +178,31 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC' 
           tokens={toTokens}
         />
 
-        {/* Rate info */}
-        {fromAmount && parseFloat(fromAmount) > 0 && (
-          <div className="mt-3 px-4 py-3 bg-[#111318] rounded-xl border border-gray-800">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Rate</span>
-              <span className="text-gray-300">
-                1 {fromToken} ≈ {rate.toLocaleString(undefined, { maximumSignificantDigits: 6 })} {toToken}
+        {/* Rate info — always visible */}
+        <div className="mt-3 px-4 py-3 bg-[#111318] rounded-xl border border-gray-800">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Rate</span>
+            <span className="text-gray-300 font-mono">
+              1 {fromToken} ≈ {rate.toLocaleString(undefined, { maximumSignificantDigits: 6 })} {toToken}
+            </span>
+          </div>
+          {fromAmount && parseFloat(fromAmount) > 0 && (
+            <div className="flex items-center justify-between text-sm mt-1">
+              <span className="text-gray-500">You receive</span>
+              <span className="text-green-400 font-mono font-semibold">
+                ≈ {toAmount} {toToken}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-gray-500">Gas</span>
-              <span className="text-green-400 text-xs">~0.001 USDC</span>
-            </div>
-            <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-gray-500">Network</span>
-              <span className="text-violet-400 text-xs">Arc Testnet</span>
-            </div>
+          )}
+          <div className="flex items-center justify-between text-sm mt-1">
+            <span className="text-gray-500">Gas</span>
+            <span className="text-green-400 text-xs">~0.001 USDC</span>
           </div>
-        )}
+          <div className="flex items-center justify-between text-sm mt-1">
+            <span className="text-gray-500">Network</span>
+            <span className="text-violet-400 text-xs">Arc Testnet</span>
+          </div>
+        </div>
 
         {/* Swap button */}
         <div className="mt-4">
