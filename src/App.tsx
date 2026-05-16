@@ -7,7 +7,7 @@ import OrderBook from './components/OrderBook'
 import PriceChart from './components/PriceChart'
 import TransactionHistory from './components/TransactionHistory'
 
-const PAIRS = ['USDC/EURC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
+const PAIRS = ['USDC/EURC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
 type Pair = typeof PAIRS[number]
 
 export default function App() {

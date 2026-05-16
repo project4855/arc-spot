@@ -28,6 +28,7 @@ function randomTx(pair: string): TxRecord {
   const rates: Record<string, number> = {
     'USDC/EURC': 0.924, 'EURC/USDC': 1.082,
     'USDC/cirBTC': 0.0000105, 'cirBTC/USDC': 95238,
+    'EURC/cirBTC': 0.0000114, 'cirBTC/EURC': 87912,
   }
   const rate = rates[pair] ?? 1
   const toAmount = parseFloat((fromAmount * rate).toFixed(6))
