@@ -28,12 +28,17 @@ function getRate(from: string, to: string): number {
 const KIT_KEY = import.meta.env.VITE_CIRCLE_KIT_KEY as string | undefined
 const isRealMode = !!KIT_KEY
 
-export default function SwapCard() {
+interface SwapCardProps {
+  fromTokenProp?: string
+  toTokenProp?: string
+}
+
+export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC' }: SwapCardProps) {
   const { address, isConnected, chainId } = useAccount()
   const isArc = chainId === arcTestnet.id
 
-  const [fromToken, setFromToken] = useState('USDC')
-  const [toToken, setToToken] = useState('EURC')
+  const [fromToken, setFromToken] = useState(fromTokenProp)
+  const [toToken, setToToken] = useState(toTokenProp)
   const [fromAmount, setFromAmount] = useState('')
   const [isSwapping, setIsSwapping] = useState(false)
   const [txHash, setTxHash] = useState<string | null>(null)
