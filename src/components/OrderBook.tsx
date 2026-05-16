@@ -6,6 +6,7 @@ interface Props {
 
 export default function OrderBook({ pair }: Props) {
   const { asks, bids, lastPrice, priceChange } = useMarketData(pair)
+  const [, quoteCurrency] = pair.split('/')
   const isUp = priceChange >= 0
   const maxTotal = Math.max(...bids.map((b) => b.total), ...asks.map((a) => a.total))
 
@@ -19,7 +20,7 @@ export default function OrderBook({ pair }: Props) {
 
       {/* Column labels */}
       <div className="grid grid-cols-3 text-xs text-gray-600 px-1">
-        <span>Price (USDC)</span>
+        <span>Price ({quoteCurrency})</span>
         <span className="text-center">Amount</span>
         <span className="text-right">Total</span>
       </div>

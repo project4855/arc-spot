@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useAccount, useBalance } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { formatUnits } from 'viem'
@@ -39,6 +39,14 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC' 
 
   const [fromToken, setFromToken] = useState(fromTokenProp)
   const [toToken, setToToken] = useState(toTokenProp)
+
+  useEffect(() => {
+    setFromToken(fromTokenProp)
+    setToToken(toTokenProp)
+    setFromAmount('')
+    setTxHash(null)
+    setError(null)
+  }, [fromTokenProp, toTokenProp])
   const [fromAmount, setFromAmount] = useState('')
   const [isSwapping, setIsSwapping] = useState(false)
   const [txHash, setTxHash] = useState<string | null>(null)
