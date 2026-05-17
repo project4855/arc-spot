@@ -54,6 +54,7 @@ jobs:
 
           Tự động cập nhật từ X API + CryptoRank + airdrops.io"
 
+            git pull --rebase origin main
             git push
             echo "✅ Đã push changes → Cloudflare Pages sẽ tự deploy"
           fi
