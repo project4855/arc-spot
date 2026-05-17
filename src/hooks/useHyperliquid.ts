@@ -28,6 +28,23 @@ export interface HLTrade {
   hash:  string
 }
 
+export interface HLTraderFill {
+  id:          number | string
+  trader:      string          // address
+  displayName: string | null
+  rank:        number
+  coin:        string
+  side:        'buy' | 'sell'
+  dir:         string          // 'Open Long' | 'Close Long' | 'Open Short' | 'Close Short' | ...
+  price:       number
+  size:        number
+  value:       number
+  closedPnl:   number
+  fee:         number
+  time:        number
+  hash:        string
+}
+
 // ── Leaderboard hook ──────────────────────────────────────────────────────────
 
 export function useHLLeaderboard(timeWindow: LbWindow = 'day') {
@@ -175,4 +192,88 @@ export function useHLTrades() {
   }, [load])
 
   return { trades, loading, error }
+}
+
+// ── Top-trader fills hook ─────────────────────────────────────────────────────
+// Lấy các lệnh vừa thực hiện của top N traders trên leaderboard
+
+export interface TraderInfo {
+  address:     string
+  displayName: string | null
+  rank:        number
+}
+
+export function useHLTraderFills(traders: TraderInfo[], topN = 8) {
+  const [fills,   setFills]   = useState<HLTraderFill[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    const targets = traders.slice(0, topN)
+    if (targets.length === 0) return
+
+    try {
+      setLoading(true)
+
+      // Fetch fills cho mỗi trader song song
+      const results = await Promise.all(
+        targets.map((t) =>
+          fetch(`${PROXY}/trades`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ type: 'userFills', user: t.address }),
+          })
+            .then((r) => r.json())
+            .catch(() => [])
+        )
+      )
+
+      const all: HLTraderFill[] = []
+
+      results.forEach((rows, ti) => {
+        const trader = targets[ti]
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(Array.isArray(rows) ? rows : []).slice(0, 10).forEach((f: any) => {
+          const price     = parseFloat(f.px ?? '0')
+          const size      = parseFloat(f.sz ?? '0')
+          const closedPnl = parseFloat(f.closedPnl ?? '0')
+          const fee       = parseFloat(f.fee ?? '0')
+          all.push({
+            id:          f.tid ?? `${trader.address}-${f.time}`,
+            trader:      trader.address,
+            displayName: trader.displayName,
+            rank:        trader.rank,
+            coin:        f.coin ?? '?',
+            side:        f.side === 'B' ? 'buy' : 'sell',
+            dir:         f.dir  ?? '',
+            price,
+            size,
+            value:       price * size,
+            closedPnl,
+            fee,
+            time:        f.time ?? Date.now(),
+            hash:        f.hash ?? '',
+          })
+        })
+      })
+
+      all.sort((a, b) => b.time - a.time)
+      setFills(all.slice(0, 80))
+      setError(null)
+    } catch (e) {
+      console.error('HL trader fills error:', e)
+      setError('Không thể tải lệnh trader')
+    } finally {
+      setLoading(false)
+    }
+  }, [traders, topN])
+
+  useEffect(() => {
+    if (traders.length === 0) return
+    load()
+    const id = setInterval(load, 15_000)   // cập nhật 15s
+    return () => clearInterval(id)
+  }, [load, traders])
+
+  return { fills, loading, error }
 }
