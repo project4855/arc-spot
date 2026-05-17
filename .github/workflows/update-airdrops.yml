@@ -31,7 +31,10 @@ jobs:
         run: node scripts/update-airdrops.mjs
         env:
           # Lấy từ GitHub Secrets → Settings → Secrets and variables → Actions
-          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          X_BEARER_TOKEN:      ${{ secrets.X_BEARER_TOKEN }}
+          TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: 📊 Show changes
         run: |

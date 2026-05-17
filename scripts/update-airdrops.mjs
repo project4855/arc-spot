@@ -132,6 +132,70 @@ async function fetchCryptoRankDropHunting() {
   }
 }
 
+// ── Telegram alert ────────────────────────────────────────────────────────────
+
+async function sendTelegramAlert(graduates) {
+  const token  = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) {
+    log('⚠️  Không có TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID — bỏ qua Telegram')
+    return
+  }
+
+  const lines = graduates.map((g) =>
+    `✅ *${g.name}* đã phát token\\!\nConfidence: \`${g.confidence}\``
+  ).join('\n\n')
+
+  const text = `🪂 *Airdrop Bot Alert\\!*\n\n${lines}\n\n_Phát hiện lúc ${new Date().toLocaleString('vi-VN')}_`
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'MarkdownV2' }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (res.ok) log('✅ Đã gửi Telegram alert')
+    else        log(`❌ Telegram lỗi: ${res.status} ${await res.text()}`)
+  } catch (err) {
+    log(`❌ Telegram error: ${err.message}`)
+  }
+}
+
+// ── Discord alert ─────────────────────────────────────────────────────────────
+
+async function sendDiscordAlert(graduates) {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL
+  if (!webhookUrl) {
+    log('⚠️  Không có DISCORD_WEBHOOK_URL — bỏ qua Discord')
+    return
+  }
+
+  const embeds = graduates.map((g) => ({
+    title:       `🚀 ${g.name} đã phát token!`,
+    description: `Confidence: **${g.confidence}**`,
+    color:       0x00ff88,
+    timestamp:   new Date().toISOString(),
+    footer:      { text: 'Airdrop Bot · arc-spot-trade' },
+  }))
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: '🪂 **Airdrop Bot Alert** — Có dự án vừa phát token!',
+        embeds,
+      }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (res.ok) log('✅ Đã gửi Discord alert')
+    else        log(`❌ Discord lỗi: ${res.status}`)
+  } catch (err) {
+    log(`❌ Discord error: ${err.message}`)
+  }
+}
+
 // ── Airdrops.io scrape ────────────────────────────────────────────────────────
 
 async function fetchAirdropsIO() {
@@ -212,6 +276,15 @@ async function main() {
       log(`   ${project.name} → chưa có token`)
       stillActive.push(project)
     }
+  }
+
+  // 2b. Gửi alert nếu có dự án mới graduated
+  if (newGraduated.length > 0) {
+    log(`\n🔔 Phát hiện ${newGraduated.length} dự án mới graduated — gửi alerts...`)
+    await Promise.allSettled([
+      sendTelegramAlert(newGraduated),
+      sendDiscordAlert(newGraduated),
+    ])
   }
 
   // 3. Fetch CryptoRank để xem dự án mới

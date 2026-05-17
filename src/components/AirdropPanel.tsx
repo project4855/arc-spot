@@ -2,7 +2,7 @@
 // Chỉ liệt kê dự án CHƯA phát token / chưa airdrop
 // Dữ liệu xác minh từ X & nguồn tin. Cập nhật hàng tuần.
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import airdropData from '../data/airdrops.json'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -73,6 +73,106 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ALL_CATEGORIES = ['Tất cả', 'L1', 'L2', 'Infra', 'DeFi', 'BTC Layer', 'Gaming'] as const
 
+// ── TGE Countdown ─────────────────────────────────────────────────────────────
+
+const MONTH_MAP: Record<string, number> = {
+  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+  jan: 0, feb: 1, mar: 2, apr: 3, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+}
+
+function parseTGEDate(tge: string): Date | null {
+  if (!tge) return null
+  const lower = tge.toLowerCase()
+  // Too vague
+  if (lower === '2026' || lower === '2025' || lower === '2027') return null
+  if (lower.startsWith('tbd') || lower.startsWith('mainnet 20')) return null
+
+  // "July–Sept 2026", "July 2026", "July-Sept 2026" — take first month
+  const mMatch = lower.match(/([a-z]{3,})[^a-z0-9]*(\d{4})/)
+  if (mMatch) {
+    const month = MONTH_MAP[mMatch[1]]
+    const year  = parseInt(mMatch[2])
+    if (month !== undefined && !isNaN(year)) return new Date(year, month, 1)
+  }
+
+  // "Q1 2026", "Q3 2026"
+  const qMatch = lower.match(/q([1-4])[^0-9]*(\d{4})/)
+  if (qMatch) {
+    const q    = parseInt(qMatch[1])
+    const year = parseInt(qMatch[2])
+    return new Date(year, (q - 1) * 3, 1)
+  }
+
+  return null
+}
+
+function CountdownBadge({ tge }: { tge: string }) {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(t)
+  }, [])
+
+  const target = parseTGEDate(tge)
+
+  if (!target) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs">
+        <span>🗓</span>
+        <span className="text-gray-500">Dự kiến TGE:</span>
+        <span className="text-yellow-400 font-semibold">{tge}</span>
+      </div>
+    )
+  }
+
+  const diff  = target.getTime() - now
+  const days  = Math.floor(diff / 86_400_000)
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000)
+
+  if (diff <= 0) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs flex-wrap">
+        <span>🚨</span>
+        <span className="text-gray-500">TGE:</span>
+        <span className="text-orange-400 font-bold animate-pulse">{tge} — có thể đã TGE!</span>
+      </div>
+    )
+  }
+
+  let countdown: React.ReactNode
+  if (days <= 30) {
+    countdown = (
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 font-bold animate-pulse">
+        ⏰ {days}d {hours}h nữa!
+      </span>
+    )
+  } else if (days <= 90) {
+    countdown = (
+      <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 font-semibold">
+        📅 ~{days} ngày nữa
+      </span>
+    )
+  } else {
+    countdown = (
+      <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-medium">
+        📅 ~{Math.ceil(days / 30)} tháng nữa
+      </span>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs flex-wrap">
+      <span>🗓</span>
+      <span className="text-gray-500">TGE:</span>
+      <span className="text-yellow-400">{tge}</span>
+      <span className="text-gray-700">·</span>
+      {countdown}
+    </div>
+  )
+}
+
 // ── Project Card ──────────────────────────────────────────────────────────────
 
 function ProjectCard({ p }: { p: AirdropProject }) {
@@ -137,14 +237,8 @@ function ProjectCard({ p }: { p: AirdropProject }) {
         {/* Description */}
         <p className="text-gray-400 text-xs leading-relaxed">{p.desc}</p>
 
-        {/* TGE */}
-        {p.tge && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <span>🗓</span>
-            <span className="text-gray-500">Dự kiến TGE:</span>
-            <span className="text-yellow-400 font-semibold">{p.tge}</span>
-          </div>
-        )}
+        {/* TGE với countdown */}
+        {p.tge && <CountdownBadge tge={p.tge} />}
 
         {/* X verification link */}
         <a

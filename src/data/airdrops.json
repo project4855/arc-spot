@@ -502,6 +502,110 @@
       }
     },
     {
+      "id": "aztec",
+      "name": "Aztec Network",
+      "logo": "🕵️",
+      "category": "L2",
+      "raised": "$87M",
+      "investors": "a16z, Variant, King River Capital",
+      "status": "Testnet",
+      "prob": "Rất cao",
+      "tge": "Q4 2026",
+      "hasToken": false,
+      "xSearch": "Aztec Network token airdrop 2026",
+      "desc": "Privacy L2 trên Ethereum dùng ZK proofs. Raise $87M. Sandbox testnet đang active. Chưa có token — là 1 trong những airdrop được mong đợi nhất 2026.",
+      "steps": [
+        { "action": "Dùng Aztec Sandbox", "detail": "Chạy local node: npx aztec-app → viết và deploy contract thử" },
+        { "action": "Tham gia testnet sớm", "detail": "Đăng ký early access tại aztec.network, testnet sắp ra public" },
+        { "action": "Mint private tokens", "detail": "Thực hiện private transfer trên testnet để tích lịch sử" },
+        { "action": "Discord active", "detail": "Tham gia Discord aztec-network, lấy vai trò developer" },
+        { "action": "GitHub contributions", "detail": "Star, fork, hoặc build với aztec-nr framework trên GitHub" }
+      ],
+      "links": {
+        "site": "https://aztec.network",
+        "twitter": "https://twitter.com/aztecnetwork",
+        "app": "https://aztec.network/sandbox"
+      }
+    },
+    {
+      "id": "pharos",
+      "name": "Pharos",
+      "logo": "🏛️",
+      "category": "L1",
+      "raised": "$8M",
+      "investors": "Binance Labs, HashKey Capital",
+      "status": "Testnet",
+      "prob": "Cao",
+      "tge": "Q3 2026",
+      "hasToken": false,
+      "xSearch": "Pharos blockchain token airdrop 2026",
+      "desc": "High-performance L1 tập trung vào RWA (Real World Assets) và TradFi. Binance Labs-backed. Testnet vừa launch. Chưa có token.",
+      "steps": [
+        { "action": "Tham gia testnet", "detail": "Vào pharosnetwork.xyz → Connect wallet → Nhận faucet testnet tokens" },
+        { "action": "Giao dịch hàng ngày", "detail": "Swap và transfer trên Pharos testnet mỗi ngày" },
+        { "action": "Bridge assets", "detail": "Bridge ETH/USDC sang Pharos testnet qua official bridge" },
+        { "action": "Hoàn thành quests", "detail": "Làm đầy đủ quest trên Galxe và Zealy của Pharos" },
+        { "action": "Đăng ký node", "detail": "Đăng ký chạy light node để tăng eligibility" }
+      ],
+      "links": {
+        "site": "https://pharosnetwork.xyz",
+        "twitter": "https://twitter.com/PharosNetwork",
+        "app": "https://testnet.pharosnetwork.xyz"
+      }
+    },
+    {
+      "id": "monad-dex",
+      "name": "Kuru Exchange",
+      "logo": "🔄",
+      "category": "DeFi",
+      "raised": "$7M",
+      "investors": "Dragonfly Capital, Bankless Ventures",
+      "status": "Mainnet Beta",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Kuru Exchange KURU token airdrop Monad",
+      "desc": "CLOB DEX native trên Monad — orderbook on-chain tốc độ cao. Raise $7M từ Dragonfly. Points system đang chạy. Chưa có token.",
+      "steps": [
+        { "action": "Bridge sang Monad", "detail": "Bridge ETH sang Monad qua bridge.monad.xyz hoặc official bridge" },
+        { "action": "Swap trên Kuru", "detail": "Trade thường xuyên trên kuru.exchange — càng nhiều volume càng tốt" },
+        { "action": "Tích lũy Kuru Points", "detail": "Mỗi trade = điểm, có thể convert sang token khi TGE" },
+        { "action": "Add thanh khoản", "detail": "Provide liquidity cho các cặp phổ biến trên Kuru" },
+        { "action": "Refer bạn bè", "detail": "Referral link tăng multiplier điểm cho cả 2 người" }
+      ],
+      "links": {
+        "site": "https://kuru.exchange",
+        "twitter": "https://twitter.com/kuru_exchange",
+        "app": "https://kuru.exchange"
+      }
+    },
+    {
+      "id": "hyperevmdex",
+      "name": "HyperEVM Ecosystem",
+      "logo": "⚡",
+      "category": "DeFi",
+      "raised": "Hyperliquid VC",
+      "investors": "Hyperliquid (no external VC)",
+      "status": "Mainnet Beta",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "HyperEVM dApp token airdrop 2026",
+      "desc": "Hyperliquid đã launch HYPE, nhưng các protocol native trên HyperEVM (HyperSwap, Felix, Hyperlend...) chưa có token riêng. Farm đồng thời nhiều protocol.",
+      "steps": [
+        { "action": "Bridge sang HyperEVM", "detail": "Bridge USDC từ Arbitrum sang HyperEVM qua Hyperliquid bridge" },
+        { "action": "Dùng HyperSwap", "detail": "Swap token trên HyperSwap — DEX native của HyperEVM" },
+        { "action": "Lending trên Hyperlend", "detail": "Supply/borrow trên Hyperlend để earn yield và tích điểm" },
+        { "action": "Mint trên Felix", "detail": "Mint feUSD stablecoin qua Felix Protocol trên HyperEVM" },
+        { "action": "Dùng đa dạng protocol", "detail": "Tương tác với nhiều dApps khác nhau để build cross-protocol eligibility" }
+      ],
+      "links": {
+        "site": "https://hyperliquid.xyz",
+        "twitter": "https://twitter.com/HyperliquidX",
+        "app": "https://app.hyperliquid.xyz/trade"
+      }
+    },
+    {
       "id": "worldchain",
       "name": "World Chain",
       "logo": "🌍",
@@ -598,6 +702,27 @@
       "name": "Initia",
       "logo": "🌐",
       "detectedAt": "2024-10-01",
+      "confidence": "high"
+    },
+    {
+      "id": "hyperliquid",
+      "name": "Hyperliquid",
+      "logo": "⚡",
+      "detectedAt": "2024-11-29",
+      "confidence": "high"
+    },
+    {
+      "id": "berachain",
+      "name": "Berachain",
+      "logo": "🐻",
+      "detectedAt": "2025-02-06",
+      "confidence": "high"
+    },
+    {
+      "id": "scroll",
+      "name": "Scroll",
+      "logo": "📜",
+      "detectedAt": "2024-10-22",
       "confidence": "high"
     }
   ]

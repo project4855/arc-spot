@@ -4,7 +4,7 @@ import {
   useHLTrades,
   useHLTraderFills,
 } from '../hooks/useHyperliquid'
-import type { LbWindow } from '../hooks/useHyperliquid'
+import type { LbWindow, HLTraderFill } from '../hooks/useHyperliquid'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -228,6 +228,105 @@ function RecentTrades() {
   )
 }
 
+// ── Copy Trade Signals ────────────────────────────────────────────────────────
+
+interface SignalData {
+  coin:       string
+  dir:        'Open Long' | 'Open Short'
+  traders:    Set<string>
+  totalValue: number
+  latestTime: number
+}
+
+function CopyTradeSignals({ fills }: { fills: HLTraderFill[] }) {
+  const signals = useMemo((): SignalData[] => {
+    const map = new Map<string, SignalData>()
+
+    for (const f of fills) {
+      // Chỉ quan tâm lệnh MỞ vị thế (Open Long / Open Short)
+      if (f.dir !== 'Open Long' && f.dir !== 'Open Short') continue
+
+      const key = `${f.coin}|${f.dir}`
+      if (!map.has(key)) {
+        map.set(key, {
+          coin:       f.coin,
+          dir:        f.dir as 'Open Long' | 'Open Short',
+          traders:    new Set(),
+          totalValue: 0,
+          latestTime: 0,
+        })
+      }
+      const s = map.get(key)!
+      s.traders.add(f.trader)
+      s.totalValue += f.value
+      s.latestTime = Math.max(s.latestTime, f.time)
+    }
+
+    return [...map.values()]
+      .filter((s) => s.traders.size >= 2)              // Ít nhất 2 top trader cùng mở
+      .sort((a, b) => b.traders.size - a.traders.size || b.totalValue - a.totalValue)
+      .slice(0, 6)
+  }, [fills])
+
+  if (signals.length === 0) return null
+
+  return (
+    <div className="bg-gradient-to-r from-violet-900/20 via-indigo-900/10 to-blue-900/20 border border-violet-500/25 rounded-xl p-3 flex flex-col gap-2.5">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-base">🔥</span>
+        <h4 className="text-white text-xs font-bold">Copy Trade Signal</h4>
+        <span className="px-2 py-0.5 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[10px] font-semibold animate-pulse">
+          LIVE
+        </span>
+        <span className="text-[10px] text-gray-500">— Coin nhiều top trader đang mở vị thế</span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {signals.map((s) => {
+          const isLong     = s.dir === 'Open Long'
+          const strength   = s.traders.size >= 4 ? 'Rất mạnh' : s.traders.size >= 3 ? 'Mạnh' : 'Trung bình'
+          const strengthCl = s.traders.size >= 4 ? 'text-yellow-400' : s.traders.size >= 3 ? 'text-orange-400' : 'text-gray-400'
+
+          return (
+            <div
+              key={`${s.coin}|${s.dir}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:scale-[1.02] ${
+                isLong
+                  ? 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
+                  : 'bg-red-500/10 border-red-500/30 hover:border-red-500/50'
+              }`}
+            >
+              <span className={`text-sm font-bold ${isLong ? 'text-green-400' : 'text-red-400'}`}>
+                {isLong ? '▲' : '▼'}
+              </span>
+              <span className={`font-bold text-sm ${isLong ? 'text-green-300' : 'text-red-300'}`}>
+                {s.coin}
+              </span>
+              <span className={`text-xs ${isLong ? 'text-green-500' : 'text-red-500'}`}>
+                {isLong ? 'Long' : 'Short'}
+              </span>
+              <div className="w-px h-3 bg-gray-700" />
+              <div className="flex flex-col items-center">
+                <span className="text-white font-bold text-xs">{s.traders.size}</span>
+                <span className="text-gray-600 text-[9px]">traders</span>
+              </div>
+              <div className="flex flex-col">
+                <span className={`text-[10px] font-semibold ${strengthCl}`}>{strength}</span>
+                <span className="text-gray-600 text-[10px]">{fmtUSD(s.totalValue)}</span>
+              </div>
+              <span className="text-gray-700 text-[10px]">{fmtRelTime(s.latestTime)}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="text-[10px] text-gray-700">
+        ⚠️ Tín hiệu tham khảo · Không phải lời khuyên đầu tư · Luôn DYOR trước khi giao dịch
+      </p>
+    </div>
+  )
+}
+
 // ── Top Trader Fills ──────────────────────────────────────────────────────────
 
 const DIR_ICON: Record<string, string> = {
@@ -285,6 +384,9 @@ function TopTraderFills({
             <span>Cập nhật 15s</span>
           </div>
         </div>
+
+        {/* Copy Trade Signals */}
+        <CopyTradeSignals fills={fills} />
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 items-center">
