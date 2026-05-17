@@ -11,7 +11,7 @@ import HyperliquidPanel from './components/HyperliquidPanel'
 
 const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
 type Pair = typeof PAIRS[number]
-type AppTab = 'trade' | 'lending'
+type AppTab = 'trade' | 'lending' | 'traders'
 
 export default function App() {
   const [tab, setTab] = useState<AppTab>('trade')
@@ -51,9 +51,10 @@ export default function App() {
         <div className="flex justify-center">
           <div className="flex bg-[#0d0e12] border border-gray-800 rounded-2xl p-1 gap-1">
             {([
-              { key: 'trade',   label: '📊 Trade',             desc: 'Spot swap' },
-              { key: 'lending', label: '🏦 Lending & Borrow',  desc: 'Earn & borrow' },
-            ] as { key: AppTab; label: string; desc: string }[]).map(({ key, label }) => (
+              { key: 'trade',   label: '📊 Trade' },
+              { key: 'lending', label: '🏦 Lending & Borrow' },
+              { key: 'traders', label: '🏆 Traders' },
+            ] as { key: AppTab; label: string }[]).map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
@@ -132,8 +133,17 @@ export default function App() {
           </>
         )}
 
-        {/* ── Hyperliquid live data ── */}
-        <HyperliquidPanel />
+        {/* ══ TRADERS TAB ══ */}
+        {tab === 'traders' && (
+          <>
+            <div className="text-center -mt-2 mb-2">
+              <p className="text-gray-500 text-sm">
+                Dữ liệu thực từ Hyperliquid · Cập nhật liên tục
+              </p>
+            </div>
+            <HyperliquidPanel />
+          </>
+        )}
 
         {/* Stats bar */}
         <StatsBar />
