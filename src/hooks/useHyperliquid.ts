@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
-// Dùng Cloudflare proxy để tránh CORS
+// Dùng Cloudflare proxy để tránh CORS (production)
+// Dev: proxy qua vite.config.ts
 const PROXY = '/api/hyperliquid'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -46,87 +47,76 @@ export interface HLTraderFill {
 }
 
 // ── Leaderboard hook ──────────────────────────────────────────────────────────
+// Fetch 1 lần duy nhất (mỗi 60s), sort/filter theo timeWindow trong memory
+// Không re-fetch khi đổi tab → nhanh hơn, không race condition
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RawRow = any
 
 export function useHLLeaderboard(timeWindow: LbWindow = 'day') {
-  const [traders, setTraders] = useState<HLTrader[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState<string | null>(null)
+  const [rawRows,  setRawRows]  = useState<RawRow[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const load = useCallback(async () => {
+    // Huỷ request cũ nếu đang chạy
+    abortRef.current?.abort()
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
+
     try {
       setLoading(true)
-
-      const res = await fetch(`${PROXY}/leaderboard`)
+      const res = await fetch(`${PROXY}/leaderboard`, { signal: ctrl.signal })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await res.json()
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rows: any[] = Array.isArray(data)
+      const rows: RawRow[] = Array.isArray(data)
         ? data
         : (data.leaderboardRows ?? data.rows ?? [])
 
-      /*
-       * Actual response shape (confirmed from API):
-       * {
-       *   ethAddress: "0x...",
-       *   accountValue: "78142271.77",
-       *   displayName: null,
-       *   windowPerformances: [
-       *     ["day",     { pnl: "62937.69", roi: "0.00113", vlm: "545986909.83" }],
-       *     ["week",    { pnl: "...", ... }],
-       *     ["month",   { pnl: "...", ... }],
-       *     ["allTime", { pnl: "...", ... }],
-       *   ]
-       * }
-       */
-      const parsed: HLTrader[] = rows
-        .slice(0, 100)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((r: any, i: number) => {
-          const accountValue = parseFloat(r.accountValue ?? '0')
-
-          // windowPerformances: Array<[windowName, {pnl, roi, vlm}]>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const perfs: [string, any][] = Array.isArray(r.windowPerformances)
-            ? r.windowPerformances
-            : []
-
-          // Find the tuple matching the chosen timeWindow
-          const perf = perfs.find(([key]) => key === timeWindow)?.[1] ?? {}
-
-          const windowPnl = parseFloat(perf.pnl ?? '0')
-          const roi       = parseFloat(perf.roi ?? '0') * 100  // 0.045 → 4.5%
-          const volume    = parseFloat(perf.vlm ?? '0')
-
-          return {
-            rank:        i + 1,
-            address:     r.ethAddress ?? r.address ?? '—',
-            displayName: r.displayName ?? null,
-            accountValue,
-            windowPnl,
-            roi,
-            volume,
-          }
-        })
-        .sort((a, b) => b.windowPnl - a.windowPnl)
-        .map((t, i) => ({ ...t, rank: i + 1 }))
-
-      setTraders(parsed)
+      setRawRows(rows.slice(0, 200))
       setError(null)
     } catch (e) {
+      if ((e as Error).name === 'AbortError') return  // bị huỷ chủ động, bỏ qua
       console.error('HL leaderboard error:', e)
       setError('Không thể tải leaderboard')
     } finally {
       setLoading(false)
     }
-  }, [timeWindow])
+  }, [])  // không có deps → hàm ổn định, không recreate
 
+  // Fetch khi mount, sau đó mỗi 60s
   useEffect(() => {
     load()
     const id = setInterval(load, 60_000)
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(id)
+      abortRef.current?.abort()
+    }
   }, [load])
+
+  // Parse & sort theo timeWindow trong memory (không fetch lại)
+  const traders: HLTrader[] = rawRows
+    .map((r: RawRow, i: number) => {
+      const accountValue = parseFloat(r.accountValue ?? '0')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const perfs: [string, any][] = Array.isArray(r.windowPerformances)
+        ? r.windowPerformances : []
+      const perf  = perfs.find(([key]) => key === timeWindow)?.[1] ?? {}
+      const windowPnl = parseFloat(perf.pnl ?? '0')
+      const roi       = parseFloat(perf.roi ?? '0') * 100
+      const volume    = parseFloat(perf.vlm ?? '0')
+      return {
+        rank:        i + 1,
+        address:     r.ethAddress ?? r.address ?? '—',
+        displayName: r.displayName ?? null,
+        accountValue, windowPnl, roi, volume,
+      }
+    })
+    .sort((a, b) => b.windowPnl - a.windowPnl)
+    .map((t, i) => ({ ...t, rank: i + 1 }))
 
   return { traders, loading, error, refresh: load }
 }
@@ -205,17 +195,19 @@ export interface TraderInfo {
 
 export function useHLTraderFills(traders: TraderInfo[], topN = 8) {
   const [fills,   setFills]   = useState<HLTraderFill[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    const targets = traders.slice(0, topN)
+  // Dùng key ổn định thay vì so sánh reference của array
+  // Chỉ re-fetch khi danh sách địa chỉ thực sự thay đổi
+  const tradersKey = traders.slice(0, topN).map(t => t.address).join(',')
+
+  const load = useCallback(async (targets: TraderInfo[]) => {
     if (targets.length === 0) return
 
     try {
       setLoading(true)
 
-      // Fetch fills cho mỗi trader song song
       const results = await Promise.all(
         targets.map((t) =>
           fetch(`${PROXY}/trades`, {
@@ -229,7 +221,6 @@ export function useHLTraderFills(traders: TraderInfo[], topN = 8) {
       )
 
       const all: HLTraderFill[] = []
-
       results.forEach((rows, ti) => {
         const trader = targets[ti]
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -266,14 +257,18 @@ export function useHLTraderFills(traders: TraderInfo[], topN = 8) {
     } finally {
       setLoading(false)
     }
-  }, [traders, topN])
+  }, [])  // hàm ổn định, nhận targets làm tham số
 
+  // Chỉ re-subscribe khi danh sách địa chỉ trader thực sự thay đổi
   useEffect(() => {
-    if (traders.length === 0) return
-    load()
-    const id = setInterval(load, 15_000)   // cập nhật 15s
+    const targets = traders.slice(0, topN)
+    if (targets.length === 0) return
+
+    load(targets)
+    const id = setInterval(() => load(targets), 15_000)
     return () => clearInterval(id)
-  }, [load, traders])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tradersKey, topN, load])  // tradersKey thay vì traders object
 
   return { fills, loading, error }
 }
