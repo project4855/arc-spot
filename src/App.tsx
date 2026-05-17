@@ -9,10 +9,11 @@ import TransactionHistory from './components/TransactionHistory'
 import LendingPanel from './components/LendingPanel'
 import HyperliquidPanel from './components/HyperliquidPanel'
 import AirdropPanel from './components/AirdropPanel'
+import BridgePanel from './components/BridgePanel'
 
 const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
 type Pair = typeof PAIRS[number]
-type AppTab = 'trade' | 'lending' | 'traders' | 'airdrops'
+type AppTab = 'trade' | 'bridge' | 'lending' | 'traders' | 'airdrops'
 
 export default function App() {
   const [tab, setTab] = useState<AppTab>('trade')
@@ -53,7 +54,8 @@ export default function App() {
           <div className="flex bg-[#0d0e12] border border-gray-800 rounded-2xl p-1 gap-1">
             {([
               { key: 'trade',    label: '📊 Trade' },
-              { key: 'lending',  label: '🏦 Lending & Borrow' },
+              { key: 'bridge',   label: '🌉 Bridge' },
+              { key: 'lending',  label: '🏦 Lending' },
               { key: 'traders',  label: '🏆 Traders' },
               { key: 'airdrops', label: '🪂 Airdrop' },
             ] as { key: AppTab; label: string }[]).map(({ key, label }) => (
@@ -120,6 +122,18 @@ export default function App() {
                 <OrderBook pair={pair} />
               </div>
             </div>
+          </>
+        )}
+
+        {/* ══ BRIDGE TAB ══ */}
+        {tab === 'bridge' && (
+          <>
+            <div className="text-center -mt-2 mb-2">
+              <p className="text-gray-500 text-sm">
+                Bridge USDC từ các chain về Arc Testnet · Powered by Circle CCTP
+              </p>
+            </div>
+            <BridgePanel />
           </>
         )}
 
