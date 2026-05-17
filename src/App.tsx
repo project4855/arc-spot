@@ -8,10 +8,11 @@ import PriceChart from './components/PriceChart'
 import TransactionHistory from './components/TransactionHistory'
 import LendingPanel from './components/LendingPanel'
 import HyperliquidPanel from './components/HyperliquidPanel'
+import AirdropPanel from './components/AirdropPanel'
 
 const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
 type Pair = typeof PAIRS[number]
-type AppTab = 'trade' | 'lending' | 'traders'
+type AppTab = 'trade' | 'lending' | 'traders' | 'airdrops'
 
 export default function App() {
   const [tab, setTab] = useState<AppTab>('trade')
@@ -51,9 +52,10 @@ export default function App() {
         <div className="flex justify-center">
           <div className="flex bg-[#0d0e12] border border-gray-800 rounded-2xl p-1 gap-1">
             {([
-              { key: 'trade',   label: '📊 Trade' },
-              { key: 'lending', label: '🏦 Lending & Borrow' },
-              { key: 'traders', label: '🏆 Traders' },
+              { key: 'trade',    label: '📊 Trade' },
+              { key: 'lending',  label: '🏦 Lending & Borrow' },
+              { key: 'traders',  label: '🏆 Traders' },
+              { key: 'airdrops', label: '🪂 Airdrop' },
             ] as { key: AppTab; label: string }[]).map(({ key, label }) => (
               <button
                 key={key}
@@ -142,6 +144,18 @@ export default function App() {
               </p>
             </div>
             <HyperliquidPanel />
+          </>
+        )}
+
+        {/* ══ AIRDROPS TAB ══ */}
+        {tab === 'airdrops' && (
+          <>
+            <div className="text-center -mt-2 mb-2">
+              <p className="text-gray-500 text-sm">
+                Dự án tiềm năng airdrop · Vốn huy động · Cách tham gia
+              </p>
+            </div>
+            <AirdropPanel />
           </>
         )}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 // Dùng Cloudflare proxy để tránh CORS
-const PROXY  = '/api/hyperliquid'
+const PROXY = '/api/hyperliquid'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -10,6 +10,7 @@ export type LbWindow = 'day' | 'week' | 'month' | 'allTime'
 export interface HLTrader {
   rank:         number
   address:      string
+  displayName:  string | null
   accountValue: number
   windowPnl:    number
   roi:          number
@@ -29,7 +30,7 @@ export interface HLTrade {
 
 // ── Leaderboard hook ──────────────────────────────────────────────────────────
 
-export function useHLLeaderboard(window: LbWindow = 'day') {
+export function useHLLeaderboard(timeWindow: LbWindow = 'day') {
   const [traders, setTraders] = useState<HLTrader[]>([])
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
@@ -38,50 +39,61 @@ export function useHLLeaderboard(window: LbWindow = 'day') {
     try {
       setLoading(true)
 
-      // stats-data.hyperliquid.xyz/Mainnet/leaderboard (qua proxy)
-      const res  = await fetch(`${PROXY}/leaderboard`)
+      const res = await fetch(`${PROXY}/leaderboard`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await res.json()
 
-      // Response là array hoặc có field leaderboardRows
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: any[] = Array.isArray(data)
         ? data
         : (data.leaderboardRows ?? data.rows ?? [])
 
+      /*
+       * Actual response shape (confirmed from API):
+       * {
+       *   ethAddress: "0x...",
+       *   accountValue: "78142271.77",
+       *   displayName: null,
+       *   windowPerformances: [
+       *     ["day",     { pnl: "62937.69", roi: "0.00113", vlm: "545986909.83" }],
+       *     ["week",    { pnl: "...", ... }],
+       *     ["month",   { pnl: "...", ... }],
+       *     ["allTime", { pnl: "...", ... }],
+       *   ]
+       * }
+       */
       const parsed: HLTrader[] = rows
-        .slice(0, 25)
+        .slice(0, 100)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((r: any, i: number) => {
-          const accountValue = parseFloat(r.accountValue ?? r.account_value ?? r.equity ?? '0')
+          const accountValue = parseFloat(r.accountValue ?? '0')
 
-          // windowPnl: thử nhiều key khác nhau
-          const pnlKey = window === 'day'     ? 'pnl1d'
-                       : window === 'week'    ? 'pnl7d'
-                       : window === 'month'   ? 'pnl30d'
-                       : 'pnlAllTime'
-          const windowPnl = parseFloat(
-            r[pnlKey] ?? r.windowPnl ?? r.window_pnl ?? r.pnl ?? '0'
-          )
+          // windowPerformances: Array<[windowName, {pnl, roi, vlm}]>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const perfs: [string, any][] = Array.isArray(r.windowPerformances)
+            ? r.windowPerformances
+            : []
 
-          const volume = parseFloat(r.vlm ?? r.volume ?? r.volume30d ?? '0')
+          // Find the tuple matching the chosen timeWindow
+          const perf = perfs.find(([key]) => key === timeWindow)?.[1] ?? {}
 
-          // ROI = PnL / (equity - PnL), tránh chia 0
-          const base = accountValue - windowPnl
-          const roi  = base > 0 ? (windowPnl / base) * 100 : 0
+          const windowPnl = parseFloat(perf.pnl ?? '0')
+          const roi       = parseFloat(perf.roi ?? '0') * 100  // 0.045 → 4.5%
+          const volume    = parseFloat(perf.vlm ?? '0')
 
           return {
-            rank:         (r.prize ?? r.rank ?? i + 1) as number,
-            address:      r.ethAddress ?? r.eth_address ?? r.address ?? r.user ?? '—',
+            rank:        i + 1,
+            address:     r.ethAddress ?? r.address ?? '—',
+            displayName: r.displayName ?? null,
             accountValue,
             windowPnl,
             roi,
             volume,
           }
         })
-        .sort((a, b) => b.windowPnl - a.windowPnl)   // sort by PnL desc
-        .map((t, i) => ({ ...t, rank: i + 1 }))       // re-number rank
+        .sort((a, b) => b.windowPnl - a.windowPnl)
+        .map((t, i) => ({ ...t, rank: i + 1 }))
 
       setTraders(parsed)
       setError(null)
@@ -91,7 +103,7 @@ export function useHLLeaderboard(window: LbWindow = 'day') {
     } finally {
       setLoading(false)
     }
-  }, [window])
+  }, [timeWindow])
 
   useEffect(() => {
     load()
