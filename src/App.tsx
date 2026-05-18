@@ -10,10 +10,11 @@ import LendingPanel from './components/LendingPanel'
 import HyperliquidPanel from './components/HyperliquidPanel'
 import AirdropPanel from './components/AirdropPanel'
 import BridgePanel from './components/BridgePanel'
+import DerivativesPanel from './components/DerivativesPanel'
 
 const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
 type Pair = typeof PAIRS[number]
-type AppTab = 'trade' | 'bridge' | 'lending' | 'traders' | 'airdrops'
+type AppTab = 'trade' | 'bridge' | 'lending' | 'perps' | 'traders' | 'airdrops'
 
 const FEATURES = [
   { icon: '⚡', text: 'Sub-second finality' },
@@ -87,10 +88,11 @@ export default function App() {
         <div className="flex justify-center">
           <div className="flex bg-white border border-slate-200 shadow-sm rounded-2xl p-1.5 gap-2">
             {([
-              { key: 'trade',    label: '📊 Trade' },
-              { key: 'bridge',   label: '🌉 Bridge' },
-              { key: 'lending',  label: '🏦 Lending' },
-              { key: 'traders',  label: '🏆 Traders' },
+              { key: 'trade',    label: '📊 Trade'    },
+              { key: 'bridge',   label: '🌉 Bridge'   },
+              { key: 'lending',  label: '🏦 Lending'  },
+              { key: 'perps',    label: '⚡ Perps'    },
+              { key: 'traders',  label: '🏆 Traders'  },
               { key: 'airdrops', label: '🪂 Airdrops' },
             ] as { key: AppTab; label: string }[]).map(({ key, label }) => (
               <button
@@ -165,6 +167,18 @@ export default function App() {
               </p>
             </div>
             <LendingPanel />
+          </>
+        )}
+
+        {/* ══ PERPS TAB ══ */}
+        {tab === 'perps' && (
+          <>
+            <div className="text-center -mt-2 mb-2">
+              <p className="text-slate-500 text-sm">
+                Perpetual futures · Mark prices · Funding rates · Open interest · Hyperliquid Mainnet
+              </p>
+            </div>
+            <DerivativesPanel />
           </>
         )}
 

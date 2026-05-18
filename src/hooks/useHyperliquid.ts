@@ -8,6 +8,19 @@ const PROXY = '/api/hyperliquid'
 
 export type LbWindow = 'day' | 'week' | 'month' | 'allTime'
 
+export interface HLMarket {
+  coin:         string
+  markPx:       number
+  prevDayPx:    number
+  oraclePx:     number
+  change24h:    number   // percent
+  funding8h:    number   // raw 8-hour rate e.g. 0.0001
+  fundingAnn:   number   // annualised %
+  openInterest: number   // in USD
+  volume24h:    number   // in USD
+  maxLeverage:  number
+}
+
 export interface HLTrader {
   rank:         number
   address:      string
@@ -271,4 +284,75 @@ export function useHLTraderFills(traders: TraderInfo[], topN = 8) {
   }, [tradersKey, topN, load])  // tradersKey thay vì traders object
 
   return { fills, loading, error }
+}
+
+// ── Derivatives / Perps market hook ──────────────────────────────────────────
+// Fetches metaAndAssetCtxs from Hyperliquid info API every 15s
+
+export function useHLDerivatives() {
+  const [markets, setMarkets] = useState<HLMarket[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState<string | null>(null)
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`${PROXY}/trades`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ type: 'metaAndAssetCtxs' }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = await res.json()
+
+      // data = [meta, assetCtxs[]]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const universe: any[] = data?.[0]?.universe ?? []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ctxs:     any[] = data?.[1] ?? []
+
+      const parsed: HLMarket[] = universe
+        .map((asset, i) => {
+          const ctx      = ctxs[i] ?? {}
+          const markPx   = parseFloat(ctx.markPx   ?? '0')
+          const prevDay  = parseFloat(ctx.prevDayPx ?? '0')
+          const oraclePx = parseFloat(ctx.oraclePx  ?? '0')
+          const funding  = parseFloat(ctx.funding    ?? '0')
+          const oi       = parseFloat(ctx.openInterest ?? '0')
+          const vol      = parseFloat(ctx.dayNtlVlm   ?? '0')
+
+          return {
+            coin:         asset.name ?? `Asset${i}`,
+            markPx,
+            prevDayPx:    prevDay,
+            oraclePx,
+            change24h:    prevDay > 0 ? ((markPx - prevDay) / prevDay) * 100 : 0,
+            funding8h:    funding,
+            fundingAnn:   funding * 3 * 365 * 100,   // annualised %
+            openInterest: oi * markPx,                // convert to USD
+            volume24h:    vol,
+            maxLeverage:  asset.maxLeverage ?? 20,
+          }
+        })
+        .filter(m => m.markPx > 0)
+
+      setMarkets(parsed)
+      setUpdatedAt(Date.now())
+      setError(null)
+    } catch (e) {
+      console.error('HL derivatives error:', e)
+      setError('Could not load market data')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+    const id = setInterval(load, 15_000)
+    return () => clearInterval(id)
+  }, [load])
+
+  return { markets, loading, error, updatedAt, refresh: load }
 }
