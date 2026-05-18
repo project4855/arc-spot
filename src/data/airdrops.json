@@ -29,6 +29,92 @@
   },
   "projects": [
     {
+      "id": "arc-network",
+      "name": "Arc Network",
+      "logo": "⚡",
+      "category": "L1",
+      "raised": "Circle-backed",
+      "investors": "Circle (USDC issuer) · BlackRock · Visa · HSBC · Anthropic · AWS",
+      "status": "Mainnet Beta",
+      "prob": "Rất cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "symbol": "ARC",
+      "cgSearch": "Arc Network ARC",
+      "xSearch": "Arc Network token ARC airdrop 2026",
+      "desc": "Layer-1 blockchain do Circle (công ty phát hành USDC) xây dựng, định vị là 'Economic OS of the internet' cho on-chain payments, lending và RWA. Tokenomics đã được xác nhận trong whitepaper: 10 tỷ ARC supply, 60% cho ecosystem. Tất cả user đang dùng Arc testnet (bao gồm app này) có khả năng rất cao được airdrop.",
+      "steps": [
+        {
+          "action": "Dùng app này (arc-spot-trade)",
+          "detail": "Swap, lend/borrow trên app → on-chain history trên Arc Testnet"
+        },
+        {
+          "action": "Tham gia Arc Community Program",
+          "detail": "Đăng ký tại arc.io → earn badges và điểm có thể đổi rewards"
+        },
+        {
+          "action": "Bridge USDC sang Arc Testnet",
+          "detail": "Dùng Circle CCTP bridge USDC → thể hiện cross-chain activity"
+        },
+        {
+          "action": "Dùng Arc faucet",
+          "detail": "Nhận testnet tokens tại faucet.circle.com → thực hiện nhiều giao dịch"
+        },
+        {
+          "action": "Tương tác với nhiều dApps trên Arc",
+          "detail": "Swap, stake, bridge → build on-chain footprint đa dạng"
+        }
+      ],
+      "links": {
+        "site": "https://www.arc.io",
+        "twitter": "https://twitter.com/arc_network",
+        "app": "https://faucet.circle.com"
+      }
+    },
+    {
+      "id": "tempo",
+      "name": "Tempo",
+      "logo": "🎵",
+      "category": "L1 Payments",
+      "raised": "$500M",
+      "investors": "Stripe · Paradigm",
+      "status": "Mainnet",
+      "prob": "Rất cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "symbol": "TMP",
+      "cgSearch": "Tempo TMP stablechain",
+      "xSearch": "Tempo blockchain token TMP airdrop Stripe 2026",
+      "desc": "Layer-1 blockchain chuyên cho payments, được Stripe và Paradigm rót $500M. Mainnet ra ngày 18/3/2026. Hỗ trợ tất cả stablecoin lớn, phí giao dịch ~$0.001, finality 0.6 giây. Stripe là công ty fintech $50B+ valuation — nếu phát token sẽ là một trong những airdrop payments lớn nhất.",
+      "steps": [
+        {
+          "action": "Tương tác Tempo Mainnet",
+          "detail": "Kết nối ví, thực hiện giao dịch stablecoin trên Tempo mainnet"
+        },
+        {
+          "action": "Dùng Tempo Faucet (testnet)",
+          "detail": "Nhận testnet tokens → simulate transfers, payments, stablecoin mechanics"
+        },
+        {
+          "action": "Build on-chain footprint đa dạng",
+          "detail": "Transfers, account operations, stablecoin swaps — càng nhiều loại activity càng tốt"
+        },
+        {
+          "action": "Tham gia sớm khi mainnet mới ra",
+          "detail": "Early adopter mainnet có khả năng được tính điểm cao hơn (mainnet live 18/3/2026)"
+        },
+        {
+          "action": "Follow Tempo trên X",
+          "detail": "Theo dõi @tempo_chain hoặc trang chính thức để không bỏ lỡ thông báo airdrop"
+        }
+      ],
+      "links": {
+        "site": "https://tempo.xyz",
+        "twitter": "https://twitter.com/tempo_chain",
+        "app": "https://tempo.xyz/faucet"
+      }
+    },
+    {
       "id": "base",
       "name": "Base",
       "logo": "🔵",
