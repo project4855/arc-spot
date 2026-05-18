@@ -1,10 +1,10 @@
 {
-  "lastUpdated": "2026-05-17",
+  "lastUpdated": "2026-05-18",
   "source": "Auto-updated daily via GitHub Actions · X API + CryptoRank + DeFiLlama + DappRadar + AirdropAlert",
   "updateLog": {
     "graduatedThisRun": [],
-    "checkedProjects": 13,
-    "runAt": "2026-05-17T08:19:28.723Z",
+    "checkedProjects": 25,
+    "runAt": "2026-05-18T07:00:00.000Z",
     "xApiUsed": true,
     "newSuggestionsFromCryptoRank": [],
     "externalFetchCounts": {
@@ -20,123 +20,24 @@
   "cryptorankFunding": [],
   "projects": [
     {
-      "id": "unichain",
-      "name": "Unichain",
-      "logo": "🦄",
-      "category": "L2",
-      "raised": "Uniswap Labs",
-      "investors": "a16z (Uniswap backer)",
-      "status": "Mainnet Beta",
-      "prob": "Rất cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Unichain airdrop token",
-      "desc": "L2 chính thức của Uniswap Labs. Chưa có token riêng. Nếu phát token sẽ reward LP + trader on Unichain.",
-      "steps": [
-        {
-          "action": "Bridge ETH sang Unichain",
-          "detail": "Bridge ETH qua bridge.unichain.org"
-        },
-        {
-          "action": "Swap trên Uniswap v4",
-          "detail": "Thực hiện swap trên Uniswap v4 deploy trên Unichain"
-        },
-        {
-          "action": "Cung cấp thanh khoản",
-          "detail": "Add LP cho các cặp phổ biến trên Unichain"
-        },
-        {
-          "action": "Volume lớn đều đặn",
-          "detail": "Volume giao dịch cao tăng cơ hội nhận airdrop"
-        },
-        {
-          "action": "Dùng đa dạng dApps",
-          "detail": "Tương tác với nhiều protocols khác nhau trên Unichain"
-        }
-      ],
-      "links": {
-        "site": "https://unichain.org",
-        "twitter": "https://twitter.com/unichain",
-        "app": "https://app.uniswap.org"
-      }
-    },
-    {
-      "id": "ink",
-      "name": "Ink",
-      "logo": "🖋",
-      "category": "L2",
-      "raised": "Kraken",
-      "investors": "Kraken Exchange",
-      "status": "Mainnet Beta",
-      "prob": "Rất cao",
-      "tge": "July–Sept 2026",
-      "hasToken": false,
-      "xSearch": "INK token airdrop Kraken",
-      "desc": "L2 của Kraken trên OP Stack. Ink Foundation đã xác nhận token $INK và airdrop, dự kiến TGE tháng 7-9/2026.",
-      "steps": [
-        {
-          "action": "Bridge ETH sang Ink",
-          "detail": "Bridge ETH tại inkonchain.com/bridge"
-        },
-        {
-          "action": "Giao dịch hàng ngày",
-          "detail": "Swap và interact trên dApps Ink Mainnet mỗi ngày"
-        },
-        {
-          "action": "Kraken Pro users được ưu tiên",
-          "detail": "Là user Kraken Pro tăng multiplier eligibility"
-        },
-        {
-          "action": "Mint NFT",
-          "detail": "Mint NFT từ các collection trên Ink Mainnet"
-        },
-        {
-          "action": "Kiếm Ink Points",
-          "detail": "First Kraken points drop đã bắt đầu từ 13/4 — tiếp tục farm"
-        }
-      ],
-      "links": {
-        "site": "https://inkonchain.com",
-        "twitter": "https://twitter.com/inkonchain",
-        "app": "https://inkonchain.com"
-      },
-      "symbol": "INK",
-      "cgSearch": "ink protocol"
-    },
-    {
       "id": "base",
       "name": "Base",
       "logo": "🔵",
       "category": "L2",
-      "raised": "Coinbase",
-      "investors": "Coinbase (top 3 exchange)",
+      "raised": "Coinbase-backed",
+      "investors": "Coinbase (top-3 exchange)",
       "status": "Mainnet Beta",
       "prob": "Rất cao",
       "tge": "TBD 2026",
       "hasToken": false,
       "xSearch": "Base token airdrop Coinbase 2026",
-      "desc": "L2 chính thức của Coinbase. JPMorgan ước tính vốn hoá token $12-34 tỷ USD. Chưa có token. Cực kỳ tiềm năng.",
+      "desc": "L2 chính thức của Coinbase. JPMorgan ước tính vốn hoá token $12-34 tỷ USD. Có hàng chục triệu user. Nếu phát token sẽ là một trong những airdrop lớn nhất lịch sử.",
       "steps": [
-        {
-          "action": "Bridge ETH sang Base",
-          "detail": "Bridge qua bridge.base.org hoặc MetaMask"
-        },
-        {
-          "action": "Dùng đa dạng dApps",
-          "detail": "Swap Aerodrome, trade Morpho, dùng Paragraph, Friend.tech..."
-        },
-        {
-          "action": "Coinbase Wallet user",
-          "detail": "Dùng Coinbase Wallet kết nối Base tăng cơ hội"
-        },
-        {
-          "action": "Volume và tần suất",
-          "detail": "Giao dịch đều đặn nhiều tuần, không one-time deposit lớn"
-        },
-        {
-          "action": "Dùng Base Name Service",
-          "detail": "Đăng ký .base.eth domain để có on-chain identity"
-        }
+        { "action": "Bridge ETH sang Base", "detail": "Bridge qua bridge.base.org hoặc MetaMask" },
+        { "action": "Dùng đa dạng dApps", "detail": "Swap Aerodrome, trade Morpho, dùng Paragraph, Zora..." },
+        { "action": "Coinbase Wallet user", "detail": "Dùng Coinbase Wallet kết nối Base tăng cơ hội" },
+        { "action": "Volume và tần suất", "detail": "Giao dịch đều đặn nhiều tuần, không one-time deposit lớn" },
+        { "action": "Dùng Base Name Service", "detail": "Đăng ký .base.eth domain để có on-chain identity" }
       ],
       "links": {
         "site": "https://base.org",
@@ -149,35 +50,20 @@
       "name": "MetaMask",
       "logo": "🦊",
       "category": "Infra",
-      "raised": "Consensys",
+      "raised": "Consensys-backed",
       "investors": "Consensys (MetaMask maker)",
       "status": "Mainnet Beta",
       "prob": "Rất cao",
       "tge": "TBD 2026",
       "hasToken": false,
       "xSearch": "MetaMask token airdrop 2026",
-      "desc": "Ví crypto lớn nhất thế giới với 30M+ user. Chưa có token. Nếu phát token sẽ là một trong những airdrop lớn nhất lịch sử.",
+      "desc": "Ví crypto lớn nhất thế giới với 30M+ user. Chưa có token. Nếu phát token sẽ là một trong những airdrop lớn nhất lịch sử. Mọi giao dịch qua MetaMask Swap đều có thể tính điểm.",
       "steps": [
-        {
-          "action": "Dùng MetaMask Swap",
-          "detail": "Swap token trực tiếp trong ví MetaMask (không qua dApp)"
-        },
-        {
-          "action": "MetaMask Portfolio",
-          "detail": "Dùng portfolio.metamask.io để bridge, swap, stake"
-        },
-        {
-          "action": "Dùng Linea (Consensys L2)",
-          "detail": "Kết nối và dùng Linea — cùng hệ sinh thái Consensys"
-        },
-        {
-          "action": "MetaMask Card (nếu có)",
-          "detail": "Đăng ký MetaMask Card cho user ở vùng eligible"
-        },
-        {
-          "action": "Dùng thường xuyên",
-          "detail": "Càng nhiều giao dịch qua MetaMask Swap/Bridge càng tốt"
-        }
+        { "action": "Dùng MetaMask Swap", "detail": "Swap token trực tiếp trong ví MetaMask (không qua dApp)" },
+        { "action": "MetaMask Portfolio", "detail": "Dùng portfolio.metamask.io để bridge, swap, stake" },
+        { "action": "Dùng Linea (Consensys L2)", "detail": "Kết nối và dùng Linea — cùng hệ sinh thái Consensys" },
+        { "action": "MetaMask Card (nếu có)", "detail": "Đăng ký MetaMask Card cho user ở vùng eligible" },
+        { "action": "Dùng thường xuyên", "detail": "Càng nhiều giao dịch qua MetaMask Swap/Bridge càng tốt" }
       ],
       "links": {
         "site": "https://metamask.io",
@@ -186,213 +72,29 @@
       }
     },
     {
-      "id": "polymarket",
-      "name": "Polymarket",
-      "logo": "📊",
-      "category": "DeFi",
-      "raised": "$70M+",
-      "investors": "Founders Fund, Peter Thiel",
-      "status": "Mainnet Beta",
-      "prob": "Rất cao",
-      "tge": "2026",
-      "hasToken": false,
-      "xSearch": "Polymarket POLY token airdrop",
-      "desc": "Prediction market lớn nhất thế giới. CMO đã xác nhận token POLY và airdrop trên podcast tháng 10/2025. Chưa có mechanics.",
-      "steps": [
-        {
-          "action": "Tạo tài khoản",
-          "detail": "Đăng ký tại polymarket.com — cần KYC"
-        },
-        {
-          "action": "Đặt cược thị trường",
-          "detail": "Đặt cược vào các sự kiện chính trị, crypto, thể thao..."
-        },
-        {
-          "action": "Volume cao",
-          "detail": "Giao dịch volume cao và đúng dự đoán tăng eligibility"
-        },
-        {
-          "action": "Tần suất đều đặn",
-          "detail": "Đặt cược hàng tuần thay vì một lần lớn"
-        },
-        {
-          "action": "Follow @polymarket",
-          "detail": "Follow để không bỏ lỡ thông báo snapshot date"
-        }
-      ],
-      "links": {
-        "site": "https://polymarket.com",
-        "twitter": "https://twitter.com/Polymarket",
-        "app": "https://polymarket.com"
-      },
-      "cgSearch": "polymarket"
-    },
-    {
-      "id": "symbiotic",
-      "name": "Symbiotic",
-      "logo": "🔗",
+      "id": "farcaster",
+      "name": "Farcaster",
+      "logo": "🟣",
       "category": "Infra",
-      "raised": "$29M",
-      "investors": "Paradigm, cyber•Fund",
+      "raised": "$150M+",
+      "investors": "a16z, Paradigm, Multicoin Capital",
       "status": "Mainnet Beta",
       "prob": "Rất cao",
       "tge": "TBD 2026",
       "hasToken": false,
-      "xSearch": "Symbiotic restaking token airdrop",
-      "desc": "Restaking protocol linh hoạt, Paradigm-backed. Đối thủ EigenLayer. Chưa có token. Hệ thống điểm đang chạy.",
+      "xSearch": "Farcaster token airdrop Warpcast 2026",
+      "desc": "Mạng xã hội phi tập trung build trên Ethereum, raise $150M từ a16z và Paradigm. 100K+ daily active users trên Warpcast. Hệ sinh thái Frames bùng nổ. Chưa có token — nếu phát sẽ là airdrop lớn nhất SocialFi.",
       "steps": [
-        {
-          "action": "Deposit vào Symbiotic vault",
-          "detail": "Deposit stETH, wBTC, ETH tại app.symbiotic.fi"
-        },
-        {
-          "action": "Opt-in Networks",
-          "detail": "Chọn các Actively Validated Services (AVS) để bảo mật"
-        },
-        {
-          "action": "Mellow Protocol",
-          "detail": "Stake qua Mellow để nhận thêm Symbiotic points"
-        },
-        {
-          "action": "Duy trì lâu dài",
-          "detail": "Số ngày deposit × số lượng = điểm tích lũy"
-        },
-        {
-          "action": "Layer 2 exposure",
-          "detail": "Deposit vào vault của nhiều loại tài sản khác nhau"
-        }
+        { "action": "Tạo tài khoản Warpcast", "detail": "Đăng ký tại warpcast.com, link ví Ethereum để có on-chain identity" },
+        { "action": "Post và tương tác hàng ngày", "detail": "Cast 1-2 lần/ngày, like/recast nội dung, follow ít nhất 50 KOLs" },
+        { "action": "Tham gia Farcaster Frames", "detail": "Tương tác với Frames DeFi và game tích hợp trực tiếp trên feed" },
+        { "action": "Tích lũy Warps", "detail": "Thu thập Warps qua hoạt động platform để được tính điểm khi snapshot" },
+        { "action": "On-chain activity qua Frames", "detail": "Thực hiện giao dịch on-chain qua các Frames tích hợp để build ETH activity" }
       ],
       "links": {
-        "site": "https://symbiotic.fi",
-        "twitter": "https://twitter.com/symbioticfi",
-        "app": "https://app.symbiotic.fi"
-      }
-    },
-    {
-      "id": "karak",
-      "name": "Karak Network",
-      "logo": "⚔️",
-      "category": "Infra",
-      "raised": "$48M",
-      "investors": "Coinbase Ventures, Pantera Capital",
-      "status": "Mainnet Beta",
-      "prob": "Cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Karak KAR token airdrop 2026",
-      "desc": "Universal restaking — restake bất kỳ tài sản nào. Token $KAR đã được công bố nhưng chưa phát. XP system đang chạy.",
-      "steps": [
-        {
-          "action": "Deposit vào Karak",
-          "detail": "Deposit ETH, stETH, USDC, USDe tại app.karak.network"
-        },
-        {
-          "action": "Stake vào DSS",
-          "detail": "Opt-in vào Distributed Secure Services để kiếm thêm yield"
-        },
-        {
-          "action": "Tích lũy Karak XP",
-          "detail": "Số lượng × thời gian deposit = XP, có thể đổi $KAR"
-        },
-        {
-          "action": "Refer bạn bè",
-          "detail": "Mỗi referral thành công tăng XP multiplier"
-        },
-        {
-          "action": "Dùng K2 (Karak L2)",
-          "detail": "Tương tác trên Karak L2 để nhân đôi điểm"
-        }
-      ],
-      "links": {
-        "site": "https://karak.network",
-        "twitter": "https://twitter.com/Karak_Network",
-        "app": "https://app.karak.network"
-      },
-      "symbol": "KAR",
-      "cgSearch": "karak network"
-    },
-    {
-      "id": "succinct",
-      "name": "Succinct",
-      "logo": "✅",
-      "category": "Infra",
-      "raised": "$55M",
-      "investors": "Paradigm, Geometry Research",
-      "status": "Points Live",
-      "prob": "Cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Succinct PROVE token airdrop",
-      "desc": "SP1 zkVM — generate ZK proof cho bất kỳ Rust code. Token $PROVE trong development. Prover Network đang chạy.",
-      "steps": [
-        {
-          "action": "Dùng SP1 Prover Network",
-          "detail": "Gửi proof generation jobs lên Succinct Prover Network"
-        },
-        {
-          "action": "Tích lũy Succinct Points",
-          "detail": "Mỗi proof được generate = điểm có thể convert $PROVE"
-        },
-        {
-          "action": "GitHub contributions",
-          "detail": "Contribute vào sp1, sp1-project-template trên GitHub"
-        },
-        {
-          "action": "Xây dApp dùng SP1",
-          "detail": "Deploy ứng dụng sử dụng SP1 — developer bonus cao"
-        },
-        {
-          "action": "Discord active",
-          "detail": "Tham gia Discord SuccinctLabs, trả lời câu hỏi kỹ thuật"
-        }
-      ],
-      "links": {
-        "site": "https://succinct.xyz",
-        "twitter": "https://twitter.com/SuccinctLabs",
-        "app": "https://network.succinct.xyz"
-      },
-      "symbol": "PROVE",
-      "cgSearch": "succinct"
-    },
-    {
-      "id": "nexus",
-      "name": "Nexus",
-      "logo": "🔮",
-      "category": "Infra",
-      "raised": "$25M",
-      "investors": "Lightspeed, Pantera Capital",
-      "status": "Testnet",
-      "prob": "Cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Nexus zkVM token airdrop 2026",
-      "desc": "zkVM mở — prove bất kỳ computation. Mạng lưới proof generation phi tập trung. Chưa có token.",
-      "steps": [
-        {
-          "action": "Cài Nexus CLI",
-          "detail": "Cài đặt nexus CLI tại docs.nexus.xyz và kết nối Network"
-        },
-        {
-          "action": "Đóng góp compute",
-          "detail": "Chạy prover để generate proof — mỗi proof = NEX Points"
-        },
-        {
-          "action": "Tích lũy NEX Points",
-          "detail": "Points tích lũy có khả năng convert sang token khi TGE"
-        },
-        {
-          "action": "Testnet giao dịch",
-          "detail": "Thực hiện giao dịch hàng ngày trên Nexus testnet"
-        },
-        {
-          "action": "Đăng ký sớm",
-          "detail": "Vào nexus.xyz đăng ký email để nhận whitelist ưu tiên"
-        }
-      ],
-      "links": {
-        "site": "https://nexus.xyz",
-        "twitter": "https://twitter.com/NexusLabsHQ",
-        "app": "https://beta.nexus.xyz"
+        "site": "https://www.farcaster.xyz",
+        "twitter": "https://twitter.com/farcaster_xyz",
+        "app": "https://warpcast.com"
       }
     },
     {
@@ -407,28 +109,13 @@
       "tge": "Q4 2026",
       "hasToken": false,
       "xSearch": "Aztec Network token airdrop 2026",
-      "desc": "Privacy L2 trên Ethereum dùng ZK proofs. Raise $87M. Sandbox testnet đang active. Chưa có token — là 1 trong những airdrop được mong đợi nhất 2026.",
+      "desc": "Privacy L2 trên Ethereum dùng ZK proofs. Raise $87M từ a16z. Sandbox testnet đang active. Là 1 trong những airdrop được mong đợi nhất 2026 vì privacy là use case thực sự.",
       "steps": [
-        {
-          "action": "Dùng Aztec Sandbox",
-          "detail": "Chạy local node: npx aztec-app → viết và deploy contract thử"
-        },
-        {
-          "action": "Tham gia testnet sớm",
-          "detail": "Đăng ký early access tại aztec.network, testnet sắp ra public"
-        },
-        {
-          "action": "Mint private tokens",
-          "detail": "Thực hiện private transfer trên testnet để tích lịch sử"
-        },
-        {
-          "action": "Discord active",
-          "detail": "Tham gia Discord aztec-network, lấy vai trò developer"
-        },
-        {
-          "action": "GitHub contributions",
-          "detail": "Star, fork, hoặc build với aztec-nr framework trên GitHub"
-        }
+        { "action": "Dùng Aztec Sandbox", "detail": "Chạy local node: npx aztec-app → viết và deploy contract thử" },
+        { "action": "Tham gia testnet sớm", "detail": "Đăng ký early access tại aztec.network, testnet sắp ra public" },
+        { "action": "Mint private tokens", "detail": "Thực hiện private transfer trên testnet để tích lịch sử" },
+        { "action": "Discord active", "detail": "Tham gia Discord aztec-network, lấy vai trò developer" },
+        { "action": "GitHub contributions", "detail": "Star, fork, hoặc build với aztec-nr framework trên GitHub" }
       ],
       "links": {
         "site": "https://aztec.network",
@@ -436,6 +123,377 @@
         "app": "https://aztec.network/sandbox"
       },
       "cgSearch": "aztec network"
+    },
+    {
+      "id": "polymarket",
+      "name": "Polymarket",
+      "logo": "📊",
+      "category": "DeFi",
+      "raised": "$70M+",
+      "investors": "Founders Fund, Peter Thiel",
+      "status": "Mainnet Beta",
+      "prob": "Rất cao",
+      "tge": "2026",
+      "hasToken": false,
+      "xSearch": "Polymarket POLY token airdrop",
+      "desc": "Prediction market lớn nhất thế giới. CMO đã xác nhận token POLY và airdrop trên podcast tháng 10/2025. $70M+ từ Founders Fund. Đặt cược nhiều và đúng càng tăng eligibility.",
+      "steps": [
+        { "action": "Tạo tài khoản", "detail": "Đăng ký tại polymarket.com — cần KYC" },
+        { "action": "Đặt cược thị trường", "detail": "Đặt cược vào các sự kiện chính trị, crypto, thể thao..." },
+        { "action": "Volume cao", "detail": "Giao dịch volume cao và đúng dự đoán tăng eligibility" },
+        { "action": "Tần suất đều đặn", "detail": "Đặt cược hàng tuần thay vì một lần lớn" },
+        { "action": "Follow @polymarket", "detail": "Follow để không bỏ lỡ thông báo snapshot date" }
+      ],
+      "links": {
+        "site": "https://polymarket.com",
+        "twitter": "https://twitter.com/Polymarket",
+        "app": "https://polymarket.com"
+      },
+      "cgSearch": "polymarket"
+    },
+    {
+      "id": "unichain",
+      "name": "Unichain",
+      "logo": "🦄",
+      "category": "L2",
+      "raised": "Uniswap Labs-backed",
+      "investors": "a16z (Uniswap backer)",
+      "status": "Mainnet Beta",
+      "prob": "Rất cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Unichain airdrop token",
+      "desc": "L2 chính thức của Uniswap Labs. Chưa có token riêng. Nếu phát token sẽ reward LP + trader on Unichain. Cực kỳ tiềm năng vì Uniswap là DEX lớn nhất thế giới.",
+      "steps": [
+        { "action": "Bridge ETH sang Unichain", "detail": "Bridge ETH qua bridge.unichain.org" },
+        { "action": "Swap trên Uniswap v4", "detail": "Thực hiện swap trên Uniswap v4 deploy trên Unichain" },
+        { "action": "Cung cấp thanh khoản", "detail": "Add LP cho các cặp phổ biến trên Unichain" },
+        { "action": "Volume lớn đều đặn", "detail": "Volume giao dịch cao tăng cơ hội nhận airdrop" },
+        { "action": "Dùng đa dạng dApps", "detail": "Tương tác với nhiều protocols khác nhau trên Unichain" }
+      ],
+      "links": {
+        "site": "https://unichain.org",
+        "twitter": "https://twitter.com/unichain",
+        "app": "https://app.uniswap.org"
+      }
+    },
+    {
+      "id": "ink",
+      "name": "Ink",
+      "logo": "🖋",
+      "category": "L2",
+      "raised": "Kraken-backed",
+      "investors": "Kraken Exchange",
+      "status": "Mainnet Beta",
+      "prob": "Rất cao",
+      "tge": "July–Sept 2026",
+      "hasToken": false,
+      "xSearch": "INK token airdrop Kraken",
+      "desc": "L2 của Kraken trên OP Stack. Ink Foundation đã xác nhận token $INK và airdrop, dự kiến TGE tháng 7-9/2026. Kraken Points drop đã bắt đầu từ 4/2025 — farm đều để tăng tier.",
+      "steps": [
+        { "action": "Bridge ETH sang Ink", "detail": "Bridge ETH tại inkonchain.com/bridge" },
+        { "action": "Giao dịch hàng ngày", "detail": "Swap và interact trên dApps Ink Mainnet mỗi ngày" },
+        { "action": "Kraken Pro users được ưu tiên", "detail": "Là user Kraken Pro tăng multiplier eligibility" },
+        { "action": "Mint NFT", "detail": "Mint NFT từ các collection trên Ink Mainnet" },
+        { "action": "Kiếm Ink Points", "detail": "Tiếp tục farm points — First drop đã bắt đầu từ 4/2025" }
+      ],
+      "links": {
+        "site": "https://inkonchain.com",
+        "twitter": "https://twitter.com/inkonchain",
+        "app": "https://inkonchain.com"
+      },
+      "symbol": "INK",
+      "cgSearch": "ink protocol"
+    },
+    {
+      "id": "soneium",
+      "name": "Soneium",
+      "logo": "🎵",
+      "category": "L2",
+      "raised": "Sony-backed",
+      "investors": "Sony Group Corp, a16z CSX",
+      "status": "Mainnet Beta",
+      "prob": "Rất cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Soneium airdrop Sony L2 token 2026",
+      "desc": "Ethereum L2 do tập đoàn Sony xây dựng trên OP Stack, ra mắt mainnet 1/2025 với 14M+ ví testnet. Soneium Score Season đang tích điểm. Hướng đến giải trí, gaming và NFT — chưa có token native.",
+      "steps": [
+        { "action": "Bridge ETH sang Soneium", "detail": "Dùng bridge.soneium.org để bridge ETH từ Ethereum hoặc L2 khác" },
+        { "action": "Tích điểm Soneium Score", "detail": "Thực hiện swap/stake/mint NFT mỗi ngày để tích điểm và badges Season" },
+        { "action": "Dùng DeFi native", "detail": "Swap trên Uniswap Soneium, LP trên Kyo Finance để earn veKYO" },
+        { "action": "Mint NFT và tham gia drop", "detail": "Mint NFT trên Mintstars marketplace, tham gia các drop của Sony" },
+        { "action": "Hoàn thành quests Galxe", "detail": "Làm quests Soneium trên Galxe và Layer3 để nhận bonus điểm" }
+      ],
+      "links": {
+        "site": "https://soneium.org",
+        "twitter": "https://twitter.com/soneium",
+        "app": "https://bridge.soneium.org"
+      }
+    },
+    {
+      "id": "succinct",
+      "name": "Succinct",
+      "logo": "✅",
+      "category": "Infra",
+      "raised": "$55M",
+      "investors": "Paradigm, Geometry Research",
+      "status": "Points Live",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Succinct PROVE token airdrop",
+      "desc": "SP1 zkVM — generate ZK proof cho bất kỳ Rust code. Token $PROVE trong development. Prover Network đang chạy. $55M từ Paradigm — một trong những infra ZK quan trọng nhất hiện tại.",
+      "steps": [
+        { "action": "Dùng SP1 Prover Network", "detail": "Gửi proof generation jobs lên Succinct Prover Network" },
+        { "action": "Tích lũy Succinct Points", "detail": "Mỗi proof được generate = điểm có thể convert $PROVE" },
+        { "action": "GitHub contributions", "detail": "Contribute vào sp1, sp1-project-template trên GitHub" },
+        { "action": "Xây dApp dùng SP1", "detail": "Deploy ứng dụng sử dụng SP1 — developer bonus cao" },
+        { "action": "Discord active", "detail": "Tham gia Discord SuccinctLabs, trả lời câu hỏi kỹ thuật" }
+      ],
+      "links": {
+        "site": "https://succinct.xyz",
+        "twitter": "https://twitter.com/SuccinctLabs",
+        "app": "https://network.succinct.xyz"
+      },
+      "symbol": "PROVE",
+      "cgSearch": "succinct"
+    },
+    {
+      "id": "karak",
+      "name": "Karak Network",
+      "logo": "⚔️",
+      "category": "Infra",
+      "raised": "$48M",
+      "investors": "Coinbase Ventures, Pantera Capital",
+      "status": "Mainnet Beta",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Karak KAR token airdrop 2026",
+      "desc": "Universal restaking — restake bất kỳ tài sản nào (ETH, stETH, USDC, USDe). Token $KAR đã được công bố nhưng chưa phát. XP system đang chạy. $48M từ Coinbase Ventures và Pantera.",
+      "steps": [
+        { "action": "Deposit vào Karak", "detail": "Deposit ETH, stETH, USDC, USDe tại app.karak.network" },
+        { "action": "Stake vào DSS", "detail": "Opt-in vào Distributed Secure Services để kiếm thêm yield" },
+        { "action": "Tích lũy Karak XP", "detail": "Số lượng × thời gian deposit = XP, có thể đổi $KAR" },
+        { "action": "Refer bạn bè", "detail": "Mỗi referral thành công tăng XP multiplier" },
+        { "action": "Dùng K2 (Karak L2)", "detail": "Tương tác trên Karak L2 để nhân đôi điểm" }
+      ],
+      "links": {
+        "site": "https://karak.network",
+        "twitter": "https://twitter.com/Karak_Network",
+        "app": "https://app.karak.network"
+      },
+      "symbol": "KAR",
+      "cgSearch": "karak network"
+    },
+    {
+      "id": "symbiotic",
+      "name": "Symbiotic",
+      "logo": "🔗",
+      "category": "Infra",
+      "raised": "$29M",
+      "investors": "Paradigm, cyber·Fund",
+      "status": "Mainnet Beta",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Symbiotic restaking token airdrop",
+      "desc": "Restaking protocol linh hoạt, Paradigm-backed. Đối thủ EigenLayer. Chưa có token. Hệ thống điểm đang chạy. Deposit ETH/stETH vào vault để tích điểm và bảo mật nhiều AVS.",
+      "steps": [
+        { "action": "Deposit vào Symbiotic vault", "detail": "Deposit stETH, wBTC, ETH tại app.symbiotic.fi" },
+        { "action": "Opt-in Networks", "detail": "Chọn các AVS (Actively Validated Services) để bảo mật" },
+        { "action": "Mellow Protocol", "detail": "Stake qua Mellow để nhận thêm Symbiotic points" },
+        { "action": "Duy trì lâu dài", "detail": "Số ngày deposit × số lượng = điểm tích lũy" },
+        { "action": "Layer 2 exposure", "detail": "Deposit vào vault của nhiều loại tài sản khác nhau" }
+      ],
+      "links": {
+        "site": "https://symbiotic.fi",
+        "twitter": "https://twitter.com/symbioticfi",
+        "app": "https://app.symbiotic.fi"
+      }
+    },
+    {
+      "id": "ostium",
+      "name": "Ostium",
+      "logo": "📈",
+      "category": "DeFi",
+      "raised": "$27M",
+      "investors": "General Catalyst, Jump Crypto, Coinbase Ventures",
+      "status": "Points Live",
+      "prob": "Cao",
+      "tge": "Q3 2026",
+      "hasToken": false,
+      "xSearch": "Ostium RWA perp DEX token airdrop points season",
+      "desc": "Perp DEX trên Arbitrum cho phép trade vàng, dầu, S&P 500, forex với USDC collateral. $27M từ General Catalyst + Jump Crypto. $50B+ volume. Points Season 2 đang live — token dự kiến Q3/2026.",
+      "steps": [
+        { "action": "Deposit USDC và bắt đầu trade", "detail": "Vào ostium.com, connect ví Arbitrum, deposit USDC và trade XAU/USD, forex để earn Points" },
+        { "action": "Trade RWA hàng ngày", "detail": "Giao dịch gold và forex mỗi ngày — trading volume = điểm chính Season 2" },
+        { "action": "Provide OLP liquidity", "detail": "Deposit vào OLP vault (~53% APY) để earn điểm multiplier cao hơn" },
+        { "action": "Kích hoạt Boost Windows", "detail": "Tham gia Boost Windows — khoảng thời gian điểm nhân hệ số cao" },
+        { "action": "Theo dõi Season 3 và TGE", "detail": "Follow @OstiumLabs để nhận thông tin TGE timeline Q3/2026" }
+      ],
+      "links": {
+        "site": "https://www.ostium.com",
+        "twitter": "https://twitter.com/OstiumLabs",
+        "app": "https://app.ostium.com"
+      }
+    },
+    {
+      "id": "debank",
+      "name": "DeBank",
+      "logo": "🏦",
+      "category": "Infra",
+      "raised": "$25M",
+      "investors": "Sequoia China, Coinbase Ventures, Dragonfly",
+      "status": "Points Live",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "DeBank token airdrop XP points 2026",
+      "desc": "Portfolio tracker & mạng xã hội Web3 hàng đầu hỗ trợ 100+ chain. DeBank XP Points tích điểm dựa trên on-chain history — tiền thân token launch. $25M từ Sequoia China và Coinbase Ventures.",
+      "steps": [
+        { "action": "Kết nối ví và claim XP", "detail": "Vào debank.com, connect ví EVM và claim XP dựa trên lịch sử giao dịch on-chain" },
+        { "action": "Build DeBank Social profile", "detail": "Hoàn thiện profile trên DeBank Hi, follow người dùng, đăng posts để tăng Social Ranking" },
+        { "action": "Gửi ETH Stream on-chain", "detail": "Gửi ETH stream cho KOLs qua DeBank Stream để nhận Credit bằng on-chain action" },
+        { "action": "Maintain DeFi Credit Score", "detail": "Thường xuyên swap/lend/stake qua các protocol lớn để duy trì Credit Score cao" },
+        { "action": "Mời bạn bè", "detail": "Dùng referral link trong DeBank để invite người mới, tăng điểm cả 2 bên" }
+      ],
+      "links": {
+        "site": "https://debank.com",
+        "twitter": "https://twitter.com/DeBankDeFi",
+        "app": "https://debank.com/hi"
+      }
+    },
+    {
+      "id": "ritual",
+      "name": "Ritual",
+      "logo": "🔮",
+      "category": "Infra",
+      "raised": "$25M",
+      "investors": "Archetype, Accomplice, Multicoin Capital",
+      "status": "Testnet",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Ritual network AI compute token testnet 2026",
+      "desc": "L1 blockchain đầu tiên chuyên cho AI compute phi tập trung, cho phép smart contract tích hợp trực tiếp với AI inference và LLM. $25M từ Archetype và Multicoin. Testnet public với Infernet node program.",
+      "steps": [
+        { "action": "Chạy tasks trên testnet", "detail": "Hoàn thành tasks tại app.ritual.net: deploy AI model, tạo inference request" },
+        { "action": "Run Infernet node", "detail": "Cài Infernet node trên VPS để đóng góp AI compute và nhận rewards" },
+        { "action": "Tham gia Discord Ritual", "detail": "Join Discord, tích cực tham gia để đạt role Ritualist+ hoặc Zealot" },
+        { "action": "Build smart contract dùng Ritual AI", "detail": "Developer: xây contract tích hợp Ritual API, đăng ký ecosystem grants" },
+        { "action": "Theo dõi snapshot", "detail": "Follow @ritual_net để không bỏ lỡ ngày snapshot phân phối token" }
+      ],
+      "links": {
+        "site": "https://ritual.net",
+        "twitter": "https://twitter.com/ritual_net",
+        "app": "https://app.ritual.net"
+      }
+    },
+    {
+      "id": "nexus",
+      "name": "Nexus",
+      "logo": "🌐",
+      "category": "Infra",
+      "raised": "$25M",
+      "investors": "Lightspeed, Pantera Capital",
+      "status": "Testnet",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Nexus zkVM token airdrop 2026",
+      "desc": "zkVM mở — prove bất kỳ computation. Mạng lưới proof generation phi tập trung đang testnet. $25M từ Lightspeed và Pantera. NEX Points tích lũy từ đóng góp compute.",
+      "steps": [
+        { "action": "Cài Nexus CLI", "detail": "Cài đặt nexus CLI tại docs.nexus.xyz và kết nối Network" },
+        { "action": "Đóng góp compute", "detail": "Chạy prover để generate proof — mỗi proof = NEX Points" },
+        { "action": "Tích lũy NEX Points", "detail": "Points tích lũy có khả năng convert sang token khi TGE" },
+        { "action": "Testnet giao dịch", "detail": "Thực hiện giao dịch hàng ngày trên Nexus testnet" },
+        { "action": "Đăng ký sớm", "detail": "Vào nexus.xyz đăng ký email để nhận whitelist ưu tiên" }
+      ],
+      "links": {
+        "site": "https://nexus.xyz",
+        "twitter": "https://twitter.com/NexusLabsHQ",
+        "app": "https://beta.nexus.xyz"
+      }
+    },
+    {
+      "id": "morph",
+      "name": "Morph",
+      "logo": "🌀",
+      "category": "L2",
+      "raised": "$20M",
+      "investors": "Dragonfly Capital, Foresight Ventures, MEXC",
+      "status": "Points Live",
+      "prob": "Cao",
+      "tge": "Q3–Q4 2026",
+      "hasToken": false,
+      "xSearch": "Morph L2 token airdrop XP points 2026",
+      "desc": "ZK-EVM L2 kết hợp optimistic rollup với ZK fault proofs, tập trung consumer apps và payment. Mainnet live. XP Points đang chạy, convert sang token $MORPH trong 2026. $20M từ Dragonfly Capital.",
+      "steps": [
+        { "action": "Bridge ETH sang Morph", "detail": "Dùng bridge.morphl2.io để bridge ETH hoặc USDC từ Ethereum" },
+        { "action": "Tích điểm XP hàng ngày", "detail": "Swap, LP, lend và tương tác với dApps trên Morph — mọi action đều tính XP" },
+        { "action": "Dùng Morph DeFi apps", "detail": "Swap Quickswap Morph, deposit lending protocols, farming để tăng XP multiplier" },
+        { "action": "Hoàn thành Morph quests", "detail": "Tham gia campaign trên Galxe của Morph để nhận XP bổ sung" },
+        { "action": "Duy trì balance trên Morph", "detail": "Giữ ETH/USDC trên chain — snapshot thường tính giá trị tài sản" }
+      ],
+      "links": {
+        "site": "https://www.morphl2.io",
+        "twitter": "https://twitter.com/MorphLayer",
+        "app": "https://bridge.morphl2.io"
+      }
+    },
+    {
+      "id": "worldchain",
+      "name": "World Chain",
+      "logo": "🌍",
+      "category": "L2",
+      "raised": "World Corp-backed",
+      "investors": "a16z (Worldcoin backer)",
+      "status": "Mainnet Beta",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "World Chain token airdrop 2026",
+      "desc": "L2 của World App. Ưu tiên người đã verify World ID. Gas miễn phí cho human verified users. Chưa có token L2 riêng — 10M+ human-verified accounts là lợi thế cực lớn.",
+      "steps": [
+        { "action": "Verify World ID", "detail": "Quét iris tại orb hoặc dùng World App để lấy World ID" },
+        { "action": "Bridge sang World Chain", "detail": "Bridge ETH hoặc USDC vào World Chain" },
+        { "action": "Dùng dApps World Chain", "detail": "Tương tác với các dApps có World ID verification" },
+        { "action": "World App activities", "detail": "Hoàn thành các tính năng trong World App hàng tuần" },
+        { "action": "Gas miễn phí", "detail": "User verify nhận gas miễn phí — dùng tối đa để build history" }
+      ],
+      "links": {
+        "site": "https://world.org",
+        "twitter": "https://twitter.com/worldcoin",
+        "app": "https://world.org"
+      }
+    },
+    {
+      "id": "rabby-wallet",
+      "name": "Rabby Wallet",
+      "logo": "🐰",
+      "category": "Infra",
+      "raised": "DeBank-backed",
+      "investors": "DeBank (Sequoia China, Coinbase Ventures)",
+      "status": "Points Live",
+      "prob": "Cao",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Rabby Wallet token airdrop points season 2026",
+      "desc": "Ví EVM phổ biến nhất trong cộng đồng DeFi với tính năng mô phỏng giao dịch và scan rủi ro. Rabby Points Season đang tích điểm dựa trên lịch sử ví — tiền thân token launch. Hàng triệu users active.",
+      "steps": [
+        { "action": "Import ví vào Rabby và claim Points", "detail": "Tải Rabby extension, import ví EVM có balance/lịch sử để nhận initial Points tự động" },
+        { "action": "Dùng Rabby làm ví chính", "detail": "Dùng Rabby cho mọi giao dịch DeFi hàng ngày thay vì MetaMask" },
+        { "action": "Tham gia Rabby Points Season", "detail": "Hoàn thành điều kiện Season hiện tại để nhận bonus points và multiplier" },
+        { "action": "Mời bạn bè", "detail": "Dùng referral link trong Rabby để invite người mới — tăng điểm cả 2 bên" },
+        { "action": "Follow @Rabby_io để nhận thông báo", "detail": "Follow Twitter @Rabby_io và @DeBankDeFi để cập nhật token launch dates" }
+      ],
+      "links": {
+        "site": "https://rabby.io",
+        "twitter": "https://twitter.com/Rabby_io",
+        "app": "https://rabby.io"
+      }
     },
     {
       "id": "pharos",
@@ -449,28 +507,13 @@
       "tge": "Q3 2026",
       "hasToken": false,
       "xSearch": "Pharos blockchain token airdrop 2026",
-      "desc": "High-performance L1 tập trung vào RWA (Real World Assets) và TradFi. Binance Labs-backed. Testnet vừa launch. Chưa có token.",
+      "desc": "High-performance L1 tập trung RWA (Real World Assets) và TradFi. Binance Labs-backed. Testnet vừa launch. Chưa có token — Q3 2026 TGE dự kiến.",
       "steps": [
-        {
-          "action": "Tham gia testnet",
-          "detail": "Vào pharosnetwork.xyz → Connect wallet → Nhận faucet testnet tokens"
-        },
-        {
-          "action": "Giao dịch hàng ngày",
-          "detail": "Swap và transfer trên Pharos testnet mỗi ngày"
-        },
-        {
-          "action": "Bridge assets",
-          "detail": "Bridge ETH/USDC sang Pharos testnet qua official bridge"
-        },
-        {
-          "action": "Hoàn thành quests",
-          "detail": "Làm đầy đủ quest trên Galxe và Zealy của Pharos"
-        },
-        {
-          "action": "Đăng ký node",
-          "detail": "Đăng ký chạy light node để tăng eligibility"
-        }
+        { "action": "Tham gia testnet", "detail": "Vào pharosnetwork.xyz → Connect wallet → Nhận faucet testnet tokens" },
+        { "action": "Giao dịch hàng ngày", "detail": "Swap và transfer trên Pharos testnet mỗi ngày" },
+        { "action": "Bridge assets", "detail": "Bridge ETH/USDC sang Pharos testnet qua official bridge" },
+        { "action": "Hoàn thành quests", "detail": "Làm đầy đủ quest trên Galxe và Zealy của Pharos" },
+        { "action": "Đăng ký node", "detail": "Đăng ký chạy light node để tăng eligibility" }
       ],
       "links": {
         "site": "https://pharosnetwork.xyz",
@@ -490,28 +533,13 @@
       "tge": "TBD 2026",
       "hasToken": false,
       "xSearch": "Kuru Exchange KURU token airdrop Monad",
-      "desc": "CLOB DEX native trên Monad — orderbook on-chain tốc độ cao. Raise $7M từ Dragonfly. Points system đang chạy. Chưa có token.",
+      "desc": "CLOB DEX native trên Monad — orderbook on-chain tốc độ cao. $7M từ Dragonfly. Points system đang chạy. Monad ecosystem sẽ tạo ra nhiều airdrop — Kuru là dApp quan trọng nhất.",
       "steps": [
-        {
-          "action": "Bridge sang Monad",
-          "detail": "Bridge ETH sang Monad qua bridge.monad.xyz hoặc official bridge"
-        },
-        {
-          "action": "Swap trên Kuru",
-          "detail": "Trade thường xuyên trên kuru.exchange — càng nhiều volume càng tốt"
-        },
-        {
-          "action": "Tích lũy Kuru Points",
-          "detail": "Mỗi trade = điểm, có thể convert sang token khi TGE"
-        },
-        {
-          "action": "Add thanh khoản",
-          "detail": "Provide liquidity cho các cặp phổ biến trên Kuru"
-        },
-        {
-          "action": "Refer bạn bè",
-          "detail": "Referral link tăng multiplier điểm cho cả 2 người"
-        }
+        { "action": "Bridge sang Monad", "detail": "Bridge ETH sang Monad qua bridge.monad.xyz hoặc official bridge" },
+        { "action": "Swap trên Kuru", "detail": "Trade thường xuyên trên kuru.exchange — càng nhiều volume càng tốt" },
+        { "action": "Tích lũy Kuru Points", "detail": "Mỗi trade = điểm, có thể convert sang token khi TGE" },
+        { "action": "Add thanh khoản", "detail": "Provide liquidity cho các cặp phổ biến trên Kuru" },
+        { "action": "Refer bạn bè", "detail": "Referral link tăng multiplier điểm cho cả 2 người" }
       ],
       "links": {
         "site": "https://kuru.exchange",
@@ -525,35 +553,20 @@
       "name": "HyperEVM Ecosystem",
       "logo": "⚡",
       "category": "DeFi",
-      "raised": "Hyperliquid VC",
+      "raised": "Hyperliquid VC-backed",
       "investors": "Hyperliquid (no external VC)",
       "status": "Mainnet Beta",
       "prob": "Cao",
       "tge": "TBD 2026",
       "hasToken": false,
       "xSearch": "HyperEVM dApp token airdrop 2026",
-      "desc": "Hyperliquid đã launch HYPE, nhưng các protocol native trên HyperEVM (HyperSwap, Felix, Hyperlend...) chưa có token riêng. Farm đồng thời nhiều protocol.",
+      "desc": "Hyperliquid đã launch $HYPE, nhưng các protocol native trên HyperEVM (HyperSwap, Felix, Hyperlend...) chưa có token riêng. Farm đồng thời nhiều protocol để tối đa cơ hội.",
       "steps": [
-        {
-          "action": "Bridge sang HyperEVM",
-          "detail": "Bridge USDC từ Arbitrum sang HyperEVM qua Hyperliquid bridge"
-        },
-        {
-          "action": "Dùng HyperSwap",
-          "detail": "Swap token trên HyperSwap — DEX native của HyperEVM"
-        },
-        {
-          "action": "Lending trên Hyperlend",
-          "detail": "Supply/borrow trên Hyperlend để earn yield và tích điểm"
-        },
-        {
-          "action": "Mint trên Felix",
-          "detail": "Mint feUSD stablecoin qua Felix Protocol trên HyperEVM"
-        },
-        {
-          "action": "Dùng đa dạng protocol",
-          "detail": "Tương tác với nhiều dApps khác nhau để build cross-protocol eligibility"
-        }
+        { "action": "Bridge sang HyperEVM", "detail": "Bridge USDC từ Arbitrum sang HyperEVM qua Hyperliquid bridge" },
+        { "action": "Dùng HyperSwap", "detail": "Swap token trên HyperSwap — DEX native của HyperEVM" },
+        { "action": "Lending trên Hyperlend", "detail": "Supply/borrow trên Hyperlend để earn yield và tích điểm" },
+        { "action": "Mint trên Felix", "detail": "Mint feUSD stablecoin qua Felix Protocol trên HyperEVM" },
+        { "action": "Dùng đa dạng protocol", "detail": "Tương tác với nhiều dApps để build cross-protocol eligibility" }
       ],
       "links": {
         "site": "https://hyperliquid.xyz",
@@ -563,44 +576,107 @@
       "cgSkip": true
     },
     {
-      "id": "worldchain",
-      "name": "World Chain",
-      "logo": "🌍",
+      "id": "fhenix",
+      "name": "Fhenix",
+      "logo": "🔐",
       "category": "L2",
-      "raised": "World Corp",
-      "investors": "a16z (Worldcoin backer)",
-      "status": "Mainnet Beta",
-      "prob": "Cao",
+      "raised": "$22M",
+      "investors": "Multicoin Capital, Collider Ventures, Node Capital",
+      "status": "Testnet",
+      "prob": "Trung bình",
       "tge": "TBD 2026",
       "hasToken": false,
-      "xSearch": "World Chain token airdrop 2026",
-      "desc": "L2 của World App. Ưu tiên người đã verify World ID. Gas miễn phí cho human verified. Chưa có token L2 riêng.",
+      "xSearch": "Fhenix FHE token testnet encrypted blockchain 2026",
+      "desc": "Blockchain đầu tiên dùng Fully Homomorphic Encryption (FHE) để thực thi smart contract trên dữ liệu mã hóa hoàn toàn — giải pháp privacy thực sự on-chain. $22M từ Multicoin. Testnet Redact đang active.",
       "steps": [
-        {
-          "action": "Verify World ID",
-          "detail": "Quét iris tại orb hoặc dùng World App để lấy World ID"
-        },
-        {
-          "action": "Bridge sang World Chain",
-          "detail": "Bridge ETH hoặc USDC vào World Chain"
-        },
-        {
-          "action": "Dùng dApps World Chain",
-          "detail": "Tương tác với các dApps có World ID verification"
-        },
-        {
-          "action": "World App activities",
-          "detail": "Hoàn thành các tính năng trong World App hàng tuần"
-        },
-        {
-          "action": "Gas miễn phí",
-          "detail": "User verify nhận gas miễn phí — dùng tối đa để build history"
-        }
+        { "action": "Tham gia testnet Redact", "detail": "Vào testnet.fhenix.zone, connect ví và thực hiện giao dịch để build track record" },
+        { "action": "Deploy encrypted smart contract", "detail": "Dùng Fhenix SDK để deploy contract với FHE operations — developer bonus cao khi TGE" },
+        { "action": "Hoàn thành CoFHE tasks", "detail": "Thực hiện tasks CoFHE (Collaborative FHE) trên testnet để earn testnet points" },
+        { "action": "Tham gia Discord Fhenix", "detail": "Join Discord, báo cáo bugs và nhận community roles — contribution tăng airdrop weight" },
+        { "action": "Làm quests Galxe Fhenix", "detail": "Hoàn thành campaign Galxe để nhận OAT — on-chain proof of participation được tính điểm" }
       ],
       "links": {
-        "site": "https://world.org",
-        "twitter": "https://twitter.com/worldcoin",
-        "app": "https://world.org"
+        "site": "https://www.fhenix.io",
+        "twitter": "https://twitter.com/FhenixIO",
+        "app": "https://testnet.fhenix.zone"
+      }
+    },
+    {
+      "id": "abstract-chain",
+      "name": "Abstract Chain",
+      "logo": "🐧",
+      "category": "L2",
+      "raised": "Igloo/Pudgy-backed",
+      "investors": "1kx, Shima Capital, Igloo Inc (Pudgy Penguins)",
+      "status": "Points Live",
+      "prob": "Trung bình",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Abstract Chain ABS token XP airdrop Pudgy Penguins",
+      "desc": "Ethereum L2 consumer-focused do Igloo Inc. (Pudgy Penguins) xây dựng trên ZK Stack. XP system tích điểm cho mọi hoạt động on-chain. Giữ $PENGU nhận weekly XP multiplier. Token $ABS chưa có TGE.",
+      "steps": [
+        { "action": "Bridge ETH sang Abstract Chain", "detail": "Dùng portal.abs.xyz để bridge ETH từ Ethereum hoặc zkSync sang Abstract Chain" },
+        { "action": "Tích XP qua hoạt động daily", "detail": "Trade, play games, vote, mint NFT mỗi ngày — mọi action đều earn XP" },
+        { "action": "Giữ $PENGU để boost XP", "detail": "Mua và giữ $PENGU token trên Abstract để nhận weekly XP multiplier" },
+        { "action": "Play games native trên Abstract", "detail": "Tham gia games Web3 native trên Abstract — consumer L2 ưu tiên gaming activity" },
+        { "action": "Thu thập Badges", "detail": "Hoàn thành milestones đặc biệt để nhận on-chain badges — ảnh hưởng đến tier allocation" }
+      ],
+      "links": {
+        "site": "https://www.abs.xyz",
+        "twitter": "https://twitter.com/AbstractChain",
+        "app": "https://portal.abs.xyz"
+      }
+    },
+    {
+      "id": "lens-chain",
+      "name": "Lens Chain",
+      "logo": "🌿",
+      "category": "Infra",
+      "raised": "Avara/Aave-backed",
+      "investors": "Avara (Aave), Framework Ventures, Robot Ventures",
+      "status": "Mainnet Beta",
+      "prob": "Trung bình",
+      "tge": "TBD 2026",
+      "hasToken": false,
+      "xSearch": "Lens Chain protocol airdrop social blockchain Avara 2026",
+      "desc": "Ethereum L2 chuyên biệt cho mạng xã hội phi tập trung, do Avara (đội Aave) xây dựng trên ZKsync stack — mainnet ra mắt 4/2025. GHO stablecoin làm gas token. Social activity có thể là cơ sở airdrop tương lai.",
+      "steps": [
+        { "action": "Tạo Lens profile và mint handle", "detail": "Tạo profile tại hey.xyz hoặc Orb, mint handle .lens để có social identity" },
+        { "action": "Post và tương tác social", "detail": "Đăng bài, comment và mirror nội dung trên Hey.xyz và Orb hàng ngày" },
+        { "action": "Bridge và dùng GHO gas", "detail": "Bridge tài sản sang Lens Chain, dùng GHO gas — tạo on-chain history" },
+        { "action": "Tham gia DeFi trên Lens Chain", "detail": "Dùng DeFi protocols native để tạo thêm activity footprint đa dạng" },
+        { "action": "Build social following", "detail": "Tích lũy followers trên Lens, tương tác với KOLs — social graph có thể ảnh hưởng allocation" }
+      ],
+      "links": {
+        "site": "https://lens.xyz",
+        "twitter": "https://twitter.com/lensprotocol",
+        "app": "https://hey.xyz"
+      }
+    },
+    {
+      "id": "privy",
+      "name": "Privy",
+      "logo": "🔑",
+      "category": "Infra",
+      "raised": "$40M",
+      "investors": "Paradigm, Sequoia Capital, a16z",
+      "status": "Mainnet Beta",
+      "prob": "Trung bình",
+      "tge": "TBD (Stripe acquired Jun 2025)",
+      "hasToken": false,
+      "xSearch": "Privy wallet embedded SDK airdrop developer token",
+      "desc": "Infrastructure nhúng ví crypto cho developers — hỗ trợ 75M+ accounts trên 1,000+ teams. $40M từ Paradigm và Sequoia. Stripe mua lại tháng 6/2025, tiếp tục phát triển độc lập. Khả năng airdrop cho developer ecosystem vẫn còn.",
+      "steps": [
+        { "action": "Build dApp dùng Privy SDK", "detail": "Tích hợp Privy SDK tại privy.io/docs để tạo embedded wallets, trở thành qualified developer" },
+        { "action": "Tham gia Privy developer program", "detail": "Đăng ký developer account, deploy ứng dụng production để có verified developer status" },
+        { "action": "Dùng apps built trên Privy", "detail": "Tương tác với các ứng dụng dùng Privy (Coinbase, OpenSea) để có user history" },
+        { "action": "Theo dõi Stripe crypto integration", "detail": "Follow @privy_io và Stripe crypto news — acquisition có thể mở rewards cho ecosystem" },
+        { "action": "Tham gia Privy community Discord", "detail": "Join Discord để sớm nhận thông tin về distribution plan hậu Stripe acquisition" }
+      ],
+      "links": {
+        "site": "https://www.privy.io",
+        "twitter": "https://twitter.com/privy_io",
+        "app": "https://dashboard.privy.io"
       }
     }
   ],
@@ -701,6 +777,83 @@
       "name": "0G Labs",
       "logo": "🔵",
       "detectedAt": "2025-06-01",
+      "confidence": "high"
+    },
+    {
+      "id": "sahara-ai",
+      "name": "Sahara AI",
+      "logo": "🏜️",
+      "detectedAt": "2025-06-26",
+      "confidence": "high"
+    },
+    {
+      "id": "espresso",
+      "name": "Espresso Systems",
+      "logo": "☕",
+      "detectedAt": "2026-02-12",
+      "confidence": "high"
+    },
+    {
+      "id": "mezo",
+      "name": "Mezo",
+      "logo": "🟠",
+      "detectedAt": "2026-04-01",
+      "confidence": "high"
+    },
+    {
+      "id": "bob-network",
+      "name": "BOB Network",
+      "logo": "🟡",
+      "detectedAt": "2025-11-20",
+      "confidence": "high"
+    },
+    {
+      "id": "irys",
+      "name": "Irys",
+      "logo": "💾",
+      "detectedAt": "2025-11-25",
+      "confidence": "high"
+    },
+    {
+      "id": "goat-network",
+      "name": "GOAT Network",
+      "logo": "🐐",
+      "detectedAt": "2025-09-27",
+      "confidence": "high"
+    },
+    {
+      "id": "seraph",
+      "name": "Seraph",
+      "logo": "⚔️",
+      "detectedAt": "2025-01-06",
+      "confidence": "high"
+    },
+    {
+      "id": "union-protocol",
+      "name": "Union Protocol",
+      "logo": "🔗",
+      "detectedAt": "2025-09-04",
+      "confidence": "high"
+    },
+    {
+      "id": "camp-network",
+      "name": "Camp Network",
+      "logo": "⛺",
+      "detectedAt": "2025-08-28",
+      "confidence": "high"
+    },
+    {
+      "id": "infinex-dx",
+      "name": "Infinex",
+      "logo": "♾️",
+      "detectedAt": "2026-01-30",
+      "confidence": "high"
+    },
+    {
+      "id": "superform",
+      "name": "Superform",
+      "logo": "🌐",
+      "detectedAt": "2026-02-10",
       "confidence": "high"
     }
   ]
