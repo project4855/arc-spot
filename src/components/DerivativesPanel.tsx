@@ -615,7 +615,7 @@ function MarketsTable({
 
 export default function DerivativesPanel() {
   const [coin,  setCoin]  = useState('BTC')
-  const [view,  setView]  = useState<'trade' | 'markets' | 'positions'>('trade')
+  const [view,  setView]  = useState<'trade' | 'markets'>('trade')
 
   // Live data from Hyperliquid (5s)
   const { markets: liveMarkets, updatedAt, error: mktError } = useHLDerivatives()
@@ -682,9 +682,8 @@ export default function DerivativesPanel() {
       {/* ── Tab bar ── */}
       <div className="flex gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm">
         {([
-          { key: 'trade',     label: '⚡ Trade'    },
-          { key: 'markets',   label: '📊 Markets'   },
-          { key: 'positions', label: `📋 Positions${openCount > 0 ? ` (${openCount})` : ''}` },
+          { key: 'trade',   label: '⚡ Trade'   },
+          { key: 'markets', label: '📊 Markets'  },
         ] as const).map(t => (
           <button key={t.key} onClick={() => setView(t.key)}
             className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
@@ -747,24 +746,6 @@ export default function DerivativesPanel() {
                 </div>
               )}
 
-              {/* Portfolio summary */}
-              {isConnected && positions.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Your Portfolio</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Open Positions', value: String(positions.length), cls: 'text-violet-600' },
-                      { label: 'Total PnL',       value: fmtUSD(totalPnl, true),   cls: totalPnl >= 0 ? 'text-emerald-600' : 'text-red-500' },
-                      { label: 'USDC Balance',    value: balanceUSDC.toFixed(2),    cls: 'text-slate-700' },
-                    ].map(s => (
-                      <div key={s.label} className="bg-slate-50 rounded-xl p-3 text-center">
-                        <p className="text-slate-400 text-[10px] mb-1">{s.label}</p>
-                        <p className={`font-bold text-sm ${s.cls}`}>{s.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Right: Order form */}
@@ -793,6 +774,55 @@ export default function DerivativesPanel() {
               )}
             </div>
           </div>
+
+          {/* ── Your Positions (inline, always visible in Trade tab) ── */}
+          {isConnected && (
+            <div className="flex flex-col gap-3">
+              {/* Section header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    Your Positions
+                    {openCount > 0 && (
+                      <span className="ml-2 px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[11px] font-bold">
+                        {openCount}
+                      </span>
+                    )}
+                  </h3>
+                  {openCount > 0 && (
+                    <span className={`text-xs font-semibold ${totalPnl >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      Total PnL: {fmtUSD(totalPnl, true)}
+                    </span>
+                  )}
+                </div>
+                {openCount > 0 && (
+                  <button onClick={refetchPos}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs hover:border-violet-300 transition-colors">
+                    🔄 Refresh
+                  </button>
+                )}
+              </div>
+
+              {loadingPos ? (
+                <Spinner label="Loading positions…" />
+              ) : positions.length === 0 ? (
+                <div className="bg-white border border-dashed border-slate-200 rounded-2xl py-8 text-center">
+                  <p className="text-slate-400 text-sm">No open positions yet</p>
+                  <p className="text-slate-300 text-xs mt-1">Open a position above to get started</p>
+                </div>
+              ) : (
+                <>
+                  {positions.map(pos => (
+                    <PositionCard key={pos.id.toString()} pos={pos}
+                      livePrice={getLivePrice(pos.coin)}
+                      onClose={handleClose} onAddMargin={handleAddMargin}
+                      isClosing={txStep === 'sending'} />
+                  ))}
+                  <TxBadge step={txStep} hash={txHash} error={txError} />
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -801,52 +831,6 @@ export default function DerivativesPanel() {
         liveMarkets.length === 0
           ? <Spinner label="Loading markets…" />
           : <MarketsTable markets={liveMarkets} updatedAt={updatedAt} onSelect={c => { setCoin(c); setView('trade') }} />
-      )}
-
-      {/* ══ POSITIONS TAB ══ */}
-      {view === 'positions' && (
-        <div className="flex flex-col gap-4">
-          {!isConnected ? (
-            <div className="flex flex-col items-center gap-3 py-12 bg-white border border-slate-200 rounded-2xl shadow-sm">
-              <p className="text-slate-500 text-sm">Connect wallet to view positions</p>
-              <ConnectButton label="Connect Wallet" />
-            </div>
-          ) : loadingPos ? (
-            <Spinner label="Loading positions…" />
-          ) : positions.length === 0 ? (
-            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
-              <div className="text-4xl mb-3">📋</div>
-              <p className="text-slate-500 text-sm font-medium">No open positions</p>
-              <p className="text-slate-400 text-xs mt-1">Open a position in the Trade tab</p>
-              <button onClick={() => setView('trade')}
-                className="mt-4 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-colors">
-                Start Trading →
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-slate-900">{positions.length} Open Position{positions.length > 1 ? 's' : ''}</p>
-                  <p className={`text-sm font-semibold ${totalPnl >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                    Total PnL: {fmtUSD(totalPnl, true)}
-                  </p>
-                </div>
-                <button onClick={refetchPos}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-xs hover:border-violet-300 transition-colors">
-                  🔄 Refresh
-                </button>
-              </div>
-              {positions.map(pos => (
-                <PositionCard key={pos.id.toString()} pos={pos}
-                  livePrice={getLivePrice(pos.coin)}
-                  onClose={handleClose} onAddMargin={handleAddMargin}
-                  isClosing={txStep === 'sending'} />
-              ))}
-              <TxBadge step={txStep} hash={txHash} error={txError} />
-            </>
-          )}
-        </div>
       )}
 
       <p className="text-center text-xs text-slate-400 pb-2">
