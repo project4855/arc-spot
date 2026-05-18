@@ -397,6 +397,68 @@ async function fetchCryptoRankFunding() {
 
 // ── CoinGecko verify ──────────────────────────────────────────────────────────
 // Nguồn đáng tin nhất: nếu coin có market_cap_rank → đang được trade thật sự
+// Free API, không cần key, phát hiện cả token chỉ list CEX (Binance/Coinbase/OKX)
+// Rate limit: ~50 req/min (free tier)
+
+async function checkCoinGecko(project) {
+  if (project.cgSkip) return { hasToken: false, source: 'skipped' }
+
+  const searchTerm = project.cgSearch ?? project.name
+
+  try {
+    const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(searchTerm)}`
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(12_000),
+    })
+
+    if (!res.ok) {
+      log(`  CoinGecko ${res.status} for ${project.name}`)
+      return { hasToken: false, source: `gecko-${res.status}` }
+    }
+
+    const { coins = [] } = await res.json()
+    if (!coins.length) return { hasToken: false, source: 'gecko-no-results' }
+
+    // Tìm coin khớp: ưu tiên symbol match, sau đó exact name match
+    const match = coins.find(c => {
+      const symMatch  = project.symbol && c.symbol?.toUpperCase() === project.symbol.toUpperCase()
+      const nameLevel = nameMatchLevel(project.name, c.name ?? '')
+      return symMatch || nameLevel === 'exact'
+    })
+
+    if (!match) return { hasToken: false, source: 'gecko-no-match' }
+
+    // Không có market_cap_rank → coin chưa có market data (prelaunch/untracked)
+    if (!match.market_cap_rank) {
+      log(`  🔍 CoinGecko: "${match.name}" $${match.symbol} — no market rank (prelaunch?)`)
+      return { hasToken: false, source: 'gecko-no-rank' }
+    }
+
+    // Rank ≤ 500 → top coin, rất chắc chắn (Binance/Coinbase/OKX listing)
+    // Rank ≤ 2000 → mid-tier, đáng tin
+    // Rank > 2000 → quá thấp, nguy cơ scam trùng tên → bỏ qua
+    if (match.market_cap_rank > 2000) {
+      log(`  🔍 CoinGecko: "${match.name}" rank #${match.market_cap_rank} — quá thấp, bỏ qua`)
+      return { hasToken: false, source: 'gecko-rank-too-low' }
+    }
+
+    const confidence = match.market_cap_rank <= 500 ? 'high' : 'medium'
+    log(`  ✅ CoinGecko: "${match.name}" $${match.symbol} rank #${match.market_cap_rank} | conf=${confidence}`)
+
+    return {
+      hasToken:       true,
+      coinSymbol:     match.symbol?.toUpperCase(),
+      coinName:       match.name,
+      marketCapRank:  match.market_cap_rank,
+      confidence,
+      source:         'coingecko',
+    }
+  } catch (err) {
+    log(`  CoinGecko error for ${project.name}: ${err.message}`)
+    return { hasToken: false, source: 'gecko-exception' }
+  }
+}
 
 // ── Helpers matching ─────────────────────────────────────────────────────────
 
@@ -556,43 +618,90 @@ async function checkCoinPaprika(project) {
   }
 }
 
-// ── Combined verify (DexScreener + CoinPaprika) ───────────────────────────────
+// ── Combined verify (DexScreener + CoinPaprika + CoinGecko) ──────────────────
+// 3 nguồn song song:
+//   • DexScreener  — token có DEX liquidity ≥ $100K (on-chain proof)
+//   • CoinPaprika  — rank-based, covers các token lớn
+//   • CoinGecko    — market_cap_rank, phát hiện token chỉ list CEX (Binance/Coinbase/OKX)
+//                    → Giải quyết vấn đề bỏ sót $SONE/$KAR/$SYMB
 
 async function checkTokenStatus(project) {
-  // Chạy song song cả 2 nguồn miễn phí
-  const [dex, paprika] = await Promise.all([
+  // Chạy song song cả 3 nguồn miễn phí, không cần API key
+  const [dex, paprika, gecko] = await Promise.all([
     checkDexScreener(project),
     checkCoinPaprika(project),
+    checkCoinGecko(project),
   ])
 
-  // Cả 2 xác nhận → rất chắc chắn
+  // ── Ưu tiên CoinGecko high confidence (rank ≤ 500) ──
+  // Lý do: CoinGecko là nguồn aggregator đáng tin nhất, bắt được cả CEX-only tokens
+  if (gecko.hasToken && gecko.confidence === 'high') {
+    return {
+      hasToken:       true,
+      confidence:     'high',
+      coinSymbol:     gecko.coinSymbol ?? dex.coinSymbol ?? paprika.coinSymbol,
+      marketCapRank:  gecko.marketCapRank,
+      sources:        ['coingecko', dex.hasToken ? 'dexscreener' : null, paprika.hasToken ? 'coinpaprika' : null].filter(Boolean),
+      details:        { dex, paprika, gecko },
+    }
+  }
+
+  // ── Cả 3 nguồn xác nhận → cực kỳ chắc chắn ──
+  if (dex.hasToken && paprika.hasToken && gecko.hasToken) {
+    return {
+      hasToken:       true,
+      confidence:     'high',
+      coinSymbol:     dex.coinSymbol ?? paprika.coinSymbol ?? gecko.coinSymbol,
+      marketCapRank:  gecko.marketCapRank,
+      sources:        ['dexscreener', 'coinpaprika', 'coingecko'],
+      details:        { dex, paprika, gecko },
+    }
+  }
+
+  // ── 2 nguồn bất kỳ xác nhận (có DexScreener hoặc CoinPaprika) → high ──
   if (dex.hasToken && paprika.hasToken) {
     return {
-      hasToken:    true,
-      confidence:  'high',
-      coinSymbol:  dex.coinSymbol ?? paprika.coinSymbol,
-      sources:     ['dexscreener', 'coinpaprika'],
-      details:     { dex, paprika },
+      hasToken:       true,
+      confidence:     'high',
+      coinSymbol:     dex.coinSymbol ?? paprika.coinSymbol,
+      marketCapRank:  gecko.marketCapRank ?? null,
+      sources:        ['dexscreener', 'coinpaprika'],
+      details:        { dex, paprika, gecko },
     }
   }
 
-  // 1 trong 2 xác nhận high confidence → tin
-  if (dex.hasToken && dex.confidence === 'high')     return { hasToken: true, confidence: 'high',   coinSymbol: dex.coinSymbol,     sources: ['dexscreener'], details: { dex } }
-  if (paprika.hasToken && paprika.confidence === 'high') return { hasToken: true, confidence: 'high',   coinSymbol: paprika.coinSymbol, sources: ['coinpaprika'], details: { paprika } }
+  // ── 1 nguồn high confidence ──
+  if (dex.hasToken && dex.confidence === 'high')
+    return { hasToken: true, confidence: 'high', coinSymbol: dex.coinSymbol, marketCapRank: gecko.marketCapRank ?? null, sources: ['dexscreener'], details: { dex, paprika, gecko } }
+  if (paprika.hasToken && paprika.confidence === 'high')
+    return { hasToken: true, confidence: 'high', coinSymbol: paprika.coinSymbol, marketCapRank: gecko.marketCapRank ?? null, sources: ['coinpaprika'], details: { dex, paprika, gecko } }
 
-  // 1 trong 2 xác nhận medium → cần thêm X API verify
+  // ── CoinGecko medium (rank 501-2000) → cần X API xác nhận thêm ──
+  if (gecko.hasToken && gecko.confidence === 'medium') {
+    return {
+      hasToken:       true,
+      confidence:     'medium',
+      coinSymbol:     gecko.coinSymbol ?? dex.coinSymbol ?? paprika.coinSymbol,
+      marketCapRank:  gecko.marketCapRank,
+      sources:        ['coingecko'],
+      needsXVerify:   true,
+      details:        { dex, paprika, gecko },
+    }
+  }
+
+  // ── 1 nguồn medium → cần X API verify ──
   if (dex.hasToken || paprika.hasToken) {
     return {
-      hasToken:    true,
-      confidence:  'medium',
-      coinSymbol:  dex.coinSymbol ?? paprika.coinSymbol,
-      sources:     [dex.hasToken ? 'dexscreener' : 'coinpaprika'],
+      hasToken:     true,
+      confidence:   'medium',
+      coinSymbol:   dex.coinSymbol ?? paprika.coinSymbol,
+      sources:      [dex.hasToken ? 'dexscreener' : 'coinpaprika'],
       needsXVerify: true,
-      details:     { dex, paprika },
+      details:      { dex, paprika, gecko },
     }
   }
 
-  return { hasToken: false, sources: [], details: { dex, paprika } }
+  return { hasToken: false, sources: [], details: { dex, paprika, gecko } }
 }
 
 // ── Kiểm tra từng dự án hiện tại ─────────────────────────────────────────────
@@ -600,8 +709,10 @@ async function checkTokenStatus(project) {
 async function checkProjectStatus(project) {
   log(`\nChecking: ${project.name}...`)
 
-  // ① DexScreener + CoinPaprika song song (miễn phí, không cần key)
+  // ① DexScreener + CoinPaprika + CoinGecko song song (miễn phí, không cần key)
+  // Delay 1.2s sau mỗi project để tránh rate limit CoinGecko (50 req/min free tier)
   const tokenStatus = await checkTokenStatus(project)
+  await sleep(1_200)
 
   if (tokenStatus.hasToken && !tokenStatus.needsXVerify) {
     // Đủ chắc → graduate ngay
@@ -640,8 +751,6 @@ async function checkProjectStatus(project) {
         log(`  📣 X API high signal nhưng chưa có onchain proof — skip để tránh false positive`)
       }
     }
-  } else {
-    await sleep(1_000)
   }
 
   log(`  ✓ ${project.name} → chưa có token`)
@@ -666,7 +775,7 @@ async function main() {
   const stillActive  = []
   const newGraduated = []
 
-  if (!X_TOKEN) log('⚠️  Không có X_BEARER_TOKEN — chỉ dùng CoinGecko verify')
+  if (!X_TOKEN) log('⚠️  Không có X_BEARER_TOKEN — dùng DexScreener + CoinPaprika + CoinGecko')
 
   log(`\n── Bắt đầu verify ${projects.length} dự án ──`)
 
@@ -744,13 +853,13 @@ async function main() {
   // 6. Ghi lại JSON
   const updated = {
     lastUpdated: new Date().toISOString().split('T')[0],
-    source:      'Auto-updated daily via GitHub Actions · X API + CryptoRank + DeFiLlama + DappRadar + AirdropAlert',
+    source:      'Auto-updated daily via GitHub Actions · DexScreener + CoinPaprika + CoinGecko + X API + DeFiLlama + DappRadar + AirdropAlert',
     updateLog: {
       graduatedThisRun:  newGraduated.map((g) => g.name),
       checkedProjects:   projects.length,
       runAt:             new Date().toISOString(),
       xApiUsed:          !!X_TOKEN,
-      verificationSources: ['dexscreener', 'coinpaprika', X_TOKEN ? 'x-api' : null].filter(Boolean),
+      verificationSources: ['dexscreener', 'coinpaprika', 'coingecko', X_TOKEN ? 'x-api' : null].filter(Boolean),
       newSuggestionsFromCryptoRank: newSuggestions.map((c) => `${c.name} (${c.symbol})`),
       externalFetchCounts: {
         defiLlama:    defiLlamaYields.length,
