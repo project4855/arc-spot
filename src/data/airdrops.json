@@ -5,7 +5,11 @@
     "graduatedThisRun": [
       "Aztec Network",
       "Succinct",
-      "Pharos"
+      "Pharos",
+      "Soneium",
+      "Karak Network",
+      "Symbiotic",
+      "World Chain"
     ],
     "checkedProjects": 25,
     "runAt": "2026-05-18T11:37:02.137Z",
@@ -274,131 +278,6 @@
       "cgSearch": "ink protocol"
     },
     {
-      "id": "soneium",
-      "name": "Soneium",
-      "logo": "🎵",
-      "category": "L2",
-      "raised": "Sony-backed",
-      "investors": "Sony Group Corp, a16z CSX",
-      "status": "Mainnet Beta",
-      "prob": "Rất cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Soneium airdrop Sony L2 token 2026",
-      "desc": "Ethereum L2 do tập đoàn Sony xây dựng trên OP Stack, ra mắt mainnet 1/2025 với 14M+ ví testnet. Soneium Score Season đang tích điểm. Hướng đến giải trí, gaming và NFT — chưa có token native.",
-      "steps": [
-        {
-          "action": "Bridge ETH sang Soneium",
-          "detail": "Dùng bridge.soneium.org để bridge ETH từ Ethereum hoặc L2 khác"
-        },
-        {
-          "action": "Tích điểm Soneium Score",
-          "detail": "Thực hiện swap/stake/mint NFT mỗi ngày để tích điểm và badges Season"
-        },
-        {
-          "action": "Dùng DeFi native",
-          "detail": "Swap trên Uniswap Soneium, LP trên Kyo Finance để earn veKYO"
-        },
-        {
-          "action": "Mint NFT và tham gia drop",
-          "detail": "Mint NFT trên Mintstars marketplace, tham gia các drop của Sony"
-        },
-        {
-          "action": "Hoàn thành quests Galxe",
-          "detail": "Làm quests Soneium trên Galxe và Layer3 để nhận bonus điểm"
-        }
-      ],
-      "links": {
-        "site": "https://soneium.org",
-        "twitter": "https://twitter.com/soneium",
-        "app": "https://bridge.soneium.org"
-      }
-    },
-    {
-      "id": "karak",
-      "name": "Karak Network",
-      "logo": "⚔️",
-      "category": "Infra",
-      "raised": "$48M",
-      "investors": "Coinbase Ventures, Pantera Capital",
-      "status": "Mainnet Beta",
-      "prob": "Cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Karak KAR token airdrop 2026",
-      "desc": "Universal restaking — restake bất kỳ tài sản nào (ETH, stETH, USDC, USDe). Token $KAR đã được công bố nhưng chưa phát. XP system đang chạy. $48M từ Coinbase Ventures và Pantera.",
-      "steps": [
-        {
-          "action": "Deposit vào Karak",
-          "detail": "Deposit ETH, stETH, USDC, USDe tại app.karak.network"
-        },
-        {
-          "action": "Stake vào DSS",
-          "detail": "Opt-in vào Distributed Secure Services để kiếm thêm yield"
-        },
-        {
-          "action": "Tích lũy Karak XP",
-          "detail": "Số lượng × thời gian deposit = XP, có thể đổi $KAR"
-        },
-        {
-          "action": "Refer bạn bè",
-          "detail": "Mỗi referral thành công tăng XP multiplier"
-        },
-        {
-          "action": "Dùng K2 (Karak L2)",
-          "detail": "Tương tác trên Karak L2 để nhân đôi điểm"
-        }
-      ],
-      "links": {
-        "site": "https://karak.network",
-        "twitter": "https://twitter.com/Karak_Network",
-        "app": "https://app.karak.network"
-      },
-      "symbol": "KAR",
-      "cgSearch": "karak network"
-    },
-    {
-      "id": "symbiotic",
-      "name": "Symbiotic",
-      "logo": "🔗",
-      "category": "Infra",
-      "raised": "$29M",
-      "investors": "Paradigm, cyber·Fund",
-      "status": "Mainnet Beta",
-      "prob": "Cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "Symbiotic restaking token airdrop",
-      "desc": "Restaking protocol linh hoạt, Paradigm-backed. Đối thủ EigenLayer. Chưa có token. Hệ thống điểm đang chạy. Deposit ETH/stETH vào vault để tích điểm và bảo mật nhiều AVS.",
-      "steps": [
-        {
-          "action": "Deposit vào Symbiotic vault",
-          "detail": "Deposit stETH, wBTC, ETH tại app.symbiotic.fi"
-        },
-        {
-          "action": "Opt-in Networks",
-          "detail": "Chọn các AVS (Actively Validated Services) để bảo mật"
-        },
-        {
-          "action": "Mellow Protocol",
-          "detail": "Stake qua Mellow để nhận thêm Symbiotic points"
-        },
-        {
-          "action": "Duy trì lâu dài",
-          "detail": "Số ngày deposit × số lượng = điểm tích lũy"
-        },
-        {
-          "action": "Layer 2 exposure",
-          "detail": "Deposit vào vault của nhiều loại tài sản khác nhau"
-        }
-      ],
-      "links": {
-        "site": "https://symbiotic.fi",
-        "twitter": "https://twitter.com/symbioticfi",
-        "app": "https://app.symbiotic.fi"
-      }
-    },
-    {
       "id": "ostium",
       "name": "Ostium",
       "logo": "📈",
@@ -601,47 +480,6 @@
         "site": "https://www.morphl2.io",
         "twitter": "https://twitter.com/MorphLayer",
         "app": "https://bridge.morphl2.io"
-      }
-    },
-    {
-      "id": "worldchain",
-      "name": "World Chain",
-      "logo": "🌍",
-      "category": "L2",
-      "raised": "World Corp-backed",
-      "investors": "a16z (Worldcoin backer)",
-      "status": "Mainnet Beta",
-      "prob": "Cao",
-      "tge": "TBD 2026",
-      "hasToken": false,
-      "xSearch": "World Chain token airdrop 2026",
-      "desc": "L2 của World App. Ưu tiên người đã verify World ID. Gas miễn phí cho human verified users. Chưa có token L2 riêng — 10M+ human-verified accounts là lợi thế cực lớn.",
-      "steps": [
-        {
-          "action": "Verify World ID",
-          "detail": "Quét iris tại orb hoặc dùng World App để lấy World ID"
-        },
-        {
-          "action": "Bridge sang World Chain",
-          "detail": "Bridge ETH hoặc USDC vào World Chain"
-        },
-        {
-          "action": "Dùng dApps World Chain",
-          "detail": "Tương tác với các dApps có World ID verification"
-        },
-        {
-          "action": "World App activities",
-          "detail": "Hoàn thành các tính năng trong World App hàng tuần"
-        },
-        {
-          "action": "Gas miễn phí",
-          "detail": "User verify nhận gas miễn phí — dùng tối đa để build history"
-        }
-      ],
-      "links": {
-        "site": "https://world.org",
-        "twitter": "https://twitter.com/worldcoin",
-        "app": "https://world.org"
       }
     },
     {
@@ -935,6 +773,34 @@
     }
   ],
   "graduated": [
+    {
+      "id": "soneium",
+      "name": "Soneium",
+      "logo": "🎵",
+      "detectedAt": "2026-05-18",
+      "confidence": "high"
+    },
+    {
+      "id": "karak",
+      "name": "Karak Network",
+      "logo": "⚔️",
+      "detectedAt": "2025-01-25",
+      "confidence": "high"
+    },
+    {
+      "id": "symbiotic",
+      "name": "Symbiotic",
+      "logo": "🔗",
+      "detectedAt": "2024-11-20",
+      "confidence": "high"
+    },
+    {
+      "id": "worldchain",
+      "name": "World Chain",
+      "logo": "🌍",
+      "detectedAt": "2025-06-01",
+      "confidence": "high"
+    },
     {
       "id": "aztec",
       "name": "Aztec Network",
