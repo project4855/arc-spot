@@ -1,8 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import SwapCard, { type SwapRecord } from './components/SwapCard'
-import StatsBar from './components/StatsBar'
-import NetworkBadge from './components/NetworkBadge'
 import OrderBook from './components/OrderBook'
 import PriceChart from './components/PriceChart'
 import TransactionHistory from './components/TransactionHistory'
@@ -13,111 +11,159 @@ import BridgePanel from './components/BridgePanel'
 import DerivativesPanel from './components/DerivativesPanel'
 import WalletPanel from './components/WalletPanel'
 
-const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
-type Pair = typeof PAIRS[number]
-type AppTab = 'trade' | 'bridge' | 'lending' | 'perps' | 'traders' | 'airdrops' | 'wallet'
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const FEATURES = [
-  { icon: '⚡', text: 'Sub-second finality' },
-  { icon: '💵', text: 'Gas paid in USDC' },
-  { icon: '🔵', text: 'Circle CCTP bridge' },
-  { icon: '🔒', text: 'EVM compatible' },
-]
+const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
+type Pair    = typeof PAIRS[number]
+type AppTab  = 'trade' | 'bridge' | 'lending' | 'perps' | 'traders' | 'airdrops' | 'wallet'
+
+const VALID_TABS: AppTab[] = ['trade', 'bridge', 'lending', 'perps', 'traders', 'airdrops', 'wallet']
+
+// ── Tab persistence via URL hash ─────────────────────────────────────────────
+
+function getTabFromHash(): AppTab {
+  const hash = window.location.hash.replace('#', '') as AppTab
+  return VALID_TABS.includes(hash) ? hash : 'trade'
+}
+
+// ── Per-tab metadata ──────────────────────────────────────────────────────────
+
+const TAB_META: Record<AppTab, { icon: string; title: string; sub: string }> = {
+  trade:    { icon: '📊', title: 'Spot Trading',   sub: 'Swap tokens instantly on Arc Testnet'                      },
+  bridge:   { icon: '🌉', title: 'Bridge',          sub: 'Transfer USDC cross-chain via Circle CCTP'                 },
+  lending:  { icon: '🏦', title: 'Lending',         sub: 'Supply assets to earn yield · Borrow against collateral'   },
+  perps:    { icon: '⚡', title: 'Perpetuals',      sub: 'On-chain futures up to 20× leverage · USDC collateral'     },
+  traders:  { icon: '🏆', title: 'Top Traders',     sub: 'Live leaderboard from Hyperliquid Mainnet'                 },
+  airdrops: { icon: '🪂', title: 'Airdrops',        sub: 'High-potential airdrop projects · Track & qualify'         },
+  wallet:   { icon: '👛', title: 'Wallet',          sub: 'Create wallet · Receive tokens · Send USDC / EURC'         },
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [tab, setTab] = useState<AppTab>('trade')
+  const [tab,  setTab]  = useState<AppTab>(getTabFromHash)
   const [pair, setPair] = useState<Pair>('USDC/EURC')
-  const [fromToken, toToken] = pair.split('/') as [string, string]
   const [myTxs, setMyTxs] = useState<SwapRecord[]>([])
-  const handleSwapComplete = useCallback((tx: SwapRecord) => {
-    setMyTxs((prev) => [tx, ...prev].slice(0, 50))
+
+  const [fromToken, toToken] = pair.split('/') as [string, string]
+
+  // Keep URL hash in sync (no page-jump, works with back/forward)
+  const handleTabChange = useCallback((next: string) => {
+    const t = VALID_TABS.includes(next as AppTab) ? (next as AppTab) : 'trade'
+    setTab(t)
+    history.replaceState(null, '', `#${t}`)
   }, [])
+
+  // Sync when user presses browser back / forward
+  useEffect(() => {
+    const onHash = () => setTab(getTabFromHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  const handleSwapComplete = useCallback((tx: SwapRecord) => {
+    setMyTxs(prev => [tx, ...prev].slice(0, 50))
+  }, [])
+
+  const meta = TAB_META[tab]
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Navbar />
 
-      <main className="flex-1 flex flex-col px-4 pt-8 pb-20 gap-8 max-w-[1400px] mx-auto w-full">
+      {/* ── Sticky Navbar (contains tab navigation) ── */}
+      <Navbar tab={tab} onTabChange={handleTabChange} />
 
-        {/* ── Hero ── */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-blue-700 px-6 py-10 sm:py-14 text-center shadow-xl">
-          {/* Background pattern */}
-          <div className="absolute inset-0 opacity-10"
-            style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/30 text-white text-xs font-semibold mb-5 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              Live on Arc Testnet
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight mb-3">
-              DeFi on Arc Network
-            </h1>
-            <p className="text-violet-200 text-base sm:text-lg mb-8 max-w-xl mx-auto">
-              The first stablecoin-native L1 blockchain by Circle. Trade, lend, bridge and track airdrops — all in one place.
-            </p>
-
-            {/* Feature pills */}
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {FEATURES.map(f => (
-                <span key={f.text} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium backdrop-blur-sm">
-                  <span>{f.icon}</span>{f.text}
-                </span>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <a
-              href="https://faucet.circle.com"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-violet-700 font-bold text-sm hover:bg-violet-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              💧 Get Free Testnet USDC
-              <span className="text-violet-400 text-xs font-normal">faucet.circle.com</span>
-            </a>
-          </div>
+      {/* ── Slim network info strip ── */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-[1440px] mx-auto px-4 xl:px-6 py-1.5 flex items-center gap-5 text-[11px] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <span className="flex items-center gap-1.5 text-emerald-600 font-semibold shrink-0">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            Arc Testnet
+          </span>
+          <span className="text-slate-400 shrink-0">
+            Chain <strong className="text-slate-600">5042002</strong>
+          </span>
+          <span className="text-slate-400 shrink-0">
+            Gas: <strong className="text-slate-600">USDC</strong>
+          </span>
+          <span className="text-slate-400 shrink-0">
+            Finality: <strong className="text-slate-600">&lt; 1 second</strong>
+          </span>
+          <a
+            href="https://testnet.arcscan.app"
+            target="_blank" rel="noreferrer"
+            className="text-violet-600 hover:text-violet-700 font-medium shrink-0"
+          >
+            ArcScan ↗
+          </a>
+          <a
+            href="https://faucet.circle.com"
+            target="_blank" rel="noreferrer"
+            className="hidden sm:block text-violet-600 hover:text-violet-700 font-medium shrink-0 ml-auto"
+          >
+            💧 Get Testnet USDC ↗
+          </a>
         </div>
+      </div>
 
-        <NetworkBadge />
+      {/* ── Main content ── */}
+      <main className="flex-1 max-w-[1440px] mx-auto w-full px-4 xl:px-6 py-6 flex flex-col gap-6">
 
-        {/* ── Stats bar ── */}
-        <StatsBar />
-
-        {/* ── Tab navigation ── */}
-        <div className="flex justify-center">
-          <div className="flex bg-white border border-slate-200 shadow-sm rounded-2xl p-1.5 gap-2">
-            {([
-              { key: 'trade',    label: '📊 Trade'    },
-              { key: 'bridge',   label: '🌉 Bridge'   },
-              { key: 'lending',  label: '🏦 Lending'  },
-              { key: 'perps',    label: '⚡ Perps'    },
-              { key: 'traders',  label: '🏆 Traders'  },
-              { key: 'airdrops', label: '🪂 Airdrops' },
-              { key: 'wallet',   label: '👛 Wallet'   },
-            ] as { key: AppTab; label: string }[]).map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`px-8 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  tab === key
-                    ? 'bg-violet-600 text-white shadow-lg'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+        {/* Per-tab compact header (hidden on trade — has its own hero) */}
+        {tab !== 'trade' && (
+          <div className="flex items-center gap-4 px-5 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <span className="text-3xl shrink-0">{meta.icon}</span>
+            <div>
+              <h1 className="text-slate-900 font-bold text-xl leading-tight">{meta.title}</h1>
+              <p className="text-slate-400 text-sm mt-0.5">{meta.sub}</p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* ══ TRADE TAB ══ */}
+        {/* ══════════════════ TRADE ══════════════════ */}
         {tab === 'trade' && (
           <>
+            {/* Compact hero banner */}
+            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-violet-600 via-violet-700 to-blue-700 px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+              {/* subtle dot pattern */}
+              <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{
+                  backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+                  backgroundSize: '32px 32px',
+                }}
+              />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 border border-white/30 text-white text-[11px] font-semibold">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                    Live on Arc Testnet
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                  DeFi on Arc Network
+                </h1>
+                <p className="text-violet-200 text-sm mt-1">
+                  Stablecoin-native L1 by Circle · Sub-second finality · Gas paid in USDC
+                </p>
+              </div>
+              <div className="relative z-10 flex items-center gap-2 flex-wrap shrink-0">
+                {[
+                  { icon: '⚡', text: 'Sub-second' },
+                  { icon: '💵', text: 'USDC gas'   },
+                  { icon: '🔵', text: 'Circle CCTP' },
+                  { icon: '🔒', text: 'EVM'         },
+                ].map(f => (
+                  <span key={f.text} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium">
+                    {f.icon} {f.text}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             {/* Pair selector */}
-            <div className="flex justify-center gap-2 flex-wrap">
-              {PAIRS.map((p) => (
+            <div className="flex gap-2 flex-wrap">
+              {PAIRS.map(p => (
                 <button
                   key={p}
                   onClick={() => setPair(p)}
@@ -132,171 +178,105 @@ export default function App() {
               ))}
             </div>
 
-            {/* Trading layout */}
-            <div id="swap" className="grid grid-cols-1 xl:grid-cols-[1fr_420px_280px] gap-4">
-              <div className="flex flex-col gap-4">
+            {/* Trading layout — chart | swap card | order book */}
+            <div id="swap" className="grid grid-cols-1 xl:grid-cols-[1fr_400px_260px] gap-4">
+              <div className="flex flex-col gap-4 min-w-0">
                 <PriceChart pair={pair} />
                 <TransactionHistory pair={pair} myTxs={myTxs} />
               </div>
-              <div>
-                <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
+              <div className="min-w-0">
+                <SwapCard
+                  fromTokenProp={fromToken}
+                  toTokenProp={toToken}
+                  onSwapComplete={handleSwapComplete}
+                />
               </div>
-              <div>
+              <div className="min-w-0">
                 <OrderBook pair={pair} />
               </div>
             </div>
-          </>
-        )}
 
-        {/* ══ BRIDGE TAB ══ */}
-        {tab === 'bridge' && (
-          <>
-            <div className="text-center -mt-2 mb-2">
-              <p className="text-slate-500 text-sm">
-                Bridge USDC from any chain to Arc Testnet · Powered by Circle CCTP
-              </p>
-            </div>
-            <BridgePanel />
-          </>
-        )}
-
-        {/* ══ LENDING TAB ══ */}
-        {tab === 'lending' && (
-          <>
-            <div className="text-center -mt-2 mb-2">
-              <p className="text-slate-500 text-sm">
-                Supply assets to earn yield · Borrow against your collateral
-              </p>
-            </div>
-            <LendingPanel />
-          </>
-        )}
-
-        {/* ══ PERPS TAB ══ */}
-        {tab === 'perps' && (
-          <>
-            <div className="text-center -mt-2 mb-2">
-              <p className="text-slate-500 text-sm">
-                Perpetual futures · Mark prices · Funding rates · Open interest · Hyperliquid Mainnet
-              </p>
-            </div>
-            <DerivativesPanel />
-          </>
-        )}
-
-        {/* ══ TRADERS TAB ══ */}
-        {tab === 'traders' && (
-          <>
-            <div className="text-center -mt-2 mb-2">
-              <p className="text-slate-500 text-sm">
-                Live data from Hyperliquid Mainnet · Updated in real time
-              </p>
-            </div>
-            <HyperliquidPanel />
-          </>
-        )}
-
-        {/* ══ AIRDROPS TAB ══ */}
-        {tab === 'airdrops' && (
-          <>
-            <div className="text-center -mt-2 mb-2">
-              <p className="text-slate-500 text-sm">
-                High-potential airdrop projects · Funding raised · How to qualify
-              </p>
-            </div>
-            <AirdropPanel />
-          </>
-        )}
-
-        {/* ══ WALLET TAB ══ */}
-        {tab === 'wallet' && (
-          <>
-            <div className="text-center -mt-2 mb-2">
-              <p className="text-slate-500 text-sm">
-                Create or import a wallet · Receive USDC / EURC · Send tokens on Arc Testnet
-              </p>
-            </div>
-            <WalletPanel />
-          </>
-        )}
-
-        {/* ── How it works ── */}
-        <div className="w-full max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-slate-900 font-bold text-2xl mb-2">How it works</h2>
-            <p className="text-slate-500 text-sm">Get started in three simple steps</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {[
-              {
-                step: '01',
-                icon: '🦊',
-                title: 'Connect Your Wallet',
-                desc: 'Connect MetaMask or any EVM-compatible wallet. Arc Testnet is added to your wallet automatically.',
-              },
-              {
-                step: '02',
-                icon: '💧',
-                title: 'Get Testnet USDC',
-                desc: 'Visit faucet.circle.com and select Arc Testnet to receive free USDC for testing all features.',
-              },
-              {
-                step: '03',
-                icon: '🚀',
-                title: 'Trade, Lend & Explore',
-                desc: 'Swap tokens instantly, supply assets to earn yield, bridge across chains, and track airdrop opportunities.',
-              },
-            ].map((item) => (
-              <div key={item.step} className="relative bg-white border border-slate-200 shadow-sm rounded-2xl p-6 hover:border-violet-300 hover:shadow-md transition-all group">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-violet-50 border border-violet-200 flex items-center justify-center text-xl group-hover:bg-violet-100 transition-colors">
-                    {item.icon}
+            {/* How it works */}
+            <div className="pt-2">
+              <h2 className="text-slate-900 font-bold text-lg mb-4 text-center">How it works</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    step: '01', icon: '🦊',
+                    title: 'Connect Wallet',
+                    desc: 'Connect MetaMask or any EVM-compatible wallet. Arc Testnet is added automatically.',
+                  },
+                  {
+                    step: '02', icon: '💧',
+                    title: 'Get Testnet USDC',
+                    desc: 'Visit faucet.circle.com and select Arc Testnet to receive free USDC for testing.',
+                  },
+                  {
+                    step: '03', icon: '🚀',
+                    title: 'Trade & Explore',
+                    desc: 'Swap tokens, supply to earn yield, bridge across chains, and trade perpetual futures.',
+                  },
+                ].map(item => (
+                  <div
+                    key={item.step}
+                    className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-violet-300 hover:shadow-sm transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-center text-lg group-hover:bg-violet-100 transition-colors">
+                        {item.icon}
+                      </div>
+                      <span className="text-violet-400 font-mono text-xs font-bold">{item.step}</span>
+                    </div>
+                    <h3 className="text-slate-900 font-bold text-sm mb-1.5">{item.title}</h3>
+                    <p className="text-slate-500 text-xs leading-relaxed">{item.desc}</p>
                   </div>
-                  <span className="text-violet-500 font-mono text-xs font-bold">{item.step}</span>
-                </div>
-                <h3 className="text-slate-900 font-bold text-base mb-2">{item.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
 
-        {/* ── Built with section ── */}
-        <div className="w-full max-w-4xl mx-auto">
-          <p className="text-center text-slate-400 text-xs mb-4 uppercase tracking-widest font-medium">Powered by</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { name: 'Arc Network', desc: 'Stablecoin-native L1', icon: '⚡', href: 'https://arc.io' },
-              { name: 'Circle USDC', desc: 'Native gas token', icon: '🔵', href: 'https://circle.com' },
-              { name: 'Circle CCTP', desc: 'Cross-chain bridge', icon: '🌉', href: 'https://www.circle.com/cross-chain-transfer-protocol' },
-              { name: 'Hyperliquid', desc: 'Live market data', icon: '📈', href: 'https://hyperliquid.xyz' },
-            ].map(t => (
-              <a key={t.name} href={t.href} target="_blank" rel="noreferrer"
-                className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-violet-300 hover:shadow-sm transition-all text-center group">
-                <div className="text-2xl mb-2">{t.icon}</div>
-                <div className="text-slate-900 font-semibold text-sm group-hover:text-violet-600 transition-colors">{t.name}</div>
-                <div className="text-slate-400 text-xs mt-0.5">{t.desc}</div>
-              </a>
-            ))}
-          </div>
-        </div>
+        {/* ══════════════════ BRIDGE ══════════════════ */}
+        {tab === 'bridge' && <BridgePanel />}
+
+        {/* ══════════════════ LENDING ══════════════════ */}
+        {tab === 'lending' && <LendingPanel />}
+
+        {/* ══════════════════ PERPS ══════════════════ */}
+        {tab === 'perps' && <DerivativesPanel />}
+
+        {/* ══════════════════ TRADERS ══════════════════ */}
+        {tab === 'traders' && <HyperliquidPanel />}
+
+        {/* ══════════════════ AIRDROPS ══════════════════ */}
+        {tab === 'airdrops' && <AirdropPanel />}
+
+        {/* ══════════════════ WALLET ══════════════════ */}
+        {tab === 'wallet' && <WalletPanel />}
 
       </main>
 
-      <footer className="border-t border-slate-200 py-8 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      {/* ── Footer ── */}
+      <footer className="border-t border-slate-200 bg-white py-5 px-4">
+        <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center font-bold text-white text-xs">A</div>
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center font-bold text-white text-[10px]">
+              A
+            </div>
             <span className="font-semibold text-slate-600">ArcTrade</span>
-            <span>· For testnet use only</span>
+            <span className="text-slate-300">·</span>
+            <span>Testnet only · Not financial advice</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="https://arc.io" target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Arc Network</a>
-            <a href="https://docs.arc.io/app-kit" target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Circle App Kit</a>
-            <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Explorer</a>
+            <a href="https://arc.io"                                                   target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Arc Network</a>
+            <a href="https://docs.arc.io"                                              target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Docs</a>
+            <a href="https://testnet.arcscan.app"                                      target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Explorer</a>
+            <a href="https://faucet.circle.com"                                        target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">Faucet</a>
+            <a href="https://www.circle.com/cross-chain-transfer-protocol"             target="_blank" rel="noreferrer" className="hover:text-violet-500 transition-colors">CCTP</a>
           </div>
         </div>
       </footer>
+
     </div>
   )
 }
