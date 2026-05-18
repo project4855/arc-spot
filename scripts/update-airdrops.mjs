@@ -97,39 +97,328 @@ async function searchX(projectName, xSearch) {
 }
 
 // ── CryptoRank — tìm dự án mới ───────────────────────────────────────────────
+// NOTE: CryptoRank v0 free API chỉ trả về traded coins (không có filter untraded).
+// → Dùng CoinMarketCap ICO Calendar + AirdropAlert + DappRadar thay thế cho discovery.
 
 async function fetchCryptoRankDropHunting() {
   try {
-    // CryptoRank v0 API không cần key, tìm coin chưa trade và có funding
-    const res = await fetch(
-      'https://api.cryptorank.io/v0/coins?limit=200&isTraded=false&hasFundingRounds=true',
-      { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) }
+    // Fetch 500 coins đầu tiên và lọc client-side những coin có lifeCycle != traded
+    // (Các coin untraded nằm rải rác trong danh sách, không chỉ ở top)
+    const pages = await Promise.allSettled([
+      fetch('https://api.cryptorank.io/v0/coins?limit=200&offset=0',   { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) }).then(r => r.json()),
+      fetch('https://api.cryptorank.io/v0/coins?limit=200&offset=200', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) }).then(r => r.json()),
+      fetch('https://api.cryptorank.io/v0/coins?limit=200&offset=400', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) }).then(r => r.json()),
+    ])
+
+    const allCoins = pages
+      .filter(r => r.status === 'fulfilled')
+      .flatMap(r => r.value?.data ?? [])
+
+    const untraded = allCoins.filter(c =>
+      c.lifeCycle !== 'traded' &&
+      c.hasFundingRounds === true &&
+      c.category !== 'Stablecoin' &&
+      c.category !== 'Meme'
     )
-    if (!res.ok) return []
 
-    const json = await res.json()
-    const coins = json.data ?? []
+    log(`CryptoRank: ${allCoins.length} coins scanned, ${untraded.length} untraded with funding`)
 
-    return coins
-      .filter((c) => {
-        // Chỉ lấy coin chưa trade, có funding, không phải stablecoin
-        return c.lifeCycle !== 'traded'
-          && c.hasFundingRounds === true
-          && c.category !== 'Stablecoin'
-      })
-      .slice(0, 30)
-      .map((c) => ({
-        id:        c.key,
-        name:      c.name,
-        symbol:    c.symbol,
-        category:  c.category,
-        lifeCycle: c.lifeCycle,
-        logo:      c.image?.icon ?? null,
-      }))
+    return untraded.map(c => ({
+      id:              c.key,
+      name:            c.name,
+      symbol:          c.symbol,
+      category:        c.category,
+      lifeCycle:       c.lifeCycle,
+      logo:            c.image?.icon ?? null,
+      totalFundingUsd: c.totalFundingUsd ?? null,
+    }))
   } catch (err) {
     log(`CryptoRank fetch error: ${err.message}`)
     return []
   }
+}
+
+// ── CoinMarketCap ICO Calendar (free, no key needed) ─────────────────────────
+// Nguồn thay thế cho CryptoRank drophunting — listing upcoming + ongoing ICO/IDO
+
+async function fetchCMCUpcoming() {
+  try {
+    const res = await fetch(
+      'https://api.coinmarketcap.com/dex/v1/upcoming?limit=30&status=upcoming',
+      { headers: { Accept: 'application/json', 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10_000) }
+    )
+    if (!res.ok) return []
+    const json = await res.json()
+    const items = json.data ?? json.items ?? []
+    return items.map(i => ({
+      id:   (i.slug ?? i.name ?? '').toLowerCase().replace(/\s+/g, '-'),
+      name: i.name ?? i.projectName ?? '',
+      symbol: i.symbol ?? null,
+      category: i.category ?? i.type ?? 'Unknown',
+      source: 'cmc-upcoming',
+    })).filter(i => i.name)
+  } catch {
+    return []
+  }
+}
+
+// ── Auto-discovery helpers ────────────────────────────────────────────────────
+
+function getCategoryEmoji(category) {
+  const c = (category ?? '').toLowerCase()
+  if (c.includes('layer 1') || c === 'l1')   return '⛓️'
+  if (c.includes('layer 2') || c === 'l2')   return '🔵'
+  if (c.includes('defi'))                     return '💱'
+  if (c.includes('ai') || c.includes('data')) return '🤖'
+  if (c.includes('gaming') || c.includes('game')) return '🎮'
+  if (c.includes('nft'))                      return '🖼️'
+  if (c.includes('social'))                   return '💬'
+  if (c.includes('privacy') || c.includes('zk')) return '🔒'
+  if (c.includes('oracle'))                   return '🔮'
+  if (c.includes('bridge'))                   return '🌉'
+  if (c.includes('rwa') || c.includes('real world')) return '🏦'
+  if (c.includes('infra') || c.includes('infrastructure')) return '🏗️'
+  return '🔷'
+}
+
+function formatFunding(amountUsd) {
+  if (!amountUsd || amountUsd <= 0) return 'TBD'
+  if (amountUsd >= 1_000_000_000)   return `$${(amountUsd / 1e9).toFixed(1)}B`
+  if (amountUsd >= 1_000_000)       return `$${Math.round(amountUsd / 1e6)}M`
+  if (amountUsd >= 1_000)           return `$${Math.round(amountUsd / 1e3)}K`
+  return `$${amountUsd}`
+}
+
+function estimateProb(amountUsd) {
+  if (!amountUsd || amountUsd <= 0) return 'Trung bình'
+  if (amountUsd >= 100_000_000)     return 'Rất cao'
+  if (amountUsd >= 30_000_000)      return 'Cao'
+  return 'Trung bình'
+}
+
+const PROB_ORDER = { 'Rất cao': 0, 'Cao': 1, 'Trung bình': 2, 'Thấp': 3 }
+
+function getDefaultSteps(category) {
+  const c = (category ?? '').toLowerCase()
+
+  if (c.includes('layer 1') || c === 'l1' || c.includes('layer 2') || c === 'l2') return [
+    { action: 'Dùng faucet & tương tác testnet', detail: 'Nhận token testnet, thực hiện transfers, swap, stake' },
+    { action: 'Bridge assets sang chain',         detail: 'Bridge ETH/USDC qua official bridge để build cross-chain history' },
+    { action: 'Dùng native dApps',                detail: 'Swap, lend, provide liquidity trên dApps của chain' },
+    { action: 'Giao dịch đều đặn nhiều tuần',     detail: 'Consistency quan trọng hơn số tiền — nhiều tx nhỏ tốt hơn 1 tx lớn' },
+  ]
+
+  if (c.includes('defi')) return [
+    { action: 'Swap token trên protocol',  detail: 'Thực hiện swap trực tiếp — mỗi swap là 1 interaction point' },
+    { action: 'Provide liquidity',         detail: 'Add liquidity vào pool → LP token, thường được tính điểm cao' },
+    { action: 'Lending/Borrowing',         detail: 'Supply collateral và borrow để tối đa hoá protocol usage' },
+    { action: 'Giao dịch thường xuyên',    detail: 'Dùng đều đặn nhiều ngày/tuần, tránh để account inactive' },
+  ]
+
+  if (c.includes('infra') || c.includes('infrastructure') || c.includes('developer')) return [
+    { action: 'Tạo tài khoản developer',   detail: 'Đăng ký developer account/API key nếu có' },
+    { action: 'Deploy smart contract mẫu', detail: 'Deploy 1 contract đơn giản lên testnet' },
+    { action: 'Dùng testnet/devnet',       detail: 'Tương tác với product trên testnet để build activity' },
+    { action: 'Join Discord developer',    detail: 'Tham gia Discord, complete onboarding tasks' },
+  ]
+
+  if (c.includes('ai')) return [
+    { action: 'Tạo tài khoản & dùng sản phẩm', detail: 'Dùng AI product chính của dự án — mọi request đều tính' },
+    { action: 'Tham gia testnet beta',           detail: 'Đăng ký early access / waitlist nếu chưa public' },
+    { action: 'Complete onboarding tasks',       detail: 'Discord, Twitter follow, referral tasks' },
+    { action: 'Contribute data nếu có',          detail: 'Một số AI project thưởng cho data contributors' },
+  ]
+
+  // Default — generic
+  return [
+    { action: 'Tham gia testnet',              detail: 'Testnet thường là tiêu chí airdrop quan trọng nhất' },
+    { action: 'Dùng sản phẩm chính',           detail: 'Tương tác đa dạng với platform — mỗi loại action tính điểm khác nhau' },
+    { action: 'Complete social tasks',         detail: 'Twitter follow, retweet, Discord tasks, Galxe/Zealy campaigns' },
+    { action: 'Giao dịch đều đặn',             detail: 'Nhiều tuần activity tốt hơn 1 lần giao dịch lớn' },
+  ]
+}
+
+// ── Auto-discover & add new projects ─────────────────────────────────────────
+// Nguồn: CryptoRank untraded coins + AirdropAlert RSS + DappRadar
+// Giải quyết vấn đề bỏ sót: mỗi ngày so sánh feeds vs danh sách hiện tại,
+// tự động thêm dự án mới nếu:
+//   1. Xuất hiện trong ít nhất 1 feed
+//   2. Có funding data (CryptoRank) HOẶC đang được list trên airdrop sites
+//   3. Chưa có trong projects/graduated
+//   4. CoinGecko xác nhận chưa có market_cap_rank (→ chưa trade)
+
+async function autoDiscoverNewProjects(crCoins, fundingRounds, airdropAlertItems, dappRadarAirdrops, existingProjects, graduatedProjects) {
+  // ── Build dedup sets ──
+  const knownIds   = new Set([...existingProjects.map(p => p.id),   ...graduatedProjects.map(p => p.id)])
+  const knownNames = new Set([
+    ...existingProjects.map(p => p.name.toLowerCase()),
+    ...graduatedProjects.map(p => p.name.toLowerCase()),
+  ])
+
+  // Normalize name for fuzzy dedup
+  const normName = s => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const knownNormed = new Set([
+    ...existingProjects.map(p => normName(p.name)),
+    ...graduatedProjects.map(p => normName(p.name)),
+  ])
+
+  // ── Build funding lookup ──
+  const fundingByKey  = {}
+  const fundingByName = {}
+  for (const r of fundingRounds) {
+    const key = r.coinKey ?? r.id
+    if (key) {
+      const prev = fundingByKey[key]
+      if (!prev || (r.amountUsd ?? 0) > (prev.amountUsd ?? 0)) fundingByKey[key] = r
+    }
+    const n = (r.coinName ?? '').toLowerCase()
+    if (n) {
+      const prev = fundingByName[n]
+      if (!prev || (r.amountUsd ?? 0) > (prev.amountUsd ?? 0)) fundingByName[n] = r
+    }
+  }
+
+  // ── Collect candidates from all sources ──
+  const candidates = new Map() // key: normalizedName → candidate object
+
+  // Source 1: CryptoRank untraded coins (has direct funding data)
+  for (const coin of crCoins) {
+    const key = normName(coin.name)
+    if (knownIds.has(coin.id) || knownNames.has(coin.name.toLowerCase()) || knownNormed.has(key)) continue
+    const funding   = fundingByKey[coin.id] ?? fundingByName[coin.name.toLowerCase()] ?? null
+    const amountUsd = funding?.amountUsd ?? coin.totalFundingUsd ?? null
+    if (!candidates.has(key)) {
+      candidates.set(key, {
+        id: coin.id, name: coin.name, symbol: coin.symbol,
+        category: coin.category, lifeCycle: coin.lifeCycle,
+        amountUsd, investors: (funding?.investors ?? []).slice(0,3).join(', ') || null,
+        sources: ['cryptorank'],
+      })
+    }
+  }
+
+  // Source 2: AirdropAlert RSS — extract project names từ titles
+  for (const item of airdropAlertItems) {
+    // Title thường có dạng: "ProjectName Airdrop", "ProjectName Testnet Airdrop", etc.
+    const rawName = item.title
+      ?.replace(/\s*(airdrop|testnet|mainnet|token|launch|ido|ico|presale|retrodrop)\s*/gi, '')
+      ?.replace(/[^a-zA-Z0-9 ]/g, '')
+      ?.trim()
+    if (!rawName || rawName.length < 3) continue
+    const key = normName(rawName)
+    if (knownNormed.has(key) || candidates.has(key)) continue
+    candidates.set(key, {
+      id: rawName.toLowerCase().replace(/\s+/g, '-'),
+      name: rawName,
+      symbol: null, category: 'Unknown', lifeCycle: null,
+      amountUsd: null, investors: null,
+      sources: ['airdrop-alert'],
+      link: item.link,
+    })
+  }
+
+  // Source 3: DappRadar airdrops
+  for (const item of dappRadarAirdrops) {
+    const name = item.name
+    if (!name || name === 'Unknown') continue
+    const key = normName(name)
+    if (knownNormed.has(key)) continue
+    if (candidates.has(key)) {
+      candidates.get(key).sources.push('dappradar')
+    } else {
+      candidates.set(key, {
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name, symbol: null, category: item.chain ? 'DeFi' : 'Unknown',
+        lifeCycle: null, amountUsd: null, investors: null,
+        sources: ['dappradar'],
+        link: item.link, chain: item.chain,
+        totalValue: item.totalValue,
+      })
+    }
+  }
+
+  log(`\n🔍 Discovery candidates: ${candidates.size} total từ tất cả feeds`)
+
+  // ── Filter & verify candidates ──
+  // Tiêu chí pass:
+  //   A) CryptoRank untraded + funding ≥ $1M → auto-add (reliable source)
+  //   B) Xuất hiện trong ≥2 feeds → cần verify thêm (CoinGecko check)
+  //   C) DappRadar/AirdropAlert chỉ 1 feed → cần funding data để add
+
+  const discovered = []
+
+  for (const [, cand] of candidates) {
+    const hasGoodFunding = cand.amountUsd && cand.amountUsd >= 1_000_000
+    const multiSource    = cand.sources.length >= 2
+    const isCryptoRank   = cand.sources.includes('cryptorank')
+
+    // Bỏ qua nếu không đủ tín hiệu
+    if (!hasGoodFunding && !multiSource) {
+      // Chỉ 1 nguồn mà không có funding → skip (tránh thêm dự án rác)
+      continue
+    }
+
+    // Với candidate chưa có funding info (từ RSS/DappRadar), thử CoinGecko
+    // để verify chưa trade (có rank → đã trade → skip)
+    if (!isCryptoRank && !hasGoodFunding) {
+      try {
+        const geckoRes = await fetch(
+          `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(cand.name)}`,
+          { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8_000) }
+        )
+        if (geckoRes.ok) {
+          const { coins = [] } = await geckoRes.json()
+          const match = coins.find(c => normName(c.name) === normName(cand.name))
+          if (match?.market_cap_rank) {
+            log(`  ⏭️  Skip "${cand.name}" — đã có market_cap_rank #${match.market_cap_rank} (đã trade)`)
+            continue
+          }
+        }
+        await sleep(1_500) // rate limit
+      } catch { /* ignore */ }
+    }
+
+    const prob = estimateProb(cand.amountUsd)
+
+    discovered.push({
+      id:          cand.id,
+      name:        cand.name,
+      logo:        getCategoryEmoji(cand.category),
+      category:    cand.category ?? 'Unknown',
+      raised:      formatFunding(cand.amountUsd),
+      investors:   cand.investors ?? 'TBD',
+      status:      cand.lifeCycle === 'testnet' ? 'Testnet' : (cand.lifeCycle ?? 'TBD'),
+      prob,
+      tge:         'TBD',
+      hasToken:    false,
+      autoAdded:   true,
+      autoAddedAt: new Date().toISOString().split('T')[0],
+      discoveredFrom: cand.sources,
+      symbol:      cand.symbol ?? null,
+      cgSearch:    cand.symbol ? `${cand.name} ${cand.symbol}` : cand.name,
+      xSearch:     `${cand.name} token airdrop`,
+      desc:        [
+        `${cand.name}`,
+        cand.amountUsd ? ` huy động ${formatFunding(cand.amountUsd)}` : '',
+        cand.investors  ? ` từ ${cand.investors}` : '',
+        `. Phát hiện qua: ${cand.sources.join(', ')}.`,
+        ` Chưa phát token — tự động thêm bởi daily update script.`,
+      ].join(''),
+      steps: getDefaultSteps(cand.category),
+      links: {
+        site: cand.link ?? `https://cryptorank.io/price/${cand.id}`,
+      },
+    })
+  }
+
+  if (discovered.length > 0) {
+    log(`\n🆕 Auto-discovered ${discovered.length} dự án mới:`)
+    discovered.forEach(p => log(`   + ${p.name} | raised=${p.raised} | sources=${p.discoveredFrom?.join('+')} | ${p.prob}`))
+  } else {
+    log('\n✅ Không có dự án mới — danh sách đã đầy đủ')
+  }
+
+  return discovered
 }
 
 // ── Telegram alert ────────────────────────────────────────────────────────────
@@ -710,9 +999,9 @@ async function checkProjectStatus(project) {
   log(`\nChecking: ${project.name}...`)
 
   // ① DexScreener + CoinPaprika + CoinGecko song song (miễn phí, không cần key)
-  // Delay 1.2s sau mỗi project để tránh rate limit CoinGecko (50 req/min free tier)
+  // Delay 3s sau mỗi project để tránh rate limit CoinGecko (~10 req/10s free tier)
   const tokenStatus = await checkTokenStatus(project)
-  await sleep(1_200)
+  await sleep(3_000)
 
   if (tokenStatus.hasToken && !tokenStatus.needsXVerify) {
     // Đủ chắc → graduate ngay
@@ -809,41 +1098,62 @@ async function main() {
     ])
   }
 
-  // 3. Fetch CryptoRank để xem dự án mới
-  log('\nFetch CryptoRank drophunting...')
-  const crCoins     = await fetchCryptoRankDropHunting()
-  const existingIds = new Set(projects.map((p) => p.id))
+  // 3. Fetch CryptoRank drophunting + external sources song song
+  log('\n── Fetching CryptoRank + external data sources ──')
+  const [
+    crCoins,
+    defiLlamaYields,
+    dappRadarAirdrops,
+    airdropAlertItems,
+    cryptorankFunding,
+  ] = await Promise.allSettled([
+    fetchCryptoRankDropHunting(),
+    fetchDefiLlamaYields(),
+    fetchDappRadarAirdrops(),
+    fetchAirdropAlertRSS(),
+    fetchCryptoRankFunding(),
+  ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []))
 
-  const newSuggestions = crCoins
-    .filter((c) => !existingIds.has(c.id))
-    .slice(0, 5)
+  log(`CryptoRank drophunting: ${crCoins.length} coins`)
+  log(`DeFiLlama yields: ${defiLlamaYields.length} pools`)
+  log(`DappRadar airdrops: ${dappRadarAirdrops.length} items`)
+  log(`AirdropAlert RSS: ${airdropAlertItems.length} items`)
+  log(`CryptoRank funding: ${cryptorankFunding.length} rounds`)
 
-  if (newSuggestions.length > 0) {
-    log(`\n📌 CryptoRank gợi ý ${newSuggestions.length} dự án mới cần xem xét:`)
-    newSuggestions.forEach((c) => log(`   - ${c.name} (${c.symbol}) [${c.lifeCycle}]`))
-  }
-
-  // 4. Fetch airdrops.io
+  // 4. Fetch airdrops.io (nhẹ, bổ sung)
   log('\nFetch airdrops.io...')
   const airdropsIONames = await fetchAirdropsIO()
   if (airdropsIONames.length > 0) {
     log(`airdrops.io có ${airdropsIONames.length} tên: ${airdropsIONames.join(', ')}`)
   }
 
-  // 5. Fetch external data sources (chạy song song để nhanh)
-  log('\n── Fetching external data sources ──')
-  const [defiLlamaYields, dappRadarAirdrops, airdropAlertItems, cryptorankFunding] =
-    await Promise.allSettled([
-      fetchDefiLlamaYields(),
-      fetchDappRadarAirdrops(),
-      fetchAirdropAlertRSS(),
-      fetchCryptoRankFunding(),
-    ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []))
+  // 5. Auto-discover dự án mới — so sánh feeds vs danh sách, tự thêm nếu đủ tiêu chí
+  log('\n── Auto-discovering new projects ──')
+  const autoDiscovered = await autoDiscoverNewProjects(
+    crCoins,
+    cryptorankFunding,
+    airdropAlertItems,
+    dappRadarAirdrops,
+    stillActive,
+    graduated,
+  )
 
-  log(`DeFiLlama yields: ${defiLlamaYields.length} pools`)
-  log(`DappRadar airdrops: ${dappRadarAirdrops.length} items`)
-  log(`AirdropAlert RSS: ${airdropAlertItems.length} items`)
-  log(`CryptoRank funding: ${cryptorankFunding.length} rounds`)
+  // Merge: dự án cũ vẫn active + dự án mới auto-discovered
+  // Sort theo prob (Rất cao → Cao → Trung bình → Thấp) rồi theo funding lớn nhất
+  const allActive = [...stillActive, ...autoDiscovered].sort((a, b) => {
+    const probDiff = (PROB_ORDER[a.prob] ?? 9) - (PROB_ORDER[b.prob] ?? 9)
+    if (probDiff !== 0) return probDiff
+    // Cùng prob → sort theo funding (lớn trước)
+    const parseAmt = s => {
+      if (!s || s === 'TBD') return 0
+      const n = parseFloat(s.replace(/[$,BMK]/gi, ''))
+      if (s.includes('B')) return n * 1e9
+      if (s.includes('M')) return n * 1e6
+      if (s.includes('K')) return n * 1e3
+      return n
+    }
+    return parseAmt(b.raised) - parseAmt(a.raised)
+  })
 
   // Keep previous external data if fetch failed (fallback)
   const prevYields    = store.yields ?? []
@@ -855,20 +1165,22 @@ async function main() {
     lastUpdated: new Date().toISOString().split('T')[0],
     source:      'Auto-updated daily via GitHub Actions · DexScreener + CoinPaprika + CoinGecko + X API + DeFiLlama + DappRadar + AirdropAlert',
     updateLog: {
-      graduatedThisRun:  newGraduated.map((g) => g.name),
-      checkedProjects:   projects.length,
-      runAt:             new Date().toISOString(),
-      xApiUsed:          !!X_TOKEN,
+      graduatedThisRun:    newGraduated.map((g) => g.name),
+      autoDiscoveredAdded: autoDiscovered.map((p) => `${p.name} (${p.symbol ?? '?'}) ${p.raised}`),
+      checkedProjects:     projects.length,
+      totalActiveAfter:    allActive.length,
+      runAt:               new Date().toISOString(),
+      xApiUsed:            !!X_TOKEN,
       verificationSources: ['dexscreener', 'coinpaprika', 'coingecko', X_TOKEN ? 'x-api' : null].filter(Boolean),
-      newSuggestionsFromCryptoRank: newSuggestions.map((c) => `${c.name} (${c.symbol})`),
       externalFetchCounts: {
+        cryptorankDrophunting: crCoins.length,
         defiLlama:    defiLlamaYields.length,
         dappRadar:    dappRadarAirdrops.length,
         airdropAlert: airdropAlertItems.length,
-        cryptorank:   cryptorankFunding.length,
+        cryptorankFunding: cryptorankFunding.length,
       },
     },
-    projects:  stillActive,
+    projects:  allActive,
     graduated: [
       ...newGraduated,
       ...(graduated.filter((g) => !newGraduated.find((n) => n.id === g.id))),
@@ -883,12 +1195,13 @@ async function main() {
   writeFileSync(DATA, JSON.stringify(updated, null, 2), 'utf-8')
 
   log(`\n═══ Kết quả ═══`)
-  log(`  Active:         ${stillActive.length} dự án`)
-  log(`  Graduated:      ${newGraduated.length} dự án mới phát hiện`)
-  log(`  DeFiLlama:      ${defiLlamaYields.length} pools`)
-  log(`  DappRadar:      ${dappRadarAirdrops.length} airdrops`)
-  log(`  AirdropAlert:   ${airdropAlertItems.length} items`)
-  log(`  CryptoRank FRs: ${cryptorankFunding.length} funding rounds`)
+  log(`  Active projects:    ${allActive.length} dự án (${stillActive.length} cũ + ${autoDiscovered.length} mới auto-discovered)`)
+  log(`  Graduated mới:      ${newGraduated.length} dự án`)
+  log(`  CryptoRank scan:    ${crCoins.length} coins checked`)
+  log(`  DeFiLlama:          ${defiLlamaYields.length} pools`)
+  log(`  DappRadar:          ${dappRadarAirdrops.length} airdrops`)
+  log(`  AirdropAlert:       ${airdropAlertItems.length} items`)
+  log(`  CryptoRank FRs:     ${cryptorankFunding.length} funding rounds`)
   log(`  File đã ghi: ${DATA}`)
   log('═══ Done ═══')
 }
