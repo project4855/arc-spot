@@ -92,9 +92,9 @@ function stepIcon(state: BridgeStep['state']) {
 function stepLabel(name: string): string {
   switch (name) {
     case 'approve':  return 'Approve USDC'
-    case 'burn':     return 'Burn trên nguồn'
-    case 'attest':   return 'Xác thực Circle'
-    case 'mint':     return 'Mint trên Arc'
+    case 'burn':     return 'Burn on Source'
+    case 'attest':   return 'Circle Attestation'
+    case 'mint':     return 'Mint on Arc'
     default:         return name
   }
 }
@@ -191,7 +191,7 @@ export default function BridgePanel() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const provider = (window as any).ethereum
-      if (!provider) throw new Error('Không tìm thấy ví. Vui lòng cài MetaMask.')
+      if (!provider) throw new Error('No wallet found. Please install MetaMask.')
 
       const adapter = await createViemAdapterFromProvider({ provider })
       const kit = new AppKit()
@@ -228,7 +228,7 @@ export default function BridgePanel() {
 
       const record: BridgeRecord = {
         id: Date.now().toString(),
-        time: new Date().toLocaleTimeString('vi-VN'),
+        time: new Date().toLocaleTimeString('en-US'),
         fromChain: fromChain.shortName,
         amount,
         txHash: finalSteps.find(s => s.txHash)?.txHash ?? '—',
@@ -241,7 +241,7 @@ export default function BridgePanel() {
 
     } catch (err: unknown) {
       cancelAnim()
-      const msg = err instanceof Error ? err.message : 'Bridge thất bại. Vui lòng thử lại.'
+      const msg = err instanceof Error ? err.message : 'Bridge failed. Please try again.'
       setError(msg)
       // Mark current processing step as failed
       setSteps(prev => prev.map(s => s.state === 'processing' ? { ...s, state: 'failed' } : s))
@@ -261,12 +261,12 @@ export default function BridgePanel() {
         <div className="flex-1 text-left">
           <p className="text-violet-700 font-semibold text-sm">Powered by Circle CCTP</p>
           <p className="text-slate-500 text-xs mt-0.5">
-            Bridge USDC từ bất kỳ chain nào về Arc Testnet · Tốc độ nhanh ~2 phút
+            Bridge USDC from any chain to Arc Testnet · Fast speed ~2 minutes
           </p>
         </div>
         <a href="https://docs.arc.io/app-kit/bridge" target="_blank" rel="noreferrer"
           className="text-violet-600 text-xs hover:text-violet-700 transition-colors whitespace-nowrap">
-          Tài liệu ↗
+          Docs ↗
         </a>
       </div>
 
@@ -278,7 +278,7 @@ export default function BridgePanel() {
           {/* From chain selector */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest mb-3">
-              Từ Chain
+              From Chain
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
               {SOURCE_CHAINS.map(chain => (
@@ -309,11 +309,11 @@ export default function BridgePanel() {
             <div className="mt-3 flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
               <span className="text-amber-600 text-sm mt-px">⚠️</span>
               <p className="text-amber-600/80 text-[11px] leading-relaxed">
-                Cần có <strong>{fromChain.nativeToken}</strong> trên {fromChain.shortName} để trả phí gas.{' '}
+                You need <strong>{fromChain.nativeToken}</strong> on {fromChain.shortName} to pay gas fees.{' '}
                 {fromChain.faucetUrl && (
                   <a href={fromChain.faucetUrl} target="_blank" rel="noreferrer"
                     className="underline hover:text-amber-700 transition-colors">
-                    Lấy {fromChain.nativeToken} testnet ↗
+                    Get {fromChain.nativeToken} testnet ↗
                   </a>
                 )}
               </p>
@@ -325,7 +325,7 @@ export default function BridgePanel() {
             {/* Amount input */}
             <div className="mb-4">
               <label className="text-slate-500 text-xs font-semibold uppercase tracking-widest block mb-2">
-                Số lượng USDC
+                USDC Amount
               </label>
               <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus-within:border-violet-400 transition-colors">
                 <span className="text-slate-400 text-lg">💵</span>
@@ -354,7 +354,7 @@ export default function BridgePanel() {
             {/* Speed selector */}
             <div>
               <label className="text-slate-500 text-xs font-semibold uppercase tracking-widest block mb-2">
-                Tốc độ
+                Speed
               </label>
               <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl">
                 <button
@@ -364,7 +364,7 @@ export default function BridgePanel() {
                       ? 'bg-violet-600 text-white shadow-md'
                       : 'text-slate-500 hover:text-slate-700'
                   }`}>
-                  <span>⚡</span> Nhanh <span className="text-xs opacity-70">(~2 phút)</span>
+                  <span>⚡</span> Fast <span className="text-xs opacity-70">(~2 min)</span>
                 </button>
                 <button
                   onClick={() => setSpeed('standard')}
@@ -373,12 +373,12 @@ export default function BridgePanel() {
                       ? 'bg-violet-600 text-white shadow-md'
                       : 'text-slate-500 hover:text-slate-700'
                   }`}>
-                  <span>🐌</span> Chuẩn <span className="text-xs opacity-70">(~20 phút)</span>
+                  <span>🐌</span> Standard <span className="text-xs opacity-70">(~20 min)</span>
                 </button>
               </div>
               {speed === 'fast' && (
                 <p className="text-[11px] text-slate-400 mt-1.5 text-center">
-                  Phí CCTP Fast Transfer áp dụng · Phí thấp hơn với Standard
+                  CCTP Fast Transfer fee applies · Lower fee with Standard
                 </p>
               )}
             </div>
@@ -418,7 +418,7 @@ export default function BridgePanel() {
 
             {address && (
               <p className="text-[11px] text-slate-400 mt-2 text-center">
-                Nhận tại: <span className="text-slate-500 font-mono">{address.slice(0, 8)}…{address.slice(-6)}</span>
+                Recipient: <span className="text-slate-500 font-mono">{address.slice(0, 8)}…{address.slice(-6)}</span>
               </p>
             )}
           </div>
@@ -434,7 +434,7 @@ export default function BridgePanel() {
           {/* Bridge button */}
           {!isConnected ? (
             <div className="text-center py-4 text-slate-500 text-sm bg-white border border-slate-200 rounded-2xl shadow-sm">
-              Kết nối ví để bridge
+              Connect wallet to bridge
             </div>
           ) : (
             <button
@@ -452,7 +452,7 @@ export default function BridgePanel() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                   </svg>
-                  Đang bridge…
+                  Bridging…
                 </span>
               ) : `🌉 Bridge ${amount ? `${amount} USDC` : 'USDC'} → Arc Testnet`}
             </button>
@@ -465,15 +465,15 @@ export default function BridgePanel() {
           {/* Transaction Steps */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-900 font-bold text-sm">Tiến trình Bridge</h3>
+              <h3 className="text-slate-900 font-bold text-sm">Bridge Progress</h3>
               {isBridging && (
                 <span className="flex items-center gap-1.5 text-[11px] text-violet-600">
                   <span className="w-1.5 h-1.5 bg-violet-600 rounded-full animate-pulse" />
-                  Đang xử lý
+                  Processing
                 </span>
               )}
               {result && (
-                <span className="text-[11px] text-emerald-600 font-semibold">✓ Hoàn thành</span>
+                <span className="text-[11px] text-emerald-600 font-semibold">✓ Complete</span>
               )}
             </div>
 
@@ -536,10 +536,10 @@ export default function BridgePanel() {
             {result && (
               <div className="mt-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
                 <p className="text-emerald-600 font-semibold text-sm text-center">
-                  🎉 Bridge thành công!
+                  🎉 Bridge successful!
                 </p>
                 <p className="text-slate-500 text-[11px] text-center mt-1">
-                  {result.amount} USDC đã đến Arc Testnet
+                  {result.amount} USDC arrived on Arc Testnet
                 </p>
               </div>
             )}
@@ -547,20 +547,20 @@ export default function BridgePanel() {
             {/* Idle hint */}
             {!isBridging && !result && (
               <p className="text-slate-300 text-[11px] text-center mt-4">
-                Nhập số lượng và nhấn Bridge để bắt đầu
+                Enter amount and click Bridge to start
               </p>
             )}
           </div>
 
           {/* How it works */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-            <h3 className="text-slate-900 font-bold text-sm mb-3">Cách hoạt động</h3>
+            <h3 className="text-slate-900 font-bold text-sm mb-3">How it works</h3>
             <div className="flex flex-col gap-3">
               {[
-                { step: '01', title: 'Approve',   desc: 'Ủy quyền cho CCTP contract sử dụng USDC của bạn' },
-                { step: '02', title: 'Burn',       desc: 'USDC bị đốt trên chain nguồn (không thể hoàn tác)' },
-                { step: '03', title: 'Attest',     desc: 'Circle xác thực giao dịch burn (~2 phút Fast)' },
-                { step: '04', title: 'Mint',       desc: 'USDC mới được tạo ra trên Arc Testnet cho bạn' },
+                { step: '01', title: 'Approve',   desc: 'Authorize the CCTP contract to use your USDC' },
+                { step: '02', title: 'Burn',       desc: 'USDC is burned on the source chain (irreversible)' },
+                { step: '03', title: 'Attest',     desc: 'Circle verifies the burn transaction (~2 min Fast)' },
+                { step: '04', title: 'Mint',       desc: 'New USDC is minted on Arc Testnet for you' },
               ].map(item => (
                 <div key={item.step} className="flex items-start gap-3">
                   <span className="text-violet-600 font-mono text-[10px] font-bold mt-0.5 flex-shrink-0 w-5">
@@ -578,7 +578,7 @@ export default function BridgePanel() {
           {/* Bridge history */}
           {history.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-              <h3 className="text-slate-900 font-bold text-sm mb-3">Lịch sử Bridge</h3>
+              <h3 className="text-slate-900 font-bold text-sm mb-3">Bridge History</h3>
               <div className="flex flex-col gap-2">
                 {history.map(h => (
                   <div key={h.id}
