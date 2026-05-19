@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import {
-  useAccount, useBalance, useWriteContract, useDeployContract,
+  useAccount, useBalance, useWriteContract, useSendTransaction,
   usePublicClient,
 } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -567,9 +567,9 @@ function BulkSendSection({
     return saved ? saved as `0x${string}` : null
   })
 
-  const publicClient              = usePublicClient()
-  const { writeContractAsync }    = useWriteContract()
-  const { deployContractAsync }   = useDeployContract()
+  const publicClient                  = usePublicClient()
+  const { writeContractAsync }        = useWriteContract()
+  const { sendTransactionAsync }      = useSendTransaction()
 
   const totalAmount = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0)
   const validRows   = rows.filter(r => isAddress(r.address) && parseFloat(r.amount) > 0)
@@ -588,15 +588,16 @@ function BulkSendSection({
       }
     ))
 
-  // ── Step 0: Deploy batch contract (one-time) ─────────────────────────────
+  // ── Step 0: Deploy batch contract via raw tx (no 'to' = contract creation) ──
   const handleDeploy = async () => {
     if (!address || !publicClient) return
     setStep('deploying')
     setErrMsg('')
     try {
-      const hash = await deployContractAsync({
-        abi:      BATCH_ABI,
-        bytecode: BATCH_BYTECODE,
+      // Sending tx with no `to` and bytecode as `data` is the standard EVM
+      // contract deployment — no ABI parsing needed.
+      const hash = await sendTransactionAsync({
+        data: BATCH_BYTECODE,
       })
       const receipt = await publicClient.waitForTransactionReceipt({ hash })
       const deployed = receipt.contractAddress
