@@ -149,23 +149,34 @@ function MarketCard({
   isConnected: boolean
   onBet:       (id: string, side: 'yes' | 'no', amount: number) => void
 }) {
-  const [open,   setOpen]   = useState(false)
-  const [side,   setSide]   = useState<'yes' | 'no'>('yes')
-  const [amount, setAmount] = useState('')
+  const [open,        setOpen]        = useState(false)
+  const [side,        setSide]        = useState<'yes' | 'no'>('yes')
+  const [amount,      setAmount]      = useState('')
+  const [confirmed,   setConfirmed]   = useState(false)
 
-  const odds    = getOdds(market.yesPool, market.noPool)
-  const amountN = parseFloat(amount) || 0
+  const odds       = getOdds(market.yesPool, market.noPool)
+  const amountN    = parseFloat(amount) || 0
   const returnOdds = side === 'yes' ? odds.yes : odds.no
-  const payout  = amountN > 0 && returnOdds > 0 ? (amountN / returnOdds) * 100 : 0
-  const cat     = CAT_META[market.category]
+  const payout     = amountN > 0 && returnOdds > 0 ? (amountN / returnOdds) * 100 : 0
+  const cat        = CAT_META[market.category]
+
+  function handleConfirm() {
+    if (amountN <= 0) return
+    onBet(market.id, side, amountN)
+    setAmount('')
+    setConfirmed(true)
+    setTimeout(() => { setConfirmed(false); setOpen(false) }, 1800)
+  }
 
   return (
     <div className={`bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col transition-all hover:shadow-md ${
+      open ? 'border-violet-400 shadow-md ring-1 ring-violet-200/60' :
       market.featured ? 'border-violet-300 ring-1 ring-violet-200/60' : 'border-slate-200'
     }`}>
-      {market.featured && (
+      {market.featured && !open && (
         <div className="h-1 bg-gradient-to-r from-violet-500 to-blue-500" />
       )}
+      {open && <div className="h-1 bg-gradient-to-r from-emerald-500 to-violet-500" />}
 
       <div className="p-4 flex flex-col gap-3 flex-1">
         {/* Meta */}
@@ -192,7 +203,7 @@ function MarketCard({
           </div>
         </div>
 
-        {/* Volume + my bet */}
+        {/* Volume + my bet badge */}
         <div className="flex items-center justify-between text-[11px]">
           <span className="text-slate-400">
             Vol: <strong className="text-slate-600">{fmtVol(market.yesPool + market.noPool)}</strong>
@@ -208,24 +219,31 @@ function MarketCard({
           )}
         </div>
 
-        {/* Bet UI */}
+        {/* ── Bet UI ── */}
         {!open ? (
+          /* Place Bet button — always clickable, opens form for everyone */
           <button
-            onClick={() => isConnected && setOpen(true)}
-            className={`mt-auto w-full py-2 rounded-xl text-xs font-bold transition-all ${
-              isConnected
-                ? 'bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-            }`}>
-            {isConnected ? 'Place Bet' : 'Connect wallet to bet'}
+            onClick={() => setOpen(true)}
+            className="mt-auto w-full py-2.5 rounded-xl text-xs font-bold transition-all bg-violet-600 text-white hover:bg-violet-500 active:scale-95 shadow-sm"
+          >
+            🎯 Place Bet
           </button>
+        ) : confirmed ? (
+          /* Success flash */
+          <div className="mt-auto flex flex-col items-center gap-1.5 py-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <span className="text-2xl">🎉</span>
+            <p className="text-emerald-700 font-bold text-sm">Bet placed!</p>
+            <p className="text-emerald-600 text-[11px]">{side.toUpperCase()} · ${amountN > 0 ? amountN.toFixed(2) : '—'}</p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 mt-auto">
-            {/* YES / NO */}
+          /* Expanded bet form */
+          <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-3 mt-auto">
+
+            {/* YES / NO toggle */}
             <div className="grid grid-cols-2 gap-1.5">
               {(['yes', 'no'] as const).map(s => (
                 <button key={s} onClick={() => setSide(s)}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
                     side === s
                       ? s === 'yes' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-red-500 text-white shadow-sm'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
@@ -236,12 +254,13 @@ function MarketCard({
             </div>
 
             {/* Amount input */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus-within:border-violet-400 transition-colors">
-              <span className="text-slate-400 text-xs shrink-0">USDC</span>
+            <div className="flex items-center gap-2 bg-slate-50 border-2 border-violet-300 rounded-xl px-3 py-2 focus-within:border-violet-500 transition-colors">
+              <span className="text-slate-500 text-xs font-semibold shrink-0">USDC</span>
               <input
+                autoFocus
                 type="number" min="0" placeholder="0.00" value={amount}
                 onChange={e => setAmount(e.target.value)}
-                className="flex-1 bg-transparent text-slate-900 font-bold text-sm outline-none min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="flex-1 bg-transparent text-slate-900 font-bold text-base outline-none min-w-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
 
@@ -249,7 +268,7 @@ function MarketCard({
             <div className="flex gap-1">
               {[5, 10, 25, 50].map(v => (
                 <button key={v} onClick={() => setAmount(String(v))}
-                  className="flex-1 py-1 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 text-[11px] font-medium transition-colors">
+                  className="flex-1 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-violet-100 hover:text-violet-700 text-[11px] font-semibold transition-colors">
                   ${v}
                 </button>
               ))}
@@ -259,25 +278,34 @@ function MarketCard({
             {amountN > 0 && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 flex justify-between text-[11px]">
                 <span className="text-emerald-700">Potential payout</span>
-                <span className="font-bold text-emerald-700">${payout.toFixed(2)}</span>
+                <span className="font-bold text-emerald-700">${payout.toFixed(2)} USDC</span>
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button
-                disabled={amountN <= 0}
-                onClick={() => { if (amountN > 0) { onBet(market.id, side, amountN); setAmount(''); setOpen(false) } }}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                  side === 'yes' ? 'bg-emerald-500 text-white hover:bg-emerald-400' : 'bg-red-500 text-white hover:bg-red-400'
-                }`}>
-                Confirm {side.toUpperCase()}
-              </button>
-              <button onClick={() => { setOpen(false); setAmount('') }}
-                className="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-xs hover:bg-slate-200 transition-colors">
-                ✕
-              </button>
-            </div>
+            {/* Connect wall OR confirm button */}
+            {!isConnected ? (
+              <div className="flex flex-col items-center gap-2 py-2 bg-amber-50 border border-amber-200 rounded-xl px-3">
+                <p className="text-amber-700 text-[11px] font-semibold">Connect wallet to confirm bet</p>
+                <ConnectButton label="Connect" />
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  disabled={amountN <= 0}
+                  onClick={handleConfirm}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                    side === 'yes'
+                      ? 'bg-emerald-500 text-white hover:bg-emerald-400 shadow-sm'
+                      : 'bg-red-500 text-white hover:bg-red-400 shadow-sm'
+                  }`}>
+                  Confirm {side.toUpperCase()} {amountN > 0 ? `$${amountN}` : ''}
+                </button>
+                <button onClick={() => { setOpen(false); setAmount('') }}
+                  className="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-sm hover:bg-slate-200 transition-colors">
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
