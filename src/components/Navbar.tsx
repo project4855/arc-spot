@@ -40,25 +40,50 @@ export default function Navbar({ tab, onTabChange }: NavbarProps) {
           </span>
         </button>
 
-        {/* ── Tab navigation (evenly spaced, scrollable on tiny screens) ── */}
+        {/* ── Tab navigation ── */}
+        {/* On xl+ screens: evenly spaced with labels. Below xl: icon-only, scrollable */}
         <div className="flex-1 flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TABS.map(t => {
-            const active = tab === t.key
-            return (
-              <button
-                key={t.key}
-                onClick={() => onTabChange(t.key)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all min-w-[40px] ${
-                  active
-                    ? 'bg-violet-600 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                <span className="text-base leading-none">{t.icon}</span>
-                <span className="hidden lg:inline">{t.label}</span>
-              </button>
-            )
-          })}
+          {/* Icon-only row (< xl) */}
+          <div className="flex xl:hidden items-center gap-0.5 w-full">
+            {TABS.map(t => {
+              const active = tab === t.key
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => onTabChange(t.key)}
+                  title={t.label}
+                  className={`flex-1 flex items-center justify-center py-1.5 rounded-lg text-base transition-all min-w-[36px] shrink-0 ${
+                    active
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {t.icon}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Icon + label row (xl+) */}
+          <div className="hidden xl:flex items-center gap-0.5 w-full">
+            {TABS.map(t => {
+              const active = tab === t.key
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => onTabChange(t.key)}
+                  className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all min-w-[36px] ${
+                    active
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="text-base leading-none">{t.icon}</span>
+                  <span className="text-xs">{t.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* ── Right: wrong-network warning + faucet + wallet ── */}
