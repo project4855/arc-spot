@@ -38,15 +38,15 @@ export default function Navbar({ tab, onTabChange }: NavbarProps) {
           </span>
         </button>
 
-        {/* ── Tab navigation (scrollable, no scrollbar) ── */}
-        <div className="flex-1 flex items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* ── Tab navigation (evenly spaced, scrollable on tiny screens) ── */}
+        <div className="flex-1 flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map(t => {
             const active = tab === t.key
             return (
               <button
                 key={t.key}
                 onClick={() => onTabChange(t.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all shrink-0 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all min-w-[40px] ${
                   active
                     ? 'bg-violet-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
@@ -74,7 +74,7 @@ export default function Navbar({ tab, onTabChange }: NavbarProps) {
           >
             💧 Faucet
           </a>
-          <ConnectButton chainStatus="icon" showBalance={false} accountStatus="avatar" />
+          <ConnectButton chainStatus="icon" showBalance={true} accountStatus="avatar" />
         </div>
       </div>
     </nav>

@@ -496,7 +496,7 @@ function PositionCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
           { label: 'Margin',       value: fmtUSD(pos.margin),             cls: 'text-slate-700' },
           { label: 'Mark Price',   value: fmtPrice(currentPrice),          cls: pnlPos ? 'text-emerald-600' : 'text-red-500' },
@@ -565,47 +565,50 @@ function MarketsTable({
         </div>
       </div>
 
-      {/* Table header */}
-      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] px-5 py-2 bg-slate-50 border-b border-slate-100 text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
-        <span>Market</span>
-        <span className="text-right">Price</span>
-        <span className="text-right">24h %</span>
-        <span className="text-right">Open Interest</span>
-        <span className="text-right">Funding 8h</span>
-        <span />
-      </div>
+      {/* Scrollable table — prevents overflow on narrow screens */}
+      <div className="overflow-x-auto">
+        {/* Table header */}
+        <div className="grid grid-cols-[160px_100px_80px_120px_110px_80px] px-5 py-2 bg-slate-50 border-b border-slate-100 text-[11px] text-slate-500 font-semibold uppercase tracking-wider min-w-[660px]">
+          <span>Market</span>
+          <span className="text-right">Price</span>
+          <span className="text-right">24h %</span>
+          <span className="text-right">Open Interest</span>
+          <span className="text-right">Funding 8h</span>
+          <span />
+        </div>
 
-      <div className="divide-y divide-slate-50">
-        {filtered.map(m => {
-          const up = m.change24h >= 0
-          const fundingUp = m.funding8h >= 0
-          return (
-            <div key={m.coin}
-              className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] px-5 py-3 items-center hover:bg-slate-50 transition-colors cursor-pointer"
-              onClick={() => onSelect(m.coin)}>
-              <div className="flex items-center gap-2">
-                <CoinIcon coin={m.coin} size={7} />
-                <div>
-                  <span className="font-bold text-slate-900 text-xs">{m.coin}-PERP</span>
-                  <p className="text-[10px] text-slate-400">{m.maxLeverage}× max</p>
+        <div className="divide-y divide-slate-50 min-w-[660px]">
+          {filtered.map(m => {
+            const up = m.change24h >= 0
+            const fundingUp = m.funding8h >= 0
+            return (
+              <div key={m.coin}
+                className="grid grid-cols-[160px_100px_80px_120px_110px_80px] px-5 py-3 items-center hover:bg-slate-50 transition-colors cursor-pointer"
+                onClick={() => onSelect(m.coin)}>
+                <div className="flex items-center gap-2">
+                  <CoinIcon coin={m.coin} size={7} />
+                  <div>
+                    <span className="font-bold text-slate-900 text-xs">{m.coin}-PERP</span>
+                    <p className="text-[10px] text-slate-400">{m.maxLeverage}× max</p>
+                  </div>
                 </div>
+                <p className="text-slate-900 font-mono text-xs text-right font-semibold">{fmtPrice(m.markPx)}</p>
+                <p className={`text-xs text-right font-bold ${up ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {fmtPct(m.change24h)}
+                </p>
+                <p className="text-slate-600 text-xs text-right font-mono">{fmtUSD(m.openInterest)}</p>
+                <p className={`text-xs text-right font-semibold ${fundingUp ? 'text-red-500' : 'text-emerald-600'}`}>
+                  {fundingUp ? '+' : ''}{(m.funding8h * 100).toFixed(4)}%
+                </p>
+                <button
+                  onClick={e => { e.stopPropagation(); onSelect(m.coin) }}
+                  className="ml-auto px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-600 text-[11px] font-bold hover:bg-violet-100 transition-colors">
+                  Trade
+                </button>
               </div>
-              <p className="text-slate-900 font-mono text-xs text-right font-semibold">{fmtPrice(m.markPx)}</p>
-              <p className={`text-xs text-right font-bold ${up ? 'text-emerald-600' : 'text-red-500'}`}>
-                {fmtPct(m.change24h)}
-              </p>
-              <p className="text-slate-600 text-xs text-right font-mono">{fmtUSD(m.openInterest)}</p>
-              <p className={`text-xs text-right font-semibold ${fundingUp ? 'text-red-500' : 'text-emerald-600'}`}>
-                {fundingUp ? '+' : ''}{(m.funding8h * 100).toFixed(4)}%
-              </p>
-              <button
-                onClick={e => { e.stopPropagation(); onSelect(m.coin) }}
-                className="ml-3 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-600 text-[11px] font-bold hover:bg-violet-100 transition-colors">
-                Trade
-              </button>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -721,7 +724,7 @@ export default function DerivativesPanel() {
           </div>
 
           {/* Chart + Order form */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5">
 
             {/* Left: Chart */}
             <div className="flex flex-col gap-4">
