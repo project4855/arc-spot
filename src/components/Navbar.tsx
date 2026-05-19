@@ -2,13 +2,15 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount, useChainId } from 'wagmi'
 
 const TABS = [
-  { key: 'trade',    label: 'Trade',    icon: '📊' },
-  { key: 'bridge',   label: 'Bridge',   icon: '🌉' },
-  { key: 'lending',  label: 'Lending',  icon: '🏦' },
-  { key: 'perps',    label: 'Perps',    icon: '⚡' },
-  { key: 'traders',  label: 'Traders',  icon: '🏆' },
-  { key: 'airdrops', label: 'Airdrops', icon: '🪂' },
-  { key: 'wallet',   label: 'Wallet',   icon: '👛' },
+  { key: 'trade',     label: 'Trade',     icon: '🔄' },
+  { key: 'bridge',    label: 'Bridge',    icon: '🌉' },
+  { key: 'lending',   label: 'Lending',   icon: '🏦' },
+  { key: 'perps',     label: 'Perps',     icon: '⚡' },
+  { key: 'traders',   label: 'Traders',   icon: '🏆' },
+  { key: 'predict',   label: 'Predict',   icon: '🎯' },
+  { key: 'portfolio', label: 'Portfolio', icon: '💼' },
+  { key: 'airdrops',  label: 'Airdrops',  icon: '🪂' },
+  { key: 'wallet',    label: 'Wallet',    icon: '👛' },
 ] as const
 
 interface NavbarProps {
