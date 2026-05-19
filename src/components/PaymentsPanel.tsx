@@ -11,7 +11,7 @@ import {
   usePublicClient,
 } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { isAddress, parseUnits, encodeFunctionData } from 'viem'
+import { isAddress, parseUnits, encodeFunctionData, maxUint256 } from 'viem'
 import { TOKEN_ADDRESSES } from '../config/contracts'
 
 // ── Minimal ERC-20 transfer ABI ───────────────────────────────────────────────
@@ -537,13 +537,23 @@ const APPROVE_ABI = [
   },
 ] as const
 
-const LS_KEY = 'arc_batch_contract_5042002'
+const ALLOWANCE_ABI = [
+  {
+    name: 'allowance', type: 'function' as const,
+    stateMutability: 'view',
+    inputs:  [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const
+
+const LS_KEY       = 'arc_batch_contract_5042002'
+const LS_APPROVED  = 'arc_batch_approved_5042002'  // flag: max allowance already set
 
 type BulkStep =
   | 'idle'
-  | 'deploying'   // deploying batch contract (first-time setup)
-  | 'approving'   // waiting for approve() confirmation (#1)
-  | 'sending'     // waiting for disperseToken() confirmation (#2)
+  | 'deploying'   // deploying batch contract (first-time setup, once)
+  | 'approving'   // approve MAX_UINT256 (once ever — skipped on repeat sends)
+  | 'sending'     // disperseToken — THE only confirmation on repeat sends
   | 'done'
   | 'error'
 
@@ -566,6 +576,8 @@ function BulkSendSection({
     const saved = localStorage.getItem(LS_KEY)
     return saved ? saved as `0x${string}` : null
   })
+  // Track whether MAX allowance has been granted (skips approve on future sends)
+  const [maxApproved, setMaxApproved] = useState(() => !!localStorage.getItem(LS_APPROVED))
 
   const publicClient                  = usePublicClient()
   const { writeContractAsync }        = useWriteContract()
@@ -612,7 +624,20 @@ function BulkSendSection({
     }
   }
 
-  // ── Step 1+2: Approve + disperseToken (2 confirmations total) ────────────
+  // ── Allowance check helper ────────────────────────────────────────────────
+  const checkAllowance = async (): Promise<bigint> => {
+    if (!address || !publicClient || !batchAddr) return 0n
+    try {
+      return await publicClient.readContract({
+        address: TOKEN_ADDRESSES.USDC,
+        abi:     ALLOWANCE_ABI,
+        functionName: 'allowance',
+        args: [address, batchAddr],
+      }) as bigint
+    } catch { return 0n }
+  }
+
+  // ── Main send: approve MAX once, then only 1 confirmation per bulk send ──
   const handleSendAll = async () => {
     if (!address || !canSend || !batchAddr || !publicClient) return
     setResults([])
@@ -621,17 +646,24 @@ function BulkSendSection({
     const totalUnits = parseUnits(totalAmount.toFixed(6), 6)
 
     try {
-      // ── Confirmation #1: approve batch contract for total amount ──
-      setStep('approving')
-      const approveTx = await writeContractAsync({
-        address:      TOKEN_ADDRESSES.USDC,
-        abi:          APPROVE_ABI,
-        functionName: 'approve',
-        args:         [batchAddr, totalUnits],
-      })
-      await publicClient.waitForTransactionReceipt({ hash: approveTx })
+      // Check if allowance is already sufficient (MAX was approved before)
+      const allowance = maxApproved ? maxUint256 : await checkAllowance()
 
-      // ── Confirmation #2: disperseToken — sends to ALL recipients at once ──
+      if (allowance < totalUnits) {
+        // ── One-time approve MAX_UINT256 — never need to approve again ──
+        setStep('approving')
+        const approveTx = await writeContractAsync({
+          address:      TOKEN_ADDRESSES.USDC,
+          abi:          APPROVE_ABI,
+          functionName: 'approve',
+          args:         [batchAddr, maxUint256],
+        })
+        await publicClient.waitForTransactionReceipt({ hash: approveTx })
+        localStorage.setItem(LS_APPROVED, '1')
+        setMaxApproved(true)
+      }
+
+      // ── Single confirmation: disperseToken sends to ALL recipients at once ──
       setStep('sending')
       const dispatchTx = await writeContractAsync({
         address:      batchAddr,
@@ -674,21 +706,36 @@ function BulkSendSection({
     <div className="flex flex-col gap-4">
 
       {/* How it works banner */}
-      <div className="flex items-start gap-3 px-4 py-3 bg-violet-50 border border-violet-200 rounded-xl text-xs text-violet-700">
-        <span className="text-lg shrink-0">⚡</span>
+      <div className={`flex items-start gap-3 px-4 py-3 border rounded-xl text-xs ${
+        maxApproved && batchAddr
+          ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+          : 'bg-violet-50 border-violet-200 text-violet-700'
+      }`}>
+        <span className="text-lg shrink-0">{maxApproved && batchAddr ? '✅' : '⚡'}</span>
         <div>
-          <p className="font-bold text-violet-900 mb-1">2 confirmations — no matter how many recipients</p>
-          <div className="flex gap-3 flex-wrap">
-            <span className="flex items-center gap-1">
-              <span className="w-4 h-4 rounded-full bg-violet-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">1</span>
-              Approve total USDC
-            </span>
-            <span className="text-violet-300">→</span>
-            <span className="flex items-center gap-1">
-              <span className="w-4 h-4 rounded-full bg-violet-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">2</span>
-              Send to all recipients at once
-            </span>
-          </div>
+          {maxApproved && batchAddr ? (
+            <>
+              <p className="font-bold text-emerald-900 mb-0.5">1 confirmation per bulk send</p>
+              <p className="text-emerald-600">Max allowance already granted — just click Send and confirm once.</p>
+            </>
+          ) : (
+            <>
+              <p className="font-bold text-violet-900 mb-1">
+                {batchAddr ? '2 confirmations first time · 1 confirmation every time after' : 'Setup required first'}
+              </p>
+              <div className="flex gap-2 flex-wrap items-center">
+                <span className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded-full bg-violet-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">1</span>
+                  Approve MAX (once ever)
+                </span>
+                <span className="text-violet-300">→</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded-full bg-violet-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">2→1</span>
+                  Send to all at once
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -828,7 +875,7 @@ function BulkSendSection({
                   </svg>
                 ) : <span className="shrink-0">✅</span>}
                 <span className="font-semibold">
-                  {step === 'approving' ? '👛 Confirmation 1/2 — Approve USDC' : '✓ Approved USDC'}
+                  {step === 'approving' ? '👛 Approve MAX USDC — one-time, never again' : '✓ Max allowance granted'}
                 </span>
               </div>
               {/* Step 2 */}
@@ -845,7 +892,7 @@ function BulkSendSection({
                 ) : <span className="shrink-0">⏳</span>}
                 <span className="font-semibold">
                   {step === 'sending'
-                    ? `👛 Confirmation 2/2 — Send to all ${validRows.length} recipients`
+                    ? `👛 Confirm — Send to all ${validRows.length} recipients at once`
                     : `Send to all ${validRows.length} recipients`}
                 </span>
               </div>
@@ -901,7 +948,9 @@ function BulkSendSection({
               }`}>
               💸 Send to {validRows.length} recipients — {fmtUSDC(totalAmount)} USDC
               {validRows.length > 0 && (
-                <span className="ml-2 text-[11px] opacity-75 font-normal">(2 confirmations)</span>
+                <span className="ml-2 text-[11px] opacity-75 font-normal">
+                  ({maxApproved ? '1 confirmation' : '2 first time, 1 after'})
+                </span>
               )}
             </button>
           )}
