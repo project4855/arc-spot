@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   useAccount, useBalance, useWriteContract,
-  useWaitForTransactionReceipt, usePublicClient,
+  usePublicClient,
 } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { isAddress, parseUnits, encodeFunctionData } from 'viem'

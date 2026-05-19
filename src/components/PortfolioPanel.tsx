@@ -39,11 +39,6 @@ function fmtAddr(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
-function fmtTime(ts: number): string {
-  const d = new Date(ts * 1000)
-  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-}
-
 function fmtAge(ts: number): string {
   const diff = Date.now() - ts * 1000
   const mins  = Math.floor(diff / 60_000)
@@ -417,7 +412,8 @@ export default function PortfolioPanel() {
                 width={56} orientation="right"
               />
               <Tooltip
-                formatter={(v: number) => [fmtUSD(v), 'Value']}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(v: any) => [fmtUSD(Number(v)), 'Value']}
                 contentStyle={{ background: '#0f172a', border: 'none', borderRadius: '12px', fontSize: 11, color: '#fff' }}
                 itemStyle={{ color: '#94a3b8' }}
               />
