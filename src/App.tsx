@@ -239,7 +239,7 @@ export default function App() {
         {tab === 'portfolio' && <PortfolioPanel />}
 
         {/* ══════════════════ PAYMENTS ══════════════════ */}
-        {tab === 'payments' && <PaymentsPanel />}
+        {tab === 'payments' && <PaymentsPanel onNavigate={handleTabChange} />}
 
       </main>
 

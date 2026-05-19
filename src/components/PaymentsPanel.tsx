@@ -121,17 +121,20 @@ function TxStatus({ rec }: { rec: FinalityRecord }) {
 // ── 1. Quick USDC Send ────────────────────────────────────────────────────────
 
 function QuickSendSection({
-  address, balanceUsdc, onTxSent,
+  address, balanceUsdc, onTxSent, onSwitchTab, onNavigate,
 }: {
-  address:     `0x${string}` | undefined
-  balanceUsdc: number
-  onTxSent:    (rec: FinalityRecord) => void
+  address:      `0x${string}` | undefined
+  balanceUsdc:  number
+  onTxSent:     (rec: FinalityRecord) => void
+  onSwitchTab:  (tab: PanelTab) => void
+  onNavigate:   (tab: string) => void
 }) {
-  const [to,      setTo]      = useState('')
-  const [amount,  setAmount]  = useState('')
-  const [feeEst,  setFeeEst]  = useState<number | null>(null)
-  const [txStep,  setTxStep]  = useState<'idle' | 'estimating' | 'sending' | 'done' | 'error'>('idle')
-  const [lastRec, setLastRec] = useState<FinalityRecord | null>(null)
+  const [to,          setTo]          = useState('')
+  const [amount,      setAmount]      = useState('')
+  const [feeEst,      setFeeEst]      = useState<number | null>(null)
+  const [defaultFee,  setDefaultFee]  = useState<number | null>(null)
+  const [txStep,      setTxStep]      = useState<'idle' | 'estimating' | 'sending' | 'done' | 'error'>('idle')
+  const [lastRec,     setLastRec]     = useState<FinalityRecord | null>(null)
   const sentAt = useRef<number>(0)
 
   const publicClient = usePublicClient()
@@ -141,6 +144,24 @@ function QuickSendSection({
   const toValid      = isAddress(to)
   const amountValid  = amountN > 0 && amountN <= balanceUsdc
   const canSend      = toValid && amountValid && txStep === 'idle'
+
+  // Estimate default fee on mount (for a typical 10 USDC transfer)
+  useEffect(() => {
+    if (!publicClient || !address) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const gasPrice = await publicClient.getGasPrice()
+        // Arc ERC-20 transfer ~65k gas
+        const feeWei  = BigInt(65000) * gasPrice
+        const feeUsdc = Number(feeWei) / 1e18
+        if (!cancelled) setDefaultFee(feeUsdc > 0 ? feeUsdc : 0.0001)
+      } catch {
+        if (!cancelled) setDefaultFee(0.0001)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [address, publicClient])
 
   // Estimate fee when inputs change
   useEffect(() => {
@@ -352,22 +373,137 @@ function QuickSendSection({
         )}
       </div>
 
-      {/* Arc advantages callout */}
+      {/* ── 4 interactive feature widgets ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {[
-          { icon: '💵', title: 'Dollar-denominated fees', desc: 'Pay gas in USDC — no exposure to volatile ETH prices. Predictable costs for every transaction.' },
-          { icon: '⚡', title: 'Deterministic finality', desc: 'Sub-second block confirmation. No waiting for multiple block confirmations. Build real-time financial apps.' },
-          { icon: '🔗', title: 'Programmable payments', desc: 'EVM-compatible smart contracts for conditional payments, escrow, multi-sig and automated flows.' },
-          { icon: '🌉', title: 'Cross-chain USDC (CCTP)', desc: 'Circle\'s native CCTP integration. Move USDC between Arc, Ethereum, Base, Solana and more.' },
-        ].map(c => (
-          <div key={c.title} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex gap-3">
-            <span className="text-2xl shrink-0">{c.icon}</span>
+
+        {/* 1. Dollar-denominated fees — live fee meter */}
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">💵</span>
+            <p className="font-bold text-emerald-900 text-sm">Dollar-denominated fees</p>
+          </div>
+          <div className="flex items-end justify-between">
             <div>
-              <p className="font-bold text-slate-900 text-sm">{c.title}</p>
-              <p className="text-slate-500 text-xs mt-1 leading-relaxed">{c.desc}</p>
+              <p className="text-emerald-600 text-[10px] font-semibold uppercase tracking-wider">Arc (this tx)</p>
+              <p className="font-extrabold text-emerald-800 text-2xl leading-none">
+                {feeEst ?? defaultFee
+                  ? `$${fmtUSDC(feeEst ?? defaultFee ?? 0)}`
+                  : address ? '…' : '~$0.0001'}
+              </p>
+              <p className="text-emerald-600 text-[10px]">USDC · fixed & predictable</p>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Ethereum</p>
+              <p className="font-bold text-slate-400 text-lg line-through">~$2–5</p>
+              <p className="text-slate-400 text-[10px]">ETH gas (volatile)</p>
             </div>
           </div>
-        ))}
+          {/* Savings bar */}
+          <div className="mt-1">
+            <div className="flex justify-between text-[10px] text-emerald-700 font-semibold mb-1">
+              <span>Arc fee</span><span>Ethereum fee</span>
+            </div>
+            <div className="h-2 bg-white/70 rounded-full overflow-hidden flex">
+              <div className="h-full bg-emerald-500 rounded-full" style={{ width: '2%' }} />
+              <div className="h-full bg-red-300 rounded-full ml-auto" style={{ width: '98%' }} />
+            </div>
+            <p className="text-emerald-700 text-[10px] font-bold mt-1">Up to 100× cheaper ✓</p>
+          </div>
+        </div>
+
+        {/* 2. Deterministic finality — clickable, goes to tracker */}
+        <button
+          onClick={() => onSwitchTab('finality')}
+          className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-left hover:shadow-md hover:border-blue-400 transition-all group flex flex-col gap-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⚡</span>
+              <p className="font-bold text-blue-900 text-sm">Deterministic finality</p>
+            </div>
+            <span className="text-blue-400 text-lg group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-center bg-blue-100 rounded-xl px-3 py-1.5">
+              <p className="font-extrabold text-blue-800 text-lg leading-none">&lt; 1s</p>
+              <p className="text-blue-600 text-[10px]">Arc</p>
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              {[
+                { chain: 'Ethereum', time: '~3 min',  w: '100%', color: 'bg-red-300' },
+                { chain: 'Bitcoin',  time: '~60 min', w: '100%', color: 'bg-orange-300' },
+                { chain: 'Solana',   time: '~400ms',  w: '40%',  color: 'bg-purple-300' },
+              ].map(c => (
+                <div key={c.chain} className="flex items-center gap-1.5">
+                  <span className="text-[9px] text-slate-400 w-12 shrink-0">{c.chain}</span>
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={`h-full ${c.color} rounded-full`} style={{ width: c.w }} />
+                  </div>
+                  <span className="text-[9px] text-slate-400 w-10 text-right shrink-0">{c.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-blue-600 text-[11px] font-semibold">View Finality Tracker →</p>
+        </button>
+
+        {/* 3. Programmable payments — clickable, goes to flows */}
+        <button
+          onClick={() => onSwitchTab('flows')}
+          className="bg-violet-50 border border-violet-200 rounded-2xl p-4 text-left hover:shadow-md hover:border-violet-400 transition-all group flex flex-col gap-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⚙️</span>
+              <p className="font-bold text-violet-900 text-sm">Programmable payments</p>
+            </div>
+            <span className="text-violet-400 text-lg group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { icon: '🔁', label: 'Payment streams' },
+              { icon: '🔐', label: 'Escrow & conditional' },
+              { icon: '👥', label: 'Multi-sig treasury' },
+              { icon: '📋', label: 'Bulk distribution' },
+            ].map(f => (
+              <div key={f.label} className="flex items-center gap-1.5 bg-white/70 rounded-lg px-2 py-1.5">
+                <span className="text-sm">{f.icon}</span>
+                <span className="text-[11px] text-violet-700 font-medium">{f.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-violet-600 text-[11px] font-semibold">Create payment flows →</p>
+        </button>
+
+        {/* 4. Cross-chain USDC (CCTP) — clickable, goes to Bridge tab */}
+        <button
+          onClick={() => onNavigate('bridge')}
+          className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left hover:shadow-md hover:border-amber-400 transition-all group flex flex-col gap-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🌉</span>
+              <p className="font-bold text-amber-900 text-sm">Cross-chain USDC (CCTP)</p>
+            </div>
+            <span className="text-amber-400 text-lg group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { name: 'Arc',      bg: 'bg-violet-100 text-violet-700 border-violet-200' },
+              { name: 'Ethereum', bg: 'bg-blue-100 text-blue-700 border-blue-200' },
+              { name: 'Base',     bg: 'bg-blue-100 text-blue-700 border-blue-200' },
+              { name: 'Solana',   bg: 'bg-green-100 text-green-700 border-green-200' },
+              { name: 'Arbitrum', bg: 'bg-sky-100 text-sky-700 border-sky-200' },
+              { name: 'Polygon',  bg: 'bg-purple-100 text-purple-700 border-purple-200' },
+            ].map(c => (
+              <span key={c.name} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${c.bg}`}>
+                {c.name}
+              </span>
+            ))}
+          </div>
+          <p className="text-amber-700 text-[11px] font-semibold">Open Bridge tab →</p>
+        </button>
+
       </div>
     </div>
   )
@@ -883,7 +1019,7 @@ const SECTION_TABS: { key: PanelTab; label: string; icon: string }[] = [
   { key: 'finality', label: 'Finality',    icon: '⚡' },
 ]
 
-export default function PaymentsPanel() {
+export default function PaymentsPanel({ onNavigate }: { onNavigate: (tab: string) => void }) {
   const { address, isConnected } = useAccount()
   const { data: usdcBal } = useBalance({ address, token: TOKEN_ADDRESSES.USDC })
   const balanceUsdc = usdcBal ? parseFloat(usdcBal.formatted) : 0
@@ -968,7 +1104,7 @@ export default function PaymentsPanel() {
       </div>
 
       {/* ── Sections ── */}
-      {activeTab === 'send'     && <QuickSendSection  address={address} balanceUsdc={balanceUsdc} onTxSent={handleTxSent} />}
+      {activeTab === 'send'     && <QuickSendSection  address={address} balanceUsdc={balanceUsdc} onTxSent={handleTxSent} onSwitchTab={setActiveTab} onNavigate={onNavigate} />}
       {activeTab === 'bulk'     && <BulkSendSection   address={address} balanceUsdc={balanceUsdc} onTxSent={handleTxSent} />}
       {activeTab === 'flows'    && <PaymentFlowsSection />}
       {activeTab === 'finality' && <FinalitySection records={txRecords} />}
