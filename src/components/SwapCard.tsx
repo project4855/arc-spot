@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useBalance, useReadContract } from 'wagmi'
+import { useBalance, useReadContract, usePublicClient } from 'wagmi'
 import { formatUnits } from 'viem'
 
 import TokenInput from './TokenInput'
@@ -58,6 +58,8 @@ interface SwapCardProps {
 export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC', onSwapComplete }: SwapCardProps) {
   const { address, isReady, walletType, chainId, writeContract, sendTransaction } = useWallet()
   const isArc = walletType === 'turnkey' || chainId === arcTestnet.id
+  // Public client for waitForTransactionReceipt — ensures approve is on-chain before swap tx
+  const publicClient = usePublicClient({ chainId: arcTestnet.id })
 
   const [fromToken, setFromToken] = useState(fromTokenProp)
   const [toToken, setToToken] = useState(toTokenProp)
@@ -271,17 +273,26 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
         const ix = instructions[i]
         const shortTarget = `${ix.target.slice(0, 8)}…${ix.target.slice(-4)}`
 
-        // Approve token if needed
+        // Approve token if needed — must wait for receipt before next tx
         if (ix.tokenIn && ix.amountToApprove && BigInt(ix.amountToApprove) > 0n) {
           const humanAmt = (Number(ix.amountToApprove) / 10 ** inDecimals).toFixed(6)
           addStep(`[${i+1}/${instructions.length}] Approve ${fromToken} → ${shortTarget} (${humanAmt})`)
           try {
-            await writeContract({
+            const approveHash = await writeContract({
               address:      ix.tokenIn,
               abi:          ERC20_APPROVE_ABI,
               functionName: 'approve',
               args:         [ix.target, BigInt(ix.amountToApprove)],
             })
+            markLast('ok')
+            // ⚠️ Critical: wait for the approve tx to be mined before sending
+            // the next tx. Without this, transferFrom reverts with
+            // "ERC20: transfer amount exceeds allowance" because the allowance
+            // hasn't been written to state yet.
+            addStep(`[${i+1}/${instructions.length}] Waiting for approve to confirm…`)
+            if (publicClient) {
+              await publicClient.waitForTransactionReceipt({ hash: approveHash, confirmations: 1 })
+            }
             markLast('ok')
           } catch (approveErr) {
             markLast('err')
