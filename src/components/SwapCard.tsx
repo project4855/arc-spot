@@ -56,7 +56,7 @@ interface SwapCardProps {
 }
 
 export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC', onSwapComplete }: SwapCardProps) {
-  const { address, isReady, walletType, chainId, writeContract, sendTransaction } = useWallet()
+  const { address, isReady, walletType, chainId, writeContract } = useWallet()
   const isArc = walletType === 'turnkey' || chainId === arcTestnet.id
   // Public client for waitForTransactionReceipt — ensures approve is on-chain before swap tx
   const publicClient = usePublicClient({ chainId: arcTestnet.id })
@@ -237,87 +237,153 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
         )
       }
 
+      // Circle Adapter Contract — manages approval, instruction execution, and
+      // EURC delivery to the user in one atomic tx.
+      const ADAPTER_CONTRACT = '0xBBD70b01a1CAbc96d5b7b129Ae1AAabdf50dd40b' as const
+      const ADAPTER_ABI = [{
+        type: 'function', name: 'execute', stateMutability: 'payable',
+        inputs: [
+          { name: 'params', type: 'tuple', components: [
+            { name: 'instructions', type: 'tuple[]', components: [
+              { name: 'target',          type: 'address' },
+              { name: 'data',            type: 'bytes'   },
+              { name: 'value',           type: 'uint256' },
+              { name: 'tokenIn',         type: 'address' },
+              { name: 'amountToApprove', type: 'uint256' },
+              { name: 'tokenOut',        type: 'address' },
+              { name: 'minTokenOut',     type: 'uint256' },
+            ]},
+            { name: 'tokens', type: 'tuple[]', components: [
+              { name: 'token',       type: 'address' },
+              { name: 'beneficiary', type: 'address' },
+            ]},
+            { name: 'execId',   type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+            { name: 'metadata', type: 'bytes'   },
+          ]},
+          { name: 'tokenInputs', type: 'tuple[]', components: [
+            { name: 'permitType',     type: 'uint8'   },
+            { name: 'token',          type: 'address' },
+            { name: 'amount',         type: 'uint256' },
+            { name: 'permitCalldata', type: 'bytes'   },
+          ]},
+          { name: 'signature', type: 'bytes' },
+        ],
+        outputs: [],
+      }] as const
+
       type Instruction = {
-        target: `0x${string}`
-        data:   `0x${string}`
-        value:  string
-        tokenIn?: `0x${string}`
+        target:          `0x${string}`
+        data:            `0x${string}`
+        value:           string
+        tokenIn?:        `0x${string}`
         amountToApprove?: string
+        tokenOut?:       `0x${string}`
+        minTokenOut?:    string
+      }
+      type TokenRecipient = { token: `0x${string}`; beneficiary: `0x${string}` }
+      type ExecParams = {
+        instructions: Instruction[]
+        tokens:       TokenRecipient[]
+        execId:       string   // hex or decimal string
+        deadline:     string   // decimal string
+        metadata:     string
       }
       const swapData = await resp.json() as {
-        transaction?: { executionParams?: { instructions?: Instruction[] } }
-        instructions?: Instruction[]
+        transaction?: { signature?: string; executionParams?: ExecParams }
       }
 
-      // Handle both possible response shapes
-      const instructions: Instruction[] =
-        swapData?.transaction?.executionParams?.instructions ??
-        swapData?.instructions ??
-        []
+      const execParams = swapData?.transaction?.executionParams
+      const signature  = swapData?.transaction?.signature
 
-      if (instructions.length === 0) {
+      if (!execParams || !execParams.instructions?.length) {
         markLast('err')
         throw new Error(
-          `Circle API returned no instructions.\nFull response: ${JSON.stringify(swapData, null, 2)}`
+          `Circle API returned no instructions.\nResponse: ${JSON.stringify(swapData, null, 2)}`
         )
       }
 
+      const ZERO = '0x0000000000000000000000000000000000000000' as const
+      const { instructions, tokens, execId, deadline, metadata } = execParams
+
       markLast('ok')
-      addStep(`✓ Got ${instructions.length} instruction(s) — executing on-chain…`)
+      addStep(`✓ Got ${instructions.length} instruction(s) from Circle`)
       markLast('ok')
 
-      // ── Step 2: Execute each instruction ─────────────────────────────────
-      let lastHash: `0x${string}` = '0x0'
-
-      for (let i = 0; i < instructions.length; i++) {
-        const ix = instructions[i]
-        const shortTarget = `${ix.target.slice(0, 8)}…${ix.target.slice(-4)}`
-
-        // Approve token if needed — must wait for receipt before next tx
-        if (ix.tokenIn && ix.amountToApprove && BigInt(ix.amountToApprove) > 0n) {
-          const humanAmt = (Number(ix.amountToApprove) / 10 ** inDecimals).toFixed(6)
-          addStep(`[${i+1}/${instructions.length}] Approve ${fromToken} → ${shortTarget} (${humanAmt})`)
-          try {
-            const approveHash = await writeContract({
-              address:      ix.tokenIn,
-              abi:          ERC20_APPROVE_ABI,
-              functionName: 'approve',
-              args:         [ix.target, BigInt(ix.amountToApprove)],
-            })
-            markLast('ok')
-            // ⚠️ Critical: wait for the approve tx to be mined before sending
-            // the next tx. Without this, transferFrom reverts with
-            // "ERC20: transfer amount exceeds allowance" because the allowance
-            // hasn't been written to state yet.
-            addStep(`[${i+1}/${instructions.length}] Waiting for approve to confirm…`)
-            if (publicClient) {
-              await publicClient.waitForTransactionReceipt({ hash: approveHash, confirmations: 1 })
-            }
-            markLast('ok')
-          } catch (approveErr) {
-            markLast('err')
-            throw new Error(
-              `Approve failed (instruction ${i+1}): ${approveErr instanceof Error ? approveErr.message : String(approveErr)}`
-            )
-          }
+      // ── Step 2: Approve total tokenIn to Adapter Contract (1 approve tx) ──
+      // The adapter contract pulls the total USDC, executes all instructions
+      // atomically, then forwards EURC to the beneficiary (user address).
+      const totalApprove = instructions.reduce((sum, ix) => {
+        if (ix.tokenIn && ix.tokenIn.toLowerCase() === tokenInAddr.toLowerCase()) {
+          return sum + BigInt(ix.amountToApprove ?? '0')
         }
+        return sum
+      }, 0n)
 
-        // Execute the swap instruction
-        const txValue = ix.value && ix.value !== '0' && ix.value !== '0x0' && ix.value !== ''
-          ? BigInt(ix.value) : 0n
-        addStep(`[${i+1}/${instructions.length}] Send tx → ${shortTarget}`)
-        try {
-          lastHash = await sendTransaction({ to: ix.target, data: ix.data, value: txValue })
-          markLast('ok')
-          addStep(`[${i+1}/${instructions.length}] ✓ ${lastHash.slice(0, 12)}…`)
-          markLast('ok')
-        } catch (txErr) {
-          markLast('err')
-          throw new Error(
-            `Transaction failed (instruction ${i+1}, target ${ix.target}):\n` +
-            `${txErr instanceof Error ? txErr.message : String(txErr)}`
-          )
-        }
+      const humanTotal = (Number(totalApprove) / 10 ** inDecimals).toFixed(inDecimals)
+      addStep(`Approve ${fromToken} → Adapter (${humanTotal})`)
+      let approveHash: `0x${string}`
+      try {
+        approveHash = await writeContract({
+          address:      tokenInAddr,
+          abi:          ERC20_APPROVE_ABI,
+          functionName: 'approve',
+          args:         [ADAPTER_CONTRACT, totalApprove],
+        })
+        markLast('ok')
+      } catch (approveErr) {
+        markLast('err')
+        throw new Error(`Approve failed: ${approveErr instanceof Error ? approveErr.message : String(approveErr)}`)
+      }
+
+      addStep('Waiting for approve confirmation…')
+      if (publicClient) {
+        await publicClient.waitForTransactionReceipt({ hash: approveHash, confirmations: 1 })
+      }
+      markLast('ok')
+
+      // ── Step 3: Call adapter.execute() — one atomic tx ───────────────────
+      addStep('Calling Adapter execute() — swapping…')
+      let lastHash: `0x${string}`
+      try {
+        lastHash = await writeContract({
+          address:      ADAPTER_CONTRACT,
+          abi:          ADAPTER_ABI,
+          functionName: 'execute',
+          args: [
+            {
+              instructions: instructions.map(ix => ({
+                target:          ix.target,
+                data:            ix.data,
+                value:           ix.value && ix.value !== '0' && ix.value !== '0x0' ? BigInt(ix.value) : 0n,
+                tokenIn:         (ix.tokenIn  ?? ZERO) as `0x${string}`,
+                amountToApprove: BigInt(ix.amountToApprove ?? '0'),
+                tokenOut:        (ix.tokenOut ?? ZERO) as `0x${string}`,
+                minTokenOut:     BigInt(ix.minTokenOut ?? '0'),
+              })),
+              tokens: tokens.map(t => ({ token: t.token, beneficiary: t.beneficiary })),
+              execId:   BigInt(execId),           // hex "0x..." → uint256
+              deadline: BigInt(deadline),          // decimal string → uint256
+              metadata: (metadata ?? '0x') as `0x${string}`,
+            },
+            [{
+              permitType:     0,              // PermitType.NONE = pre-approved allowance
+              token:          tokenInAddr,
+              amount:         totalApprove,
+              permitCalldata: '0x',
+            }],
+            (signature ?? '0x') as `0x${string}`,
+          ],
+          value: 0n,
+        })
+        markLast('ok')
+        addStep(`✓ Swap tx: ${lastHash.slice(0, 14)}…`)
+        markLast('ok')
+      } catch (swapErr) {
+        markLast('err')
+        throw new Error(
+          `adapter.execute() failed:\n${swapErr instanceof Error ? swapErr.message : String(swapErr)}`
+        )
       }
 
       setTxHash(lastHash)
