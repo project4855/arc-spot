@@ -1,30 +1,34 @@
 // ── CommunityPanel.tsx ────────────────────────────────────────────────────────
 // Tab "Community" — Arc House, Architects Program, Builders Fund, Circle Grants,
-// latest content from community.arc.io
+// latest content from community.arc.io — auto-refreshes every hour
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 type CommunityTab = 'archouse' | 'architects' | 'builders' | 'content' | 'events'
 
-// ── Latest content from community.arc.io ──────────────────────────────────────
+export interface FeedItem {
+  type: string; title: string; date: string; views: string; icon: string; url: string
+}
 
-const LATEST_CONTENT = [
-  { type: 'Arc Blueprints',    title: 'Build Institutional Grade Prediction Markets on Arc',   date: 'May 15, 2026', views: '20.2K', icon: '🎯', url: 'https://www.arc.io/blog/build-institutional-grade-prediction-markets-on-arc-arc-blueprints' },
-  { type: 'Arc Blueprints',    title: 'How Arc Supports the Agentic Economy',                   date: 'May 15, 2026', views: '14K',   icon: '🤖', url: 'https://www.arc.io/blog/how-arc-supports-the-agentic-economy-arc-blueprints' },
-  { type: 'Arc Blueprints',    title: 'How Arc Supports Lending and Borrowing',                 date: 'May 15, 2026', views: '19K',   icon: '🏦', url: 'https://www.arc.io/blog/how-arc-supports-lending-and-borrowing-arc-blueprints' },
-  { type: 'Blog',              title: 'Circle Developer Grants Program Relaunches',             date: 'May 15, 2026', views: '',      icon: '🎟️', url: 'https://community.arc.io' },
-  { type: 'Video',             title: 'Circle Developer Grants: From idea to funded',           date: 'May 14, 2026', views: '',      icon: '🎥', url: 'https://community.arc.io' },
-  { type: 'Blog · Partner',    title: 'Arc 🤝 Turnkey: Wallet and signing infrastructure',     date: 'May 13, 2026', views: '',      icon: '🔑', url: 'https://community.arc.io' },
-  { type: 'Resource · Agentic',title: 'Circle Agent Stack — Builder Feedback Survey',          date: 'May 12, 2026', views: '',      icon: '🧠', url: 'https://community.arc.io' },
-  { type: 'Video · Agentic',   title: 'Circle Agent Stack Quickstart — financial infra for AI', date: 'May 12, 2026', views: '',     icon: '▶',  url: 'https://community.arc.io' },
-  { type: 'External Content',  title: 'Introducing the ARC Whitepaper: Coordination Asset',    date: 'May 11, 2026', views: '',      icon: '📄', url: 'https://www.arc.io/blog' },
-  { type: 'Video · Agentic',   title: 'Arc 🤝 LI.FI: Crosschain routing and liquidity access', date: 'May 10, 2026', views: '',      icon: '🌉', url: 'https://community.arc.io' },
-  { type: 'Blog · Agentic',    title: 'Agentic Economy on Arc',                                date: 'May 8, 2026',  views: '',      icon: '🤖', url: 'https://community.arc.io' },
-  { type: 'Blog · Partner',    title: 'Arc 🤝 Dynamic: Better onboarding for Arc apps',        date: 'May 6, 2026',  views: '',      icon: '⚡', url: 'https://community.arc.io' },
-  { type: 'Blog · Arc Updates', title: 'App Kits: A Suite of SDKs to Build Onchain',           date: 'Apr 10, 2026', views: '',      icon: '🛠️', url: 'https://www.arc.io/blog/app-kits-a-suite-of-sdks-to-build-onchain' },
-  { type: 'Blog · Arc Updates', title: 'Open Sourcing Arc: Run Your Own Node + Bug Bounty',    date: 'Apr 10, 2026', views: '',      icon: '💻', url: 'https://community.arc.io' },
-  { type: 'Video',             title: 'Event Replay: Introducing Arc House and Architects',     date: 'Apr 6, 2026',  views: '',      icon: '🏠', url: 'https://community.arc.io' },
-  { type: 'External Content',  title: 'Arc\'s Quantum-Resistant Design and Roadmap',            date: 'Apr 4, 2026',  views: '',      icon: '🔐', url: 'https://community.arc.io' },
+// ── Static fallback (used until API responds) ─────────────────────────────────
+
+const FALLBACK_CONTENT: FeedItem[] = [
+  { type: 'Blog',              title: 'Stablecorp brings QCAD to Arc, expanding StableFX into Canadian dollars', date: 'May 21, 2026', views: '10.5K', icon: '💵', url: 'https://community.arc.io/en/public/blogs/stablecorp-brings-qcad-to-arc-expanding-stablefx-into-canadian-dollars-2026-05-21' },
+  { type: 'Video',             title: 'Replay: Arc Enterprise & DeFi Hackathon Spotlight: Chariot',              date: 'May 20, 2026', views: '26K',   icon: '🏆', url: 'https://community.arc.io/en/public/videos/replay-arc-enterprise-and-defi-hackathon-spotlight-chariot-crosschain-collateral-lending-protocol-on-arc-2026-05-20' },
+  { type: 'Arc Blueprints',   title: 'Build Institutional Grade Prediction Markets on Arc',                      date: 'May 15, 2026', views: '20.2K', icon: '🎯', url: 'https://www.arc.io/blog/build-institutional-grade-prediction-markets-on-arc-arc-blueprints' },
+  { type: 'Arc Blueprints',   title: 'How Arc Supports the Agentic Economy',                                    date: 'May 15, 2026', views: '14K',   icon: '🤖', url: 'https://www.arc.io/blog/how-arc-supports-the-agentic-economy-arc-blueprints' },
+  { type: 'Arc Blueprints',   title: 'How Arc Supports Lending and Borrowing',                                  date: 'May 15, 2026', views: '19K',   icon: '🏦', url: 'https://www.arc.io/blog/how-arc-supports-lending-and-borrowing-arc-blueprints' },
+  { type: 'Blog',             title: 'Circle Developer Grants Program Relaunches',                              date: 'May 14, 2026', views: '559',   icon: '🎟️', url: 'https://community.arc.io/en/public/blogs/circle-developer-grants-program-relaunches-2026-05-14' },
+  { type: 'Video',            title: 'Circle Developer Grants: From idea to funded',                            date: 'May 14, 2026', views: '480',   icon: '🎥', url: 'https://community.arc.io/en/public/videos/circle-developer-grants-from-idea-to-funded-2026-05-14' },
+  { type: 'Blog · Partner',  title: 'Arc 🤝 Turnkey: Wallet and signing infrastructure for builders on Arc',   date: 'May 13, 2026', views: '533',   icon: '🔑', url: 'https://community.arc.io/en/public/blogs/arc-turnkey-wallet-and-signing-infrastructure-for-builders-on-arc' },
+  { type: 'Blog · Partner',  title: 'Arc 🤝 LI.FI: Crosschain routing and liquidity access for Arc builders',  date: 'May 10, 2026', views: '',      icon: '🌉', url: 'https://community.arc.io/en/public/blogs/arc-x-lifi-crosschain-routing-and-liquidity-access-for-arc-builders' },
+  { type: 'Blog · Partner',  title: 'Arc 🤝 Dynamic: Better onboarding for Arc apps',                          date: 'May 6, 2026',  views: '',      icon: '⚡', url: 'https://community.arc.io/en/home/blogs' },
+  { type: 'Arc Blueprints',  title: 'Introducing the ARC Whitepaper: Coordination Asset',                       date: 'May 11, 2026', views: '',      icon: '📄', url: 'https://www.arc.io/blog/introducing-the-arc-token-whitepaper' },
+  { type: 'Blog · Arc Updates', title: 'App Kits: A Suite of SDKs to Build Onchain',                           date: 'Apr 10, 2026', views: '',      icon: '🛠️', url: 'https://www.arc.io/blog/app-kits-a-suite-of-sdks-to-build-onchain' },
+  { type: 'Blog · Arc Updates', title: 'Open Sourcing Arc: Run Your Own Node + Bug Bounty',                     date: 'Apr 10, 2026', views: '',      icon: '💻', url: 'https://www.arc.io/blog/open-sourcing-arc-run-your-own-arc-node-and-bug-bounty-program' },
+  { type: 'Blog · Arc Updates', title: 'Unified Balance Kit: One Integration for Unified USDC Flows',           date: 'Apr 2026',     views: '',      icon: '🔗', url: 'https://www.arc.io/blog/unified-balance-kit-one-integration-for-unified-usdc-flows' },
+  { type: 'Blog · Arc Updates', title: "Arc's Quantum-Resistant Design and Roadmap",                            date: 'Apr 4, 2026',  views: '',      icon: '🔐', url: 'https://www.arc.io/blog/arcs-quantum-resistant-design-and-roadmap-why-it-matters' },
+  { type: 'Video',            title: 'Event Replay: Introducing Arc House and Architects',                       date: 'Apr 6, 2026',  views: '',      icon: '🏠', url: 'https://community.arc.io/en/home/videos' },
 ]
 
 const ARCTALKS = [
@@ -57,7 +61,31 @@ const PARTNER_SPOTLIGHTS = [
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function AirdropPanel() {
-  const [activeTab, setActiveTab] = useState<CommunityTab>('archouse')
+  const [activeTab,   setActiveTab]   = useState<CommunityTab>('archouse')
+  const [feedItems,   setFeedItems]   = useState<FeedItem[]>(FALLBACK_CONTENT)
+  const [feedSource,  setFeedSource]  = useState<'live' | 'fallback' | 'loading'>('loading')
+  const [lastFetched, setLastFetched] = useState<Date | null>(null)
+
+  const fetchFeed = useCallback(async () => {
+    try {
+      const res = await fetch('/api/arc-feed')
+      if (!res.ok) throw new Error('feed error')
+      const data = await res.json() as { items: FeedItem[]; source: 'live' | 'fallback'; fetchedAt: string }
+      if (data.items?.length) {
+        setFeedItems(data.items)
+        setFeedSource(data.source)
+        setLastFetched(new Date())
+      }
+    } catch {
+      setFeedSource('fallback')
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchFeed()
+    const id = setInterval(fetchFeed, 60 * 60 * 1000) // refresh every hour
+    return () => clearInterval(id)
+  }, [fetchFeed])
 
   const TABS: { key: CommunityTab; label: string; icon: string }[] = [
     { key: 'archouse',   label: 'Arc House',       icon: '🏠' },
@@ -405,10 +433,40 @@ export default function AirdropPanel() {
       {/* ── Latest Content ── */}
       {activeTab === 'content' && (
         <div className="flex flex-col gap-4">
+
+          {/* Status bar */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              {feedSource === 'loading' && (
+                <span className="text-xs text-slate-400 animate-pulse">⏳ Loading latest content…</span>
+              )}
+              {feedSource === 'live' && (
+                <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  Live · auto-updates every hour
+                </span>
+              )}
+              {feedSource === 'fallback' && (
+                <span className="text-xs text-amber-600 font-semibold">📋 Cached content</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {lastFetched && (
+                <span className="text-[10px] text-slate-400">
+                  Updated {lastFetched.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+              <button onClick={fetchFeed}
+                className="text-[11px] px-2 py-1 rounded-lg bg-slate-100 text-slate-500 hover:bg-violet-100 hover:text-violet-600 font-semibold transition-colors">
+                ↻ Refresh
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {LATEST_CONTENT.map((item, i) => (
+            {feedItems.map((item, i) => (
               <a key={i} href={item.url} target="_blank" rel="noreferrer"
-                className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-violet-300 hover:shadow-sm transition-all group flex flex-col gap-2">
+                className="bg-white border border-slate-200 rounded-2xl p-4 hover:border-violet-300 hover:shadow-md transition-all group flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-2xl">{item.icon}</span>
                   <div className="text-right">
@@ -416,13 +474,19 @@ export default function AirdropPanel() {
                     <p className="text-slate-400 text-[10px]">{item.date}</p>
                   </div>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 font-medium self-start">{item.type}</span>
-                <h4 className="text-slate-800 font-semibold text-sm leading-snug group-hover:text-violet-700 transition-colors">{item.title}</h4>
+                <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold self-start ${
+                  item.type.includes('Blueprint') ? 'bg-violet-100 text-violet-700' :
+                  item.type.includes('Video')     ? 'bg-red-50 text-red-600' :
+                  item.type.includes('Partner')   ? 'bg-amber-50 text-amber-700' :
+                  'bg-slate-100 text-slate-500'
+                }`}>{item.type}</span>
+                <h4 className="text-slate-800 font-semibold text-sm leading-snug group-hover:text-violet-700 transition-colors flex-1">{item.title}</h4>
+                <span className="text-[10px] text-violet-400 group-hover:text-violet-600 transition-colors self-end">Read more ↗</span>
               </a>
             ))}
           </div>
           <div className="text-center">
-            <a href="https://community.arc.io" target="_blank" rel="noreferrer"
+            <a href="https://community.arc.io/en/home" target="_blank" rel="noreferrer"
               className="inline-block px-6 py-3 rounded-xl bg-violet-600 text-white font-bold text-sm hover:bg-violet-500 transition-colors">
               View All Content on Arc House ↗
             </a>
