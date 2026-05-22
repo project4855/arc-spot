@@ -181,7 +181,7 @@ function ConnectedDropdown({
             </div>
             <button onClick={onDisconnectCircle}
               className="w-full py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors">
-              🔌 Ngắt kết nối Circle Wallet
+              🔌 Disconnect Circle Wallet
             </button>
           </div>
         ) : (

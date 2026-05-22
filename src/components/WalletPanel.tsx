@@ -648,9 +648,9 @@ function CircleWalletSection() {
       setWallet(w)
       setShowReconnect(false)
       setReconnectId('')
-      setInfo('✅ Đã kết nối lại ví Circle!')
+      setInfo('✅ Circle wallet reconnected!')
     } catch (e) {
-      setReconnectErr(e instanceof Error ? e.message.slice(0, 150) : 'Không tìm thấy ví. Kiểm tra lại Wallet ID.')
+      setReconnectErr(e instanceof Error ? e.message.slice(0, 150) : 'Wallet not found. Please check your Wallet ID.')
     } finally {
       setReconnectBusy(false)
     }
@@ -776,8 +776,8 @@ function CircleWalletSection() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-xl shrink-0">🔁</div>
                 <div className="flex-1">
-                  <p className="text-slate-900 font-extrabold text-base">Đã có ví trước?</p>
-                  <p className="text-emerald-700 text-xs font-semibold mt-0.5">Kết nối lại bằng Wallet ID — không tạo ví mới</p>
+                  <p className="text-slate-900 font-extrabold text-base">Already have a wallet?</p>
+                  <p className="text-emerald-700 text-xs font-semibold mt-0.5">Reconnect by Wallet ID — no new wallet created</p>
                 </div>
                 <button
                   onClick={() => { setShowReconnect(v => !v); setReconnectErr('') }}
@@ -792,14 +792,14 @@ function CircleWalletSection() {
                   onClick={() => { setShowReconnect(true); setReconnectErr('') }}
                   className="w-full py-3 rounded-xl border-2 border-emerald-300 bg-white text-emerald-700 font-bold text-sm hover:bg-emerald-50 hover:border-emerald-400 transition-all"
                 >
-                  Nhập Wallet ID để kết nối lại →
+                  Enter Wallet ID to reconnect →
                 </button>
               )}
 
               {showReconnect && (
                 <div className="flex flex-col gap-3">
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    Nhập <strong>Wallet ID</strong> đã lưu để khôi phục ví cũ. Địa chỉ và số dư không thay đổi.
+                    Enter your saved <strong>Wallet ID</strong> to restore your wallet. Your address and balance remain unchanged.
                   </p>
                   <div>
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Wallet ID</label>
@@ -821,7 +821,7 @@ function CircleWalletSection() {
                     disabled={reconnectBusy || !reconnectId.trim()}
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-50 shadow-sm"
                   >
-                    {reconnectBusy ? '⏳ Đang kết nối…' : '🔌 Kết nối lại ví'}
+                    {reconnectBusy ? '⏳ Reconnecting…' : '🔌 Reconnect Wallet'}
                   </button>
                 </div>
               )}
@@ -907,14 +907,14 @@ function CircleWalletSection() {
               <div className="flex items-start gap-2 bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-3">
                 <span className="text-base shrink-0">⚠️</span>
                 <p className="text-sm text-amber-700 font-semibold leading-snug">
-                  Hãy sao chép Wallet ID ở trên trước khi ngắt kết nối để có thể kết nối lại sau.
+                  Copy your Wallet ID above before disconnecting so you can reconnect later.
                 </p>
               </div>
 
               {/* Disconnect button */}
               <button onClick={handleDisconnect}
                 className="py-3.5 rounded-xl border-2 border-red-200 bg-white text-red-500 text-base font-extrabold hover:bg-red-50 hover:border-red-400 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                🔌 Ngắt kết nối Circle Wallet
+                🔌 Disconnect Circle Wallet
               </button>
             </div>
 
@@ -923,9 +923,9 @@ function CircleWalletSection() {
               <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
                 <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm flex flex-col gap-4">
-                  <h3 className="text-slate-900 font-extrabold text-lg">⚠️ Xác nhận ngắt kết nối</h3>
+                  <h3 className="text-slate-900 font-extrabold text-lg">⚠️ Confirm Disconnect</h3>
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    Ngắt kết nối sẽ <strong>xóa ví khỏi thiết bị này</strong>. Ví vẫn tồn tại trên blockchain, nhưng bạn cần <strong>Wallet ID</strong> để kết nối lại.
+                    Disconnecting will <strong>remove the wallet from this device</strong>. Your wallet still exists on-chain, but you'll need your <strong>Wallet ID</strong> to reconnect.
                   </p>
                   <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2">
                     <span className="text-[10px] text-slate-400 shrink-0">Wallet ID</span>
@@ -935,11 +935,11 @@ function CircleWalletSection() {
                   <div className="flex gap-2">
                     <button onClick={() => setShowConfirm(false)}
                       className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors">
-                      Huỷ
+                      Cancel
                     </button>
                     <button onClick={confirmDisconnect}
                       className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors">
-                      Ngắt kết nối
+                      Disconnect
                     </button>
                   </div>
                 </div>
