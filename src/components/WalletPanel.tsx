@@ -882,22 +882,38 @@ function CircleWalletSection() {
             </div>
 
             {/* Wallet info + disconnect */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Wallet Info</p>
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <span className="text-[10px] text-slate-400 w-20 shrink-0">Wallet ID</span>
-                <span className="font-mono text-[10px] text-slate-600 flex-1 truncate">{wallet.walletId}</span>
-                <CopyBtnLight value={wallet.walletId} />
+            <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🗂️</span>
+                <p className="text-sm font-extrabold text-slate-700 uppercase tracking-wide">Wallet Info</p>
               </div>
-              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
-                <span className="text-[10px] text-emerald-700 font-semibold">⭕ Circle Developer-Controlled</span>
-                <span className="text-[10px] text-emerald-600">Arc Testnet</span>
+
+              {/* Wallet ID row */}
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Wallet ID</p>
+                <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3">
+                  <span className="font-mono text-sm text-slate-700 flex-1 truncate">{wallet.walletId}</span>
+                  <CopyBtnLight value={wallet.walletId} />
+                </div>
               </div>
-              <p className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                ⚠️ Hãy sao chép Wallet ID ở trên trước khi ngắt kết nối để có thể kết nối lại sau.
-              </p>
+
+              {/* Network badge */}
+              <div className="flex items-center justify-between bg-emerald-50 border-2 border-emerald-200 rounded-xl px-4 py-3">
+                <span className="text-sm text-emerald-700 font-bold">⭕ Circle Developer-Controlled</span>
+                <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">Arc Testnet</span>
+              </div>
+
+              {/* Warning */}
+              <div className="flex items-start gap-2 bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-3">
+                <span className="text-base shrink-0">⚠️</span>
+                <p className="text-sm text-amber-700 font-semibold leading-snug">
+                  Hãy sao chép Wallet ID ở trên trước khi ngắt kết nối để có thể kết nối lại sau.
+                </p>
+              </div>
+
+              {/* Disconnect button */}
               <button onClick={handleDisconnect}
-                className="py-2.5 rounded-xl border border-red-200 bg-white text-red-500 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center gap-2">
+                className="py-3.5 rounded-xl border-2 border-red-200 bg-white text-red-500 text-base font-extrabold hover:bg-red-50 hover:border-red-400 transition-colors flex items-center justify-center gap-2 shadow-sm">
                 🔌 Ngắt kết nối Circle Wallet
               </button>
             </div>
