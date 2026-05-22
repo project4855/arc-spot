@@ -48,11 +48,11 @@ async function pollTxHash(apiKey: string, circleTxId: string, maxMs = 90_000): P
       data: { transaction: { txHash?: string; state: string; errorReason?: string } }
     }
     const tx = data.transaction
-    if (tx.state === 'CONFIRMED' && tx.txHash) return tx.txHash
+    if (tx.txHash && ['CONFIRMED', 'COMPLETE', 'SENT'].includes(tx.state)) return tx.txHash
     if (['FAILED', 'DENIED', 'CANCELLED'].includes(tx.state)) {
       throw new Error(`Circle tx ${tx.state}: ${tx.errorReason ?? ''}`)
     }
-    await new Promise(r => setTimeout(r, 2_000))
+    await new Promise(r => setTimeout(r, 1_500))
   }
   throw new Error('Circle tx confirmation timeout (90s)')
 }
