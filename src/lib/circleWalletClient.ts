@@ -76,6 +76,20 @@ export async function createCircleWallet(): Promise<CircleWalletInfo> {
   return info
 }
 
+/**
+ * Reconnect to an existing Circle wallet by walletId.
+ * Fetches the address from Circle API and saves to localStorage.
+ */
+export async function reconnectCircleWallet(walletId: string): Promise<CircleWalletInfo> {
+  const data = await post({ action: 'getWallet', walletId })
+  const info: CircleWalletInfo = {
+    walletId: data.walletId as string,
+    address:  data.address  as `0x${string}`,
+  }
+  saveCircleWallet(info)
+  return info
+}
+
 export interface TokenBalance {
   symbol: string
   amount: string

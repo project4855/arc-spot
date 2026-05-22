@@ -110,6 +110,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ walletId: w.id, address: w.address })
     }
 
+    // ── getWallet (reconnect by walletId) ──────────────────────────────────────
+    if (action === 'getWallet') {
+      const { walletId } = p
+      if (!walletId) return res.status(400).json({ error: 'walletId required' })
+      const data = await circle(apiKey, 'GET', `/wallets/${walletId}`) as {
+        data: { wallet: { id: string; address: string; blockchain: string } }
+      }
+      const w = data.data.wallet
+      return res.status(200).json({ walletId: w.id, address: w.address })
+    }
+
     // ── balance ────────────────────────────────────────────────────────────────
     if (action === 'balance') {
       const { walletId } = p
