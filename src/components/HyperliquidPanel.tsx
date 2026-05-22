@@ -113,88 +113,133 @@ function JobCard({ job, myAddress, onAction, loading }: {
   const isExpired   = Date.now() / 1000 > Number(job.deadline)
   const busy        = loading === job.id
 
+  // Next-step hint based on status + role
+  const nextStep = (() => {
+    if (isExpired && (sName === 'Funded' || sName === 'Submitted') && isCreator)
+      return { icon: '🔙', text: 'Deadline passed — you can reclaim your USDC.', color: 'bg-slate-100 border-slate-300 text-slate-700' }
+    if (sName === 'Open' && myAddress)
+      return { icon: '💰', text: 'Fund this job to escrow USDC and open it to providers.', color: 'bg-amber-50 border-amber-200 text-amber-800' }
+    if (sName === 'Funded' && (job.provider === ZERO_ADDR || isProvider) && myAddress)
+      return { icon: '📤', text: 'Submit your deliverable (paste any text / IPFS CID) to move to review.', color: 'bg-violet-50 border-violet-200 text-violet-800' }
+    if (sName === 'Submitted' && isEvaluator)
+      return { icon: '⚖️', text: 'Review the deliverable, then Complete (release USDC) or Reject (refund creator).', color: 'bg-blue-50 border-blue-200 text-blue-800' }
+    if (sName === 'Submitted' && !isEvaluator)
+      return { icon: '⏳', text: 'Waiting for evaluator to review and complete or reject.', color: 'bg-slate-100 border-slate-200 text-slate-600' }
+    if (sName === 'Completed')
+      return { icon: '✅', text: 'Job completed. USDC has been released to the provider.', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' }
+    if (sName === 'Rejected')
+      return { icon: '❌', text: 'Job rejected. USDC has been returned to the creator.', color: 'bg-red-50 border-red-200 text-red-700' }
+    return null
+  })()
+
   return (
-    <div className={`bg-white border rounded-2xl p-4 flex flex-col gap-3 ${
-      sName === 'Completed' ? 'border-emerald-200' :
-      sName === 'Rejected' || sName === 'Expired' ? 'border-slate-200 opacity-70' :
-      'border-slate-200 hover:border-violet-200'
-    } transition-all`}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-slate-400 text-[10px] font-mono">#{job.id.toString()}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${STATUS_STYLES[sName]}`}>{sName}</span>
-            {isCreator   && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-600 font-semibold">You created</span>}
-            {isProvider  && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-violet-50 border border-violet-200 text-violet-600 font-semibold">You provide</span>}
-            {isEvaluator && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-600 font-semibold">You evaluate</span>}
-          </div>
-          <p className="text-slate-900 font-bold text-sm mt-1 leading-snug">{job.title}</p>
-          {job.description && <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{job.description}</p>}
+    <div className={`bg-white border-2 rounded-2xl overflow-hidden flex flex-col ${
+      sName === 'Completed' ? 'border-emerald-300' :
+      sName === 'Rejected' || sName === 'Expired' ? 'border-slate-200 opacity-75' :
+      sName === 'Funded'    ? 'border-amber-300' :
+      sName === 'Submitted' ? 'border-violet-300' :
+      'border-slate-200 hover:border-violet-300'
+    } transition-all shadow-sm`}>
+
+      {/* ── Top bar: ID + status + budget ── */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-slate-400 text-xs font-mono font-bold">Job #{job.id.toString()}</span>
+          <span className={`text-xs px-3 py-1 rounded-full border font-bold ${STATUS_STYLES[sName]}`}>{sName}</span>
+          {isCreator   && <span className="text-xs px-2 py-0.5 rounded-lg bg-indigo-100 border border-indigo-200 text-indigo-700 font-semibold">You created</span>}
+          {isProvider  && <span className="text-xs px-2 py-0.5 rounded-lg bg-violet-100 border border-violet-200 text-violet-700 font-semibold">You provide</span>}
+          {isEvaluator && <span className="text-xs px-2 py-0.5 rounded-lg bg-amber-100 border border-amber-200 text-amber-700 font-semibold">You evaluate</span>}
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-emerald-600 font-extrabold text-base font-mono">{fmtUsdc(job.budgetUsdc)}</p>
-          <p className="text-slate-400 text-[10px] mt-0.5">Budget</p>
+        <div className="text-right shrink-0 ml-4">
+          <p className="text-emerald-600 font-extrabold text-xl font-mono leading-none">{fmtUsdc(job.budgetUsdc)}</p>
+          <p className="text-slate-400 text-xs mt-0.5">Budget</p>
         </div>
       </div>
 
-      {/* Meta */}
-      <div className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-400">
-        <span>👤 Creator: <span className="font-mono text-slate-600">{shortAddr(job.creator)}</span></span>
-        <span>🔧 Provider: <span className="font-mono text-slate-600">{shortAddr(job.provider)}</span></span>
-        <span>⏱ Deadline: <span className="text-slate-600">{fmtDate(job.deadline)}</span></span>
-        <span>📅 Created: <span className="text-slate-600">{fmtDate(job.createdAt)}</span></span>
-        {job.deliverable !== '0x' + '0'.repeat(64) && (
-          <span className="col-span-2">📦 Deliverable: <span className="font-mono text-violet-600">{job.deliverable.slice(0, 18)}…</span></span>
+      {/* ── Title + description ── */}
+      <div className="px-5 py-4">
+        <p className="text-slate-900 font-extrabold text-base leading-snug">{job.title || <span className="italic text-slate-400">Untitled</span>}</p>
+        {job.description && (
+          <p className="text-slate-500 text-sm mt-1 leading-relaxed">{job.description}</p>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-col gap-2">
+      {/* ── Meta grid ── */}
+      <div className="px-5 pb-4 grid grid-cols-2 gap-y-2 gap-x-4">
+        <div>
+          <p className="text-slate-400 text-xs mb-0.5">Creator</p>
+          <p className="text-slate-700 text-sm font-mono font-semibold">{shortAddr(job.creator)}</p>
+        </div>
+        <div>
+          <p className="text-slate-400 text-xs mb-0.5">Provider</p>
+          <p className="text-slate-700 text-sm font-mono font-semibold">{shortAddr(job.provider)}</p>
+        </div>
+        <div>
+          <p className="text-slate-400 text-xs mb-0.5">Deadline</p>
+          <p className={`text-sm font-semibold ${isExpired ? 'text-red-500' : 'text-slate-700'}`}>{fmtDate(job.deadline)}{isExpired && ' · Expired'}</p>
+        </div>
+        <div>
+          <p className="text-slate-400 text-xs mb-0.5">Created</p>
+          <p className="text-slate-700 text-sm font-semibold">{fmtDate(job.createdAt)}</p>
+        </div>
+        {job.deliverable !== '0x' + '0'.repeat(64) && (
+          <div className="col-span-2">
+            <p className="text-slate-400 text-xs mb-0.5">Deliverable hash</p>
+            <p className="text-violet-600 text-sm font-mono font-semibold truncate">{job.deliverable.slice(0, 26)}…</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Next step hint ── */}
+      {nextStep && (
+        <div className={`mx-5 mb-4 flex items-start gap-2 px-4 py-3 rounded-xl border text-sm font-medium ${nextStep.color}`}>
+          <span className="text-base shrink-0">{nextStep.icon}</span>
+          <p>{nextStep.text}</p>
+        </div>
+      )}
+
+      {/* ── Action buttons ── */}
+      <div className="px-5 pb-5 flex flex-col gap-3">
         {sName === 'Open' && !isExpired && myAddress && (
-          <button onClick={() => onAction('fund', job.id)}
-            disabled={busy}
-            className="w-full py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-400 transition-colors disabled:opacity-50">
-            {busy ? '⏳ Funding…' : `💰 Fund Job (approve ${fmtUsdc(job.budgetUsdc)} USDC)`}
+          <button onClick={() => onAction('fund', job.id)} disabled={busy}
+            className="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-400 transition-colors disabled:opacity-50 shadow-sm">
+            {busy ? '⏳ Funding…' : `💰 Fund Job — escrow ${fmtUsdc(job.budgetUsdc)}`}
           </button>
         )}
 
         {sName === 'Funded' && !isExpired && myAddress && (job.provider === ZERO_ADDR || isProvider) && (
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <input
               value={deliverableInput}
               onChange={e => setDeliverableInput(e.target.value)}
-              placeholder="IPFS CID or deliverable identifier"
-              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-violet-400"
+              placeholder="Paste IPFS CID or any deliverable text…"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm focus:outline-none focus:border-violet-400 bg-slate-50 focus:bg-white transition-colors"
             />
             <button onClick={() => onAction('submit', job.id, deliverableInput)}
               disabled={busy || !deliverableInput.trim()}
-              className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-500 transition-colors disabled:opacity-50">
-              {busy ? '⏳' : '📤 Submit'}
+              className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-500 transition-colors disabled:opacity-50 shadow-sm">
+              {busy ? '⏳ Submitting…' : '📤 Submit Deliverable'}
             </button>
           </div>
         )}
 
         {sName === 'Submitted' && isEvaluator && (
-          <div className="flex gap-2">
-            <button onClick={() => onAction('complete', job.id)}
-              disabled={busy}
-              className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-400 transition-colors disabled:opacity-50">
+          <div className="flex gap-3">
+            <button onClick={() => onAction('complete', job.id)} disabled={busy}
+              className="flex-1 py-3 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-400 transition-colors disabled:opacity-50 shadow-sm">
               {busy ? '⏳' : '✅ Complete & Release USDC'}
             </button>
-            <button onClick={() => onAction('reject', job.id)}
-              disabled={busy}
-              className="flex-1 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-400 transition-colors disabled:opacity-50">
+            <button onClick={() => onAction('reject', job.id)} disabled={busy}
+              className="flex-1 py-3 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-400 transition-colors disabled:opacity-50 shadow-sm">
               {busy ? '⏳' : '❌ Reject & Refund'}
             </button>
           </div>
         )}
 
         {(sName === 'Funded' || sName === 'Submitted') && isExpired && isCreator && (
-          <button onClick={() => onAction('claimRefund', job.id)}
-            disabled={busy}
-            className="w-full py-2 rounded-xl bg-slate-600 text-white text-xs font-bold hover:bg-slate-500 transition-colors disabled:opacity-50">
-            {busy ? '⏳ Claiming…' : '🔙 Claim Refund (expired)'}
+          <button onClick={() => onAction('claimRefund', job.id)} disabled={busy}
+            className="w-full py-3 rounded-xl bg-slate-600 text-white text-sm font-bold hover:bg-slate-500 transition-colors disabled:opacity-50">
+            {busy ? '⏳ Claiming…' : '🔙 Claim Refund (deadline passed)'}
           </button>
         )}
       </div>
