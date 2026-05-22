@@ -16,10 +16,11 @@ import {
 } from 'wagmi'
 import { encodeFunctionData } from 'viem'
 import { getTurnkeyAddress, getTurnkeyWalletClient, clearTurnkeySigner } from '../lib/turnkeySigner'
+import { getCircleAddress, loadCircleWallet, circleExecuteContract } from '../lib/circleWalletClient'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type WalletType = 'turnkey' | 'wagmi' | 'none'
+export type WalletType = 'turnkey' | 'circle' | 'wagmi' | 'none'
 
 export interface WriteContractParams {
   address: `0x${string}`
@@ -66,36 +67,65 @@ function isTurnkeyCredentialError(err: unknown): boolean {
 
 export function useWallet() {
   const { address: wagmiAddress, isConnected, chainId } = useAccount()
-  const [tkAddress, setTkAddress] = useState<`0x${string}` | null>(getTurnkeyAddress())
+  const [tkAddress,     setTkAddress]     = useState<`0x${string}` | null>(getTurnkeyAddress())
+  const [circleAddress, setCircleAddress] = useState<`0x${string}` | null>(getCircleAddress())
 
   const { writeContractAsync: wagmiWrite } = useWriteContract()
   const { sendTransactionAsync: wagmiSend } = useSendTransaction()
 
-  // Track Turnkey login/logout events
+  // Track Turnkey and Circle wallet login/logout events
   useEffect(() => {
-    const handler = () => setTkAddress(getTurnkeyAddress())
-    window.addEventListener('turnkey_signer_ready', handler)
-    return () => window.removeEventListener('turnkey_signer_ready', handler)
+    const tkHandler     = () => setTkAddress(getTurnkeyAddress())
+    const circleHandler = () => setCircleAddress(getCircleAddress())
+    window.addEventListener('turnkey_signer_ready',  tkHandler)
+    window.addEventListener('circle_wallet_updated', circleHandler)
+    return () => {
+      window.removeEventListener('turnkey_signer_ready',  tkHandler)
+      window.removeEventListener('circle_wallet_updated', circleHandler)
+    }
   }, [])
 
   const tkClient = getTurnkeyWalletClient()
-  const tkReady = !!tkAddress && !!tkClient
+  const tkReady     = !!tkAddress && !!tkClient
+  const circleReady = !!circleAddress
 
-  // Active address — Turnkey takes priority
-  const address: `0x${string}` | undefined = tkAddress ?? wagmiAddress ?? undefined
+  // Priority: Turnkey > Circle > wagmi
+  const address: `0x${string}` | undefined = tkAddress ?? circleAddress ?? wagmiAddress ?? undefined
 
-  // True if ANY wallet is ready to sign
-  const isReady = tkReady || isConnected
+  const isReady = tkReady || circleReady || isConnected
 
-  const walletType: WalletType = tkReady ? 'turnkey' : isConnected ? 'wagmi' : 'none'
+  const walletType: WalletType =
+    tkReady     ? 'turnkey' :
+    circleReady ? 'circle'  :
+    isConnected ? 'wagmi'   : 'none'
 
-  const onWrongNetwork = isConnected && !tkReady && chainId !== 5042002
+  const onWrongNetwork = isConnected && !tkReady && !circleReady && chainId !== 5042002
 
   // ── writeContract ──────────────────────────────────────────────────────────
-  // For Turnkey: encode calldata locally + sendTransaction (avoids wallet_sendTransaction).
-  // Auto-fallback: if Turnkey signing fails with a credential error, clears the
-  // stale signer and retries with wagmi (MetaMask) if connected.
   const writeContract = useCallback(async (params: WriteContractParams): Promise<`0x${string}`> => {
+
+    // ── Circle Developer-Controlled Wallet ────────────────────────────────────
+    if (circleReady && !tkReady) {
+      const wallet = loadCircleWallet()
+      if (!wallet) throw new Error('Circle wallet not found. Please re-create it in the Wallet tab.')
+
+      // Build ABI function signature string, e.g. "approve(address,uint256)"
+      type AbiEntry = { name: string; inputs: Array<{ type: string }> }
+      const abiEntry = (params.abi as AbiEntry[]).find(
+        (e): e is AbiEntry => e.name === params.functionName,
+      )
+      if (!abiEntry) throw new Error(`ABI entry not found: ${params.functionName}`)
+      const sig = `${abiEntry.name}(${abiEntry.inputs.map(i => i.type).join(',')})`
+
+      // Encode each argument as a string (Circle API expects string array)
+      const abiParams = (params.args ?? []).map(a =>
+        typeof a === 'bigint' ? a.toString() : String(a),
+      )
+
+      return circleExecuteContract(wallet.walletId, params.address, sig, abiParams)
+    }
+
+    // ── Turnkey HSM ───────────────────────────────────────────────────────────
     const client = getTurnkeyWalletClient()
     if (client && tkReady) {
       try {
@@ -123,10 +153,9 @@ export function useWallet() {
           throw new Error(
             '📊 Turnkey signing quota exhausted (free plan limit reached).\n\n' +
             'To continue swapping:\n' +
-            '• Option 1: Connect MetaMask in Wallet tab → External Wallet → use it for swaps\n' +
-            '• Option 2: Upgrade your Turnkey plan at turnkey.com\n' +
-            '• Option 3: Create a new Turnkey organization (resets free quota)\n\n' +
-            'Contact: help@turnkey.com'
+            '• Option 1: Use Circle Wallet in Wallet tab → Circle Wallet (no quota!)\n' +
+            '• Option 2: Connect MetaMask in Wallet tab → External Wallet\n' +
+            '• Option 3: Upgrade your Turnkey plan at turnkey.com'
           )
         }
         // ── Stale/invalid credentials — clear and fall back to wagmi ──
@@ -152,6 +181,16 @@ export function useWallet() {
 
   // ── sendTransaction ────────────────────────────────────────────────────────
   const sendTransaction = useCallback(async (params: SendTransactionParams): Promise<`0x${string}`> => {
+    // Circle wallet: use contractExecution with raw calldata
+    if (circleReady && !tkReady) {
+      const wallet = loadCircleWallet()
+      if (!wallet) throw new Error('Circle wallet not found')
+      if (!params.to) throw new Error('Circle wallet sendTransaction requires a "to" address')
+      // Encode as a raw contract call passing the data hex
+      const dataHex = params.data ?? '0x'
+      return circleExecuteContract(wallet.walletId, params.to, 'fallback(bytes)', [dataHex])
+    }
+
     const client = getTurnkeyWalletClient()
     if (client && tkReady) {
       try {
@@ -190,6 +229,7 @@ export function useWallet() {
     isReady,
     walletType,
     tkReady,
+    circleReady,
     onWrongNetwork,
     chainId,
     // Actions

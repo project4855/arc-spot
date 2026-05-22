@@ -11,10 +11,14 @@ import { TOKEN_ADDRESSES, TOKEN_DECIMALS, ERC20_ABI } from '../config/contracts'
 import { TurnkeyProvider, useTurnkey, ClientState } from '@turnkey/react-wallet-kit'
 import { useWallet } from '../hooks/useWallet'
 import { arcTestnet } from '../config/wagmi'
+import {
+  loadCircleWallet, clearCircleWallet, createCircleWallet,
+  getCircleBalance, sendCircleUSDC, type CircleWalletInfo,
+} from '../lib/circleWalletClient'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type WalletKind = 'infra' | 'metamask'
+type WalletKind = 'infra' | 'circle' | 'metamask'
 type InfraSubTab = 'receive' | 'send' | 'sign' | 'policy' | 'ops'
 type MetaSubTab  = 'receive' | 'send'
 
@@ -557,6 +561,356 @@ function TurnkeyWalletSection() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ─── CIRCLE DEVELOPER-CONTROLLED WALLET SECTION ──────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function CircleWalletSection() {
+  const [wallet,   setWallet]   = useState<CircleWalletInfo | null>(loadCircleWallet())
+  const [subTab,   setSubTab]   = useState<'receive' | 'send'>('receive')
+  const [busy,     setBusy]     = useState(false)
+  const [err,      setErr]      = useState('')
+  const [info,     setInfo]     = useState('')
+  const [balances, setBalances] = useState<{ symbol: string; amount: string }[]>([])
+  const [loadingBal, setLoadingBal] = useState(false)
+
+  // Send state
+  const [toAddr,   setToAddr]   = useState('')
+  const [amount,   setAmount]   = useState('')
+  const [sendStep, setSendStep] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
+  const [txHash,   setTxHash]   = useState('')
+  const [sendErr,  setSendErr]  = useState('')
+
+  // Listen for wallet updates (created/cleared from another tab)
+  useEffect(() => {
+    const handler = () => setWallet(loadCircleWallet())
+    window.addEventListener('circle_wallet_updated', handler)
+    return () => window.removeEventListener('circle_wallet_updated', handler)
+  }, [])
+
+  // Load balances when wallet is connected
+  const loadBalances = useCallback(async () => {
+    if (!wallet) return
+    setLoadingBal(true)
+    try {
+      const bals = await getCircleBalance(wallet.walletId)
+      setBalances(bals)
+    } catch (e) {
+      // Balance fetch fails silently — fall back to on-chain display
+    } finally {
+      setLoadingBal(false)
+    }
+  }, [wallet])
+
+  useEffect(() => { loadBalances() }, [loadBalances])
+
+  const handleCreate = async () => {
+    setBusy(true); setErr(''); setInfo('')
+    try {
+      const w = await createCircleWallet()
+      setWallet(w)
+      setInfo('✅ Circle wallet created!')
+    } catch (e: unknown) {
+      const ex = e as Error & { setup_required?: boolean; env?: string }
+      if (ex.setup_required) {
+        setInfo(`⚙️ One-time setup needed:\n\n${ex.env}\n\nAdd this to Vercel → Settings → Environment Variables, then redeploy and click Create again.`)
+      } else {
+        setErr(ex.message ?? String(e))
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleDisconnect = () => {
+    clearCircleWallet()
+    setWallet(null)
+    setBalances([])
+    setErr('')
+    setInfo('')
+  }
+
+  const handleSend = async () => {
+    if (!wallet || !toAddr || !amount) return
+    setSendStep('sending'); setSendErr(''); setTxHash('')
+    try {
+      const hash = await sendCircleUSDC(wallet.walletId, toAddr, amount)
+      setTxHash(hash)
+      setSendStep('done')
+      await loadBalances()
+    } catch (e) {
+      setSendErr(e instanceof Error ? e.message.slice(0, 200) : String(e))
+      setSendStep('error')
+    }
+  }
+
+  const usdcBal = balances.find(b => b.symbol === 'USDC')?.amount ?? '—'
+  const eurcBal = balances.find(b => b.symbol === 'EURC')?.amount ?? '—'
+  const amountN = parseFloat(amount) || 0
+  const usdcNum = parseFloat(usdcBal) || 0
+  const canSend = isAddress(toAddr) && amountN > 0 && amountN <= usdcNum && sendStep === 'idle'
+
+  const SUBTABS = [
+    { key: 'receive' as const, icon: '📥', label: 'Receive' },
+    { key: 'send'    as const, icon: '📤', label: 'Send'    },
+  ]
+
+  return (
+    <div className="flex flex-col gap-0 rounded-3xl overflow-hidden border border-emerald-200 shadow-lg">
+
+      {/* Header strip */}
+      <div className="bg-gradient-to-br from-emerald-700 via-teal-600 to-cyan-700 px-5 pt-5 pb-4">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-xl shrink-0">⭕</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-white font-extrabold text-sm">Circle Wallet</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/50 text-emerald-100 font-bold uppercase tracking-wider">Developer-Controlled · No Quota</span>
+            </div>
+            {wallet ? (
+              <p className="text-emerald-200 text-[11px] font-mono mt-0.5 truncate">
+                {wallet.address.slice(0, 14)}…{wallet.address.slice(-8)}
+              </p>
+            ) : (
+              <p className="text-emerald-300 text-[11px] mt-0.5">Circle HSM · No seed phrase · No signing quota</p>
+            )}
+          </div>
+          {wallet && (
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse" />
+              <span className="text-emerald-200 text-[10px] font-semibold">Active</span>
+            </div>
+          )}
+        </div>
+
+        {/* Sub-tabs (only when wallet exists) */}
+        {wallet && (
+          <div className="flex gap-1 bg-white/10 p-1 rounded-xl">
+            {SUBTABS.map(t => (
+              <button key={t.key} onClick={() => setSubTab(t.key)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all ${
+                  subTab === t.key ? 'bg-white text-emerald-700 shadow' : 'text-emerald-200 hover:text-white hover:bg-white/10'
+                }`}>
+                <span>{t.icon}</span><span>{t.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="bg-slate-50 p-4 flex flex-col gap-4">
+        {err  && <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">❌ {err}</div>}
+        {info && (
+          <div className="px-3 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs whitespace-pre-wrap font-mono leading-relaxed">
+            {info}
+          </div>
+        )}
+
+        {/* ── No wallet: create / setup panel ── */}
+        {!wallet && (
+          <div className="flex flex-col gap-4">
+            {/* Feature cards */}
+            <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+              {[
+                { icon: '⭕', label: 'Circle HSM' },
+                { icon: '🚫', label: 'No Quota'   },
+                { icon: '🔑', label: 'No Seed Phrase' },
+              ].map(c => (
+                <div key={c.label} className="bg-white border border-slate-200 rounded-xl p-2.5">
+                  <p className="text-xl mb-0.5">{c.icon}</p>
+                  <p className="font-semibold text-slate-700">{c.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
+              <p className="text-xs font-bold text-slate-700 text-center">Create a Circle Developer Wallet</p>
+              <p className="text-[11px] text-slate-500 text-center leading-relaxed">
+                Server-signed on Arc Testnet via Circle API.<br/>
+                No Turnkey quota limits. No MetaMask needed.
+              </p>
+
+              <button onClick={handleCreate} disabled={busy}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-50">
+                {busy ? '⏳ Creating wallet…' : '⭕ Create Circle Wallet'}
+              </button>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] text-slate-500 leading-relaxed">
+                <p className="font-bold text-slate-700 mb-1">Requirements (Vercel env):</p>
+                <p>• <code className="text-emerald-700">CIRCLE_API_KEY</code> — from console.circle.com → API Keys</p>
+                <p>• <code className="text-emerald-700">CIRCLE_ENTITY_SECRET</code> — already generated</p>
+                <p>• <code className="text-emerald-700">CIRCLE_WALLET_SET_ID</code> — returned on first create</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Wallet active: Receive tab ── */}
+        {wallet && subTab === 'receive' && (
+          <div className="flex flex-col gap-4">
+            {/* Balances */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: '💵', sym: 'USDC', bal: usdcBal, color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+                { icon: '💶', sym: 'EURC', bal: eurcBal, color: 'bg-teal-50 border-teal-200 text-teal-700' },
+              ].map(b => (
+                <div key={b.sym} className={`${b.color} border rounded-2xl p-4`}>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-lg">{b.icon}</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">{b.sym}</span>
+                    {loadingBal && <span className="text-[10px] animate-pulse">…</span>}
+                  </div>
+                  <p className="font-extrabold text-2xl">{b.bal}</p>
+                  <p className="text-[10px] opacity-60 mt-0.5">Arc Testnet · Circle</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Address + QR */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Your Circle Wallet Address</p>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="shrink-0 p-2.5 bg-white border-2 border-emerald-300 rounded-xl">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&format=svg&data=${encodeURIComponent(wallet.address)}`}
+                    alt="QR" width={120} height={120} className="rounded-lg"
+                  />
+                </div>
+                <div className="flex-1 w-full flex flex-col gap-2.5">
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
+                    <p className="font-mono text-xs flex-1 break-all text-emerald-800">{wallet.address}</p>
+                    <CopyBtnLight value={wallet.address} />
+                  </div>
+                  <button onClick={loadBalances} disabled={loadingBal}
+                    className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
+                    {loadingBal ? '⏳ Loading…' : '🔄 Refresh Balance'}
+                  </button>
+                  <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-bold hover:opacity-90 transition-all">
+                    💧 Get Testnet USDC — faucet.circle.com
+                  </a>
+                  <a href={`https://testnet.arcscan.app/address/${wallet.address}`} target="_blank" rel="noreferrer"
+                    className="text-center py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs hover:text-slate-700 transition-colors">
+                    🔍 View on ArcScan ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Wallet info + disconnect */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Wallet Info</p>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <span className="text-[10px] text-slate-400 w-20 shrink-0">Wallet ID</span>
+                <span className="font-mono text-[10px] text-slate-600 flex-1 truncate">{wallet.walletId}</span>
+                <CopyBtnLight value={wallet.walletId} />
+              </div>
+              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                <span className="text-[10px] text-emerald-700 font-semibold">⭕ Circle Developer-Controlled</span>
+                <span className="text-[10px] text-emerald-600">Arc Testnet</span>
+              </div>
+              <button onClick={handleDisconnect}
+                className="mt-1 py-2 rounded-xl border border-red-200 text-red-500 text-xs font-semibold hover:bg-red-50 transition-colors">
+                🗑 Remove Wallet (local only)
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Wallet active: Send tab ── */}
+        {wallet && subTab === 'send' && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-700 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              Signed by Circle API · Arc Testnet · No Turnkey quota
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-4">
+              {/* Only USDC for Circle wallet (most common) */}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Send USDC</span>
+                <span className="text-xs text-slate-500 font-semibold">
+                  Balance: <span className="text-emerald-600 font-bold">{usdcBal} USDC</span>
+                </span>
+              </div>
+
+              {/* Recipient */}
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Recipient</label>
+                <div className={`flex items-center gap-2 bg-slate-50 border rounded-xl px-3 py-2.5 focus-within:border-emerald-400 transition-colors ${toAddr && !isAddress(toAddr) ? 'border-red-300' : 'border-slate-200'}`}>
+                  <span className="text-slate-400 text-sm">👤</span>
+                  <input type="text" placeholder="0x…" value={toAddr}
+                    onChange={e => { setToAddr(e.target.value); setSendStep('idle') }}
+                    className="flex-1 bg-transparent text-slate-900 text-sm font-mono outline-none placeholder:text-slate-300" />
+                  {isAddress(toAddr) && <span className="text-emerald-500">✓</span>}
+                </div>
+                {toAddr && !isAddress(toAddr) && <p className="text-red-500 text-xs mt-1">Invalid address</p>}
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Amount (USDC)</label>
+                <div className={`flex items-center gap-2 bg-slate-50 border rounded-xl px-3 py-2.5 focus-within:border-emerald-400 transition-colors ${amountN > usdcNum && usdcNum > 0 ? 'border-red-300' : 'border-slate-200'}`}>
+                  <span className="text-slate-400">💵</span>
+                  <input type="number" min="0" step="0.01" placeholder="0.00" value={amount}
+                    onChange={e => { setAmount(e.target.value); setSendStep('idle') }}
+                    className="flex-1 bg-transparent text-slate-900 font-bold text-xl outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                  <span className="text-slate-500 font-semibold text-sm">USDC</span>
+                  <button onClick={() => setAmount(usdcNum.toString())}
+                    className="px-2 py-1 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100 text-xs font-semibold transition-colors">
+                    Max
+                  </button>
+                </div>
+                {amountN > usdcNum && usdcNum > 0 && <p className="text-red-500 text-xs mt-1">Insufficient USDC</p>}
+              </div>
+
+              {/* Preview */}
+              {isAddress(toAddr) && amountN > 0 && amountN <= usdcNum && sendStep === 'idle' && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs flex flex-col gap-1.5">
+                  <div className="flex justify-between"><span className="text-slate-500">Send</span><span className="font-bold text-slate-900">{amount} USDC</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">To</span><span className="font-mono text-slate-600">{toAddr.slice(0,10)}…{toAddr.slice(-8)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Via</span><span className="font-semibold text-emerald-700">Circle API · Arc Testnet</span></div>
+                </div>
+              )}
+
+              {/* Status */}
+              {sendStep === 'sending' && (
+                <div className="flex items-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs font-semibold">
+                  <span className="animate-spin">⏳</span> Signing via Circle API · waiting ~780ms…
+                </div>
+              )}
+              {sendStep === 'done' && txHash && (
+                <div className="px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
+                  <p className="text-emerald-700 font-bold mb-1">✅ Transaction confirmed!</p>
+                  <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noreferrer"
+                    className="font-mono text-violet-600 hover:underline break-all">{txHash}</a>
+                </div>
+              )}
+              {sendStep === 'error' && (
+                <div className="px-3 py-2.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">❌ {sendErr}</div>
+              )}
+
+              {/* Send button */}
+              {sendStep !== 'done' ? (
+                <button onClick={handleSend} disabled={!canSend || sendStep !== 'idle'}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-emerald-900/20">
+                  {sendStep === 'sending' ? '⏳ Sending…' : `Send ${amount || '0'} USDC via Circle`}
+                </button>
+              ) : (
+                <button onClick={() => { setSendStep('idle'); setToAddr(''); setAmount(''); setTxHash('') }}
+                  className="w-full py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors">
+                  Send Another
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ─── METAMASK / EXTERNAL WALLET SECTION ──────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -686,7 +1040,7 @@ export default function WalletPanel() {
       </div>
 
       {/* Wallet type selector */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {/* Wallet Infra card */}
         <button onClick={() => setKind('infra')}
           className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 text-left transition-all ${
@@ -701,15 +1055,39 @@ export default function WalletPanel() {
           )}
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-xl shadow-sm">🏛</div>
           <div>
-            <p className={`font-extrabold text-sm ${kind === 'infra' ? 'text-indigo-900' : 'text-slate-800'}`}>Wallet Infrastructure</p>
+            <p className={`font-extrabold text-sm ${kind === 'infra' ? 'text-indigo-900' : 'text-slate-800'}`}>Wallet Infra</p>
             <p className={`text-[11px] mt-0.5 leading-relaxed ${kind === 'infra' ? 'text-indigo-600' : 'text-slate-500'}`}>
-              Turnkey HSM · Email OTP · Passkey · No seed phrase
+              Turnkey HSM · Email OTP
             </p>
           </div>
           <div className="flex gap-1 flex-wrap">
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">HSM Secured</span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">Embedded</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">HSM</span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">Recommended</span>
+          </div>
+        </button>
+
+        {/* Circle Wallet card */}
+        <button onClick={() => setKind('circle')}
+          className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 text-left transition-all ${
+            kind === 'circle'
+              ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-100'
+              : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/50'
+          }`}>
+          {kind === 'circle' && (
+            <span className="absolute top-3 right-3 w-4 h-4 rounded-full bg-emerald-600 flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-white" />
+            </span>
+          )}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xl shadow-sm">⭕</div>
+          <div>
+            <p className={`font-extrabold text-sm ${kind === 'circle' ? 'text-emerald-900' : 'text-slate-800'}`}>Circle Wallet</p>
+            <p className={`text-[11px] mt-0.5 leading-relaxed ${kind === 'circle' ? 'text-emerald-600' : 'text-slate-500'}`}>
+              Dev-Controlled · No Quota
+            </p>
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">No Quota</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 font-bold">Circle HSM</span>
           </div>
         </button>
 
@@ -729,12 +1107,11 @@ export default function WalletPanel() {
           <div>
             <p className={`font-extrabold text-sm ${kind === 'metamask' ? 'text-violet-900' : 'text-slate-800'}`}>External Wallet</p>
             <p className={`text-[11px] mt-0.5 leading-relaxed ${kind === 'metamask' ? 'text-violet-600' : 'text-slate-500'}`}>
-              MetaMask · Coinbase · WalletConnect · any EVM wallet
+              MetaMask · WalletConnect
             </p>
           </div>
           <div className="flex gap-1 flex-wrap">
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-bold">MetaMask</span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-bold">WalletConnect</span>
           </div>
         </button>
       </div>
@@ -743,9 +1120,11 @@ export default function WalletPanel() {
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-slate-200" />
         <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
-          kind === 'infra' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-violet-50 text-violet-600 border border-violet-200'
+          kind === 'infra'    ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'   :
+          kind === 'circle'   ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                                'bg-violet-50 text-violet-600 border border-violet-200'
         }`}>
-          {kind === 'infra' ? '🏛 Wallet Infrastructure' : '🦊 External Wallet'}
+          {kind === 'infra' ? '🏛 Wallet Infrastructure' : kind === 'circle' ? '⭕ Circle Wallet' : '🦊 External Wallet'}
         </span>
         <div className="flex-1 h-px bg-slate-200" />
       </div>
@@ -756,6 +1135,7 @@ export default function WalletPanel() {
           <TurnkeyWalletSection />
         </TurnkeyProvider>
       )}
+      {kind === 'circle'   && <CircleWalletSection />}
       {kind === 'metamask' && <MetaMaskWalletSection />}
 
       {/* Footer */}
