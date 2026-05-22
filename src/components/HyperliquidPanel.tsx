@@ -52,6 +52,31 @@ function loadNanoTxs(): NanoTx[] {
   try { return JSON.parse(localStorage.getItem(LS_NANO_KEY) ?? '[]') } catch { return [] }
 }
 
+// Parse raw error (Circle JSON, wagmi revert, generic) into a short human message
+function parseErr(raw: string): { msg: string; needsFaucet: boolean } {
+  try {
+    // Circle API JSON error
+    const j = JSON.parse(raw.match(/\{.*\}/s)?.[0] ?? raw)
+    const circleMsg: string = j?.message ?? j?.errors?.[0]?.message ?? ''
+    if (circleMsg.includes('insufficient') || circleMsg.includes('balance')) {
+      return { msg: 'Insufficient USDC balance — get testnet USDC from faucet.circle.com first.', needsFaucet: true }
+    }
+    if (circleMsg) return { msg: circleMsg, needsFaucet: false }
+  } catch { /* not JSON */ }
+
+  const lo = raw.toLowerCase()
+  if (lo.includes('insufficient') || lo.includes('balance') || lo.includes('token balance')) {
+    return { msg: 'Insufficient USDC balance — get testnet USDC from faucet.circle.com first.', needsFaucet: true }
+  }
+  if (lo.includes('user rejected') || lo.includes('denied')) {
+    return { msg: 'Transaction rejected by user.', needsFaucet: false }
+  }
+  if (lo.includes('allowance')) {
+    return { msg: 'USDC allowance too low — approval step may have failed.', needsFaucet: false }
+  }
+  return { msg: raw.slice(0, 160), needsFaucet: false }
+}
+
 function shortAddr(a: string) {
   return a === '0x0000000000000000000000000000000000000000' ? 'Open' : `${a.slice(0,6)}…${a.slice(-4)}`
 }
@@ -391,14 +416,33 @@ export default function HyperliquidPanel() {
       </div>
 
       {/* Tx status */}
-      {(txError || txSuccess || txPending) && (
-        <div className={`px-4 py-3 rounded-xl text-sm font-medium ${txError ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
-          {txPending && '⏳ Confirming on Arc Testnet…  '}
-          {txSuccess && !txPending && `✅ ${txSuccess}`}
-          {txError && `❌ ${txError.slice(0, 200)}`}
-          {txHash && <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noreferrer" className="ml-2 underline text-violet-600 text-xs">View tx ↗</a>}
-        </div>
-      )}
+      {(txError || txSuccess || txPending) && (() => {
+        const parsed = txError ? parseErr(txError) : null
+        return (
+          <div className={`px-4 py-3 rounded-xl text-sm font-medium flex flex-col gap-2 ${txError ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
+            <div className="flex items-start gap-2">
+              <span>{txPending ? '⏳' : txError ? '❌' : '✅'}</span>
+              <span>
+                {txPending && 'Confirming on Arc Testnet…'}
+                {txSuccess && !txPending && txSuccess}
+                {txError && parsed?.msg}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              {txHash && (
+                <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noreferrer"
+                  className="underline text-violet-600 text-xs font-semibold">View tx ↗</a>
+              )}
+              {parsed?.needsFaucet && (
+                <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
+                  className="px-3 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-500 transition-colors">
+                  💧 Get Testnet USDC ↗
+                </a>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
@@ -672,11 +716,20 @@ export default function HyperliquidPanel() {
               </div>
             </div>
 
-            {nanoErr && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-red-700 text-xs font-semibold">
-                ❌ {nanoErr}
-              </div>
-            )}
+            {nanoErr && (() => {
+              const p = parseErr(nanoErr)
+              return (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-red-700 text-xs font-semibold flex items-center gap-3 flex-wrap">
+                  <span>❌ {p.msg}</span>
+                  {p.needsFaucet && (
+                    <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
+                      className="px-3 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-500 transition-colors shrink-0">
+                      💧 Get Testnet USDC ↗
+                    </a>
+                  )}
+                </div>
+              )
+            })()}
 
             {(nanoPending || (nanoTxHash && !nanoConfirmed)) && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2 text-emerald-700 text-xs font-semibold flex items-center gap-2">
