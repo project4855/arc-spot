@@ -472,14 +472,16 @@ function fmtRelative(ms: number): string {
 // ── My Bets & History Section ─────────────────────────────────────────────────
 
 function MyBetsSection({
-  myBets, markets, totalBetAmount, onClear,
+  myBets, markets, totalBetAmount, onClear, onClose,
 }: {
   myBets:          MyBet[]
   markets:         Market[]
   totalBetAmount:  number
   onClear:         () => void
+  onClose:         (marketId: string) => void
 }) {
   const [tab, setTab] = useState<'positions' | 'history'>('positions')
+  const [confirmClose, setConfirmClose] = useState<string | null>(null)  // marketId pending close
 
   // Portfolio metrics
   const rows = myBets.map(bet => {
@@ -543,7 +545,7 @@ function MyBetsSection({
         /* ── Positions tab ── */
         <div className="divide-y divide-slate-50">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_60px_80px_80px_80px_24px] gap-2 px-5 py-2 bg-slate-50">
+          <div className="grid grid-cols-[1fr_60px_80px_80px_80px_56px] gap-2 px-5 py-2 bg-slate-50">
             {['Market', 'Side', 'Wagered', 'Cur. Value', 'Max Pay', ''].map(h => (
               <p key={h} className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">{h}</p>
             ))}
@@ -553,7 +555,7 @@ function MyBetsSection({
             const oddsChanged = curOdds !== bet.odds
             return (
               <div key={bet.marketId}
-                className="grid grid-cols-[1fr_60px_80px_80px_80px_24px] gap-2 items-center px-5 py-3.5 hover:bg-slate-50/70 transition-colors">
+                className="grid grid-cols-[1fr_60px_80px_80px_80px_56px] gap-2 items-center px-5 py-3.5 hover:bg-slate-50/70 transition-colors">
                 {/* Market */}
                 <div className="min-w-0">
                   <p className="text-slate-900 text-xs font-semibold truncate">{market.title}</p>
@@ -591,8 +593,8 @@ function MyBetsSection({
                   <p className="font-bold text-sm text-amber-600">${payout.toFixed(2)}</p>
                   <p className="text-slate-400 text-[10px]">if wins</p>
                 </div>
-                {/* Link */}
-                <div className="flex justify-end">
+                {/* Actions: tx link + close button */}
+                <div className="flex items-center justify-end gap-1.5">
                   {bet.txHash && (
                     <a href={`https://testnet.arcscan.app/tx/${bet.txHash}`}
                       target="_blank" rel="noreferrer"
@@ -601,6 +603,12 @@ function MyBetsSection({
                       ↗
                     </a>
                   )}
+                  <button
+                    onClick={() => setConfirmClose(bet.marketId)}
+                    title="Close position"
+                    className="px-1.5 py-0.5 rounded text-[10px] font-bold border border-red-200 text-red-400 hover:bg-red-50 hover:border-red-400 hover:text-red-600 transition-colors">
+                    ✕
+                  </button>
                 </div>
               </div>
             )
@@ -663,6 +671,50 @@ function MyBetsSection({
           )}
         </div>
       )}
+
+      {/* ── Close position confirm modal ── */}
+      {confirmClose && (() => {
+        const closingBet = myBets.find(b => b.marketId === confirmClose)
+        const closingMarket = markets.find(m => m.id === confirmClose)
+        const closingRow = rows.find(r => r.bet.marketId === confirmClose)
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+            onClick={() => setConfirmClose(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm flex flex-col gap-4"
+              onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">⚠️</span>
+                <div>
+                  <p className="font-extrabold text-slate-900 text-base">Close Position?</p>
+                  <p className="text-slate-500 text-xs mt-0.5">This will remove the position from your portfolio.</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm">
+                <p className="text-slate-700 font-semibold truncate">{closingMarket?.title ?? `Market #${confirmClose}`}</p>
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>Side: <span className={`font-bold ${closingBet?.side === 'yes' ? 'text-emerald-600' : 'text-red-500'}`}>{closingBet?.side?.toUpperCase()}</span></span>
+                  <span>Wagered: <span className="font-bold text-slate-800">${closingBet?.amount.toFixed(2)}</span></span>
+                  {closingRow && (
+                    <span>P&L: <span className={`font-bold ${closingRow.pnl >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {closingRow.pnl >= 0 ? '+' : ''}${closingRow.pnl.toFixed(2)}
+                    </span></span>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmClose(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={() => { onClose(confirmClose); setConfirmClose(null) }}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors shadow-sm">
+                  Close Position
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -700,6 +752,23 @@ export default function PredictionMarketPanel() {
 
   const totalVolume     = markets.reduce((s, m) => s + m.yesPool + m.noPool, 0)
   const totalBetAmount  = myBets.reduce((s, b) => s + b.amount, 0)
+
+  const handleClose = (marketId: string) => {
+    setMyBets(prev => {
+      const next = prev.filter(b => b.marketId !== marketId)
+      // Persist: remove from full storage (all wallets), keep other wallets' bets
+      try {
+        const allBets: MyBet[] = JSON.parse(localStorage.getItem(LS_BETS_KEY) ?? '[]')
+        const remaining = allBets.filter(b =>
+          b.marketId !== marketId ||
+          (b.walletAddress && b.walletAddress.toLowerCase() !== (address ?? '').toLowerCase())
+        )
+        if (remaining.length === 0) localStorage.removeItem(LS_BETS_KEY)
+        else localStorage.setItem(LS_BETS_KEY, JSON.stringify(remaining))
+      } catch { /* ignore */ }
+      return next
+    })
+  }
 
   const handleBet = (marketId: string, side: 'yes' | 'no', amount: number, txHash: string) => {
     // Update pool sizes optimistically
@@ -741,6 +810,7 @@ export default function PredictionMarketPanel() {
           myBets={myBets}
           markets={markets}
           totalBetAmount={totalBetAmount}
+          onClose={handleClose}
           onClear={() => {
             setMyBets([])
             // Remove only this wallet's bets; keep other wallets' bets intact
