@@ -1,3 +1,155 @@
+// ── ArcAgentJobs contract ─────────────────────────────────────────────────────
+// Deployed: 2026-05-22  chain: Arc Testnet (5042002)
+// ERC-8183-style job escrow: createJob → fund → submit → complete/reject/claimRefund
+export const AGENT_JOBS_ADDRESS = '0x55031271BDEfeBd9b6E6af52B9a92992aa6E3EFD' as `0x${string}`
+
+export const AGENT_JOBS_ABI = [
+  // ── Read ──────────────────────────────────────────────────────────────────
+  {
+    name: 'jobCount',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'getJob',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'jobId', type: 'uint256' }],
+    outputs: [{
+      name: '',
+      type: 'tuple',
+      components: [
+        { name: 'id',          type: 'uint256' },
+        { name: 'creator',     type: 'address' },
+        { name: 'provider',    type: 'address' },
+        { name: 'evaluator',   type: 'address' },
+        { name: 'budgetUsdc',  type: 'uint256' },
+        { name: 'deadline',    type: 'uint256' },
+        { name: 'title',       type: 'string'  },
+        { name: 'description', type: 'string'  },
+        { name: 'deliverable', type: 'bytes32' },
+        { name: 'status',      type: 'uint8'   },
+        { name: 'createdAt',   type: 'uint256' },
+      ],
+    }],
+  },
+  {
+    name: 'getRecentJobs',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'count', type: 'uint256' }],
+    outputs: [{
+      name: 'result',
+      type: 'tuple[]',
+      components: [
+        { name: 'id',          type: 'uint256' },
+        { name: 'creator',     type: 'address' },
+        { name: 'provider',    type: 'address' },
+        { name: 'evaluator',   type: 'address' },
+        { name: 'budgetUsdc',  type: 'uint256' },
+        { name: 'deadline',    type: 'uint256' },
+        { name: 'title',       type: 'string'  },
+        { name: 'description', type: 'string'  },
+        { name: 'deliverable', type: 'bytes32' },
+        { name: 'status',      type: 'uint8'   },
+        { name: 'createdAt',   type: 'uint256' },
+      ],
+    }],
+  },
+  {
+    name: 'getJobsByCreator',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'creator', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256[]' }],
+  },
+  // ── Write ─────────────────────────────────────────────────────────────────
+  {
+    name: 'createJob',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'provider',      type: 'address' },
+      { name: 'evaluator',     type: 'address' },
+      { name: 'budgetUsdc',    type: 'uint256' },
+      { name: 'deadlineHours', type: 'uint256' },
+      { name: 'title',         type: 'string'  },
+      { name: 'description',   type: 'string'  },
+    ],
+    outputs: [{ name: 'id', type: 'uint256' }],
+  },
+  {
+    name: 'fund',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'jobId', type: 'uint256' }],
+    outputs: [],
+  },
+  {
+    name: 'submit',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'jobId',       type: 'uint256' },
+      { name: 'deliverable', type: 'bytes32' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'complete',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'jobId', type: 'uint256' }],
+    outputs: [],
+  },
+  {
+    name: 'reject',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'jobId', type: 'uint256' }],
+    outputs: [],
+  },
+  {
+    name: 'claimRefund',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'jobId', type: 'uint256' }],
+    outputs: [],
+  },
+  // ── Events ────────────────────────────────────────────────────────────────
+  {
+    name: 'JobCreated',
+    type: 'event',
+    inputs: [
+      { name: 'id',          type: 'uint256', indexed: true  },
+      { name: 'creator',     type: 'address', indexed: true  },
+      { name: 'title',       type: 'string',  indexed: false },
+      { name: 'budgetUsdc',  type: 'uint256', indexed: false },
+      { name: 'deadline',    type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    name: 'JobFunded',
+    type: 'event',
+    inputs: [
+      { name: 'id',     type: 'uint256', indexed: true  },
+      { name: 'funder', type: 'address', indexed: true  },
+      { name: 'amount', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    name: 'JobCompleted',
+    type: 'event',
+    inputs: [
+      { name: 'id',       type: 'uint256', indexed: true  },
+      { name: 'provider', type: 'address', indexed: true  },
+      { name: 'payout',   type: 'uint256', indexed: false },
+    ],
+  },
+] as const
+
 // ── ArcLending contract ───────────────────────────────────────────────────────
 export const LENDING_ADDRESS = '0x918C2DD0D65eA2550D0059f93A8D6EC9C76d780a' as `0x${string}`
 

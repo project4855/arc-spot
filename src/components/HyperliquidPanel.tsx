@@ -1,535 +1,825 @@
-import { useState, useMemo, useEffect } from 'react'
-import {
-  useHLLeaderboard,
-  useHLTrades,
-  useHLTraderFills,
-} from '../hooks/useHyperliquid'
-import type { LbWindow, HLTraderFill } from '../hooks/useHyperliquid'
+// ── AgenticEconomyPanel.tsx ───────────────────────────────────────────────────
+// Tab "Agents" — ERC-8183 Job Marketplace on Arc Testnet (onchain)
+// Contract: ArcAgentJobs @ 0x55031271BDEfeBd9b6E6af52B9a92992aa6E3EFD
 
-// ── Formatters ────────────────────────────────────────────────────────────────
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useReadContract, usePublicClient, useWaitForTransactionReceipt } from 'wagmi'
+import { keccak256, toBytes } from 'viem'
+import { useWallet } from '../hooks/useWallet'
+import { AGENT_JOBS_ADDRESS, AGENT_JOBS_ABI, TOKEN_ADDRESSES, ERC20_ABI } from '../config/contracts'
 
-function fmtUSD(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
-  if (Math.abs(n) >= 1_000)     return `$${(n / 1_000).toFixed(1)}K`
-  return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type AgentTab = 'jobs' | 'create' | 'myjobs' | 'nanopay' | 'erc8183'
+
+const STATUS_LABEL = ['Open', 'Funded', 'Submitted', 'Completed', 'Rejected', 'Expired'] as const
+type StatusName = typeof STATUS_LABEL[number]
+
+const STATUS_STYLES: Record<StatusName, string> = {
+  Open:      'bg-blue-50 text-blue-700 border-blue-200',
+  Funded:    'bg-amber-50 text-amber-700 border-amber-200',
+  Submitted: 'bg-violet-50 text-violet-700 border-violet-200',
+  Completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Rejected:  'bg-red-50 text-red-700 border-red-200',
+  Expired:   'bg-slate-100 text-slate-500 border-slate-200',
 }
 
-function fmtTime(ms: number): string {
-  const d = new Date(ms)
-  return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`
+interface OnchainJob {
+  id: bigint
+  creator: string
+  provider: string
+  evaluator: string
+  budgetUsdc: bigint
+  deadline: bigint
+  title: string
+  description: string
+  deliverable: string
+  status: number
+  createdAt: bigint
 }
 
-function fmtRelTime(ms: number): string {
-  const sec = Math.floor((Date.now() - ms) / 1000)
-  if (sec < 60)   return `${sec}s ago`
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`
-  return `${Math.floor(sec / 3600)}h ago`
+function shortAddr(a: string) { return a === '0x0000000000000000000000000000000000000000' ? 'Open' : `${a.slice(0,6)}…${a.slice(-4)}` }
+function fmtUsdc(n: bigint)   { return `${(Number(n) / 1e6).toFixed(2)} USDC` }
+function fmtDate(ts: bigint)  {
+  const d = new Date(Number(ts) * 1000)
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
+function statusName(s: number): StatusName { return STATUS_LABEL[s] ?? 'Open' }
 
-function shortAddr(addr: string, name: string | null): string {
-  if (name) return name
-  if (!addr || addr === '—') return '—'
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
-}
+const USDC = TOKEN_ADDRESSES.USDC
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000' as `0x${string}`
 
-const COIN_ICONS: Record<string, string> = { BTC: '₿', ETH: 'Ξ', SOL: '◎', ARB: 'Ⓐ', OP: 'Ⓞ' }
+// ── Live nanopayment ticker ───────────────────────────────────────────────────
 
-function Spinner() {
+function NanoTicker() {
+  const [ticks, setTicks] = useState<{ id: number; label: string; amount: string; color: string }[]>([])
+  const counterRef = useRef(0)
+  useEffect(() => {
+    const EVENTS = [
+      { label: 'EV → Charger',       amount: '$0.000120', color: 'text-amber-600' },
+      { label: 'Agent → API',         amount: '$0.000500', color: 'text-violet-600' },
+      { label: 'Sensor → Hub',        amount: '$0.000010', color: 'text-blue-600' },
+      { label: 'Bot → Inference',     amount: '$0.000050', color: 'text-emerald-600' },
+      { label: 'Agent → Bandwidth',   amount: '$0.000001', color: 'text-slate-600' },
+      { label: 'Vehicle → Toll',      amount: '$0.000002', color: 'text-orange-600' },
+    ]
+    const iv = setInterval(() => {
+      const ev = EVENTS[counterRef.current % EVENTS.length]
+      counterRef.current++
+      setTicks(prev => [{ id: counterRef.current, ...ev }, ...prev].slice(0, 8))
+    }, 600)
+    return () => clearInterval(iv)
+  }, [])
   return (
-    <div className="flex items-center justify-center py-16 text-slate-400 gap-2">
-      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-      </svg>
-      <span className="text-sm">Loading...</span>
+    <div className="bg-slate-900 rounded-2xl p-4 min-h-[160px]">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+        <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Live M2M Stream · Arc Testnet</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {ticks.map((t, i) => (
+          <div key={t.id} className="flex items-center justify-between" style={{ opacity: 1 - i * 0.1 }}>
+            <span className="text-slate-400 text-xs font-mono">{t.label}</span>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-mono font-bold ${t.color}`}>{t.amount}</span>
+              <span className="text-slate-600 text-[10px]">~780ms ✓</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-// ── Leaderboard ───────────────────────────────────────────────────────────────
+// ── Job card ──────────────────────────────────────────────────────────────────
 
-const WINDOWS: { key: LbWindow; label: string }[] = [
-  { key: 'day',     label: '1D'       },
-  { key: 'week',    label: '1W'       },
-  { key: 'month',   label: '1M'       },
-  { key: 'allTime', label: 'All Time' },
-]
-
-function Leaderboard({
-  onTradersLoaded,
-}: {
-  onTradersLoaded: (t: { address: string; displayName: string | null; rank: number }[]) => void
+function JobCard({ job, myAddress, onAction, loading }: {
+  job: OnchainJob
+  myAddress?: string
+  onAction: (action: 'fund' | 'submit' | 'complete' | 'reject' | 'claimRefund', jobId: bigint, extra?: string) => void
+  loading: bigint | null
 }) {
-  const [timeWindow, setTimeWindow] = useState<LbWindow>('day')
-  const { traders, loading, error, refresh } = useHLLeaderboard(timeWindow)
-  const top10 = useMemo(() => traders.slice(0, 10), [traders])
-
-  useEffect(() => {
-    if (top10.length > 0) {
-      onTradersLoaded(top10.map(t => ({ address: t.address, displayName: t.displayName, rank: t.rank })))
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10])
-
-  // Max PnL để tính thanh bar
-  const maxPnl = Math.max(...top10.map(t => Math.abs(t.windowPnl)), 1)
+  const [deliverableInput, setDeliverableInput] = useState('')
+  const sName = statusName(job.status)
+  const isCreator   = myAddress?.toLowerCase() === job.creator.toLowerCase()
+  const isProvider  = myAddress?.toLowerCase() === job.provider.toLowerCase()
+  const isEvaluator = myAddress?.toLowerCase() === job.evaluator.toLowerCase()
+  const isExpired   = Date.now() / 1000 > Number(job.deadline)
+  const busy = loading === job.id
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+    <div className={`bg-white border rounded-2xl p-4 flex flex-col gap-3 ${sName === 'Completed' ? 'border-emerald-200' : sName === 'Rejected' || sName === 'Expired' ? 'border-slate-200 opacity-70' : 'border-slate-200 hover:border-violet-200'} transition-all`}>
       {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🏆</span>
-            <h3 className="text-slate-900 font-bold text-sm">Top 10 Traders</h3>
-            <span className="text-[11px] text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-full">Hyperliquid</span>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-slate-400 text-[10px] font-mono">#{job.id.toString()}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${STATUS_STYLES[sName]}`}>{sName}</span>
+            {isCreator   && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-600 font-semibold">You created</span>}
+            {isProvider  && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-violet-50 border border-violet-200 text-violet-600 font-semibold">You provide</span>}
+            {isEvaluator && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-600 font-semibold">You evaluate</span>}
           </div>
-          <button onClick={refresh}
-            className="text-slate-400 hover:text-slate-900 transition-colors w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100"
-            title="Refresh">
-            ↻
+          <p className="text-slate-900 font-bold text-sm mt-1 leading-snug">{job.title}</p>
+          {job.description && <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{job.description}</p>}
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-emerald-600 font-extrabold text-base font-mono">{fmtUsdc(job.budgetUsdc)}</p>
+          <p className="text-slate-400 text-[10px] mt-0.5">Budget</p>
+        </div>
+      </div>
+
+      {/* Meta */}
+      <div className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-400">
+        <span>👤 Creator: <span className="font-mono text-slate-600">{shortAddr(job.creator)}</span></span>
+        <span>🔧 Provider: <span className="font-mono text-slate-600">{shortAddr(job.provider)}</span></span>
+        <span>⏱ Deadline: <span className="text-slate-600">{fmtDate(job.deadline)}</span></span>
+        <span>📅 Created: <span className="text-slate-600">{fmtDate(job.createdAt)}</span></span>
+        {job.deliverable !== '0x' + '0'.repeat(64) && (
+          <span className="col-span-2">📦 Deliverable: <span className="font-mono text-violet-600">{job.deliverable.slice(0, 18)}…</span></span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-2">
+        {/* Fund — anyone can fund an open job */}
+        {sName === 'Open' && !isExpired && myAddress && (
+          <button onClick={() => onAction('fund', job.id)}
+            disabled={busy}
+            className="w-full py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-400 transition-colors disabled:opacity-50">
+            {busy ? '⏳ Funding…' : `💰 Fund Job (approve ${fmtUsdc(job.budgetUsdc)} USDC)`}
           </button>
-        </div>
+        )}
 
-        {/* Time window */}
-        <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-xl p-1">
-          {WINDOWS.map(({ key, label }) => (
-            <button key={key} onClick={() => setTimeWindow(key)}
-              className={`py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                timeWindow === key
-                  ? 'bg-violet-600 text-white shadow-md'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}>
-              {label}
+        {/* Submit — provider submits deliverable */}
+        {sName === 'Funded' && !isExpired && myAddress && (job.provider === ZERO_ADDR || isProvider) && (
+          <div className="flex gap-2">
+            <input
+              value={deliverableInput}
+              onChange={e => setDeliverableInput(e.target.value)}
+              placeholder="IPFS CID or deliverable identifier"
+              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-violet-400"
+            />
+            <button onClick={() => onAction('submit', job.id, deliverableInput)}
+              disabled={busy || !deliverableInput.trim()}
+              className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-500 transition-colors disabled:opacity-50">
+              {busy ? '⏳' : '📤 Submit'}
             </button>
-          ))}
+          </div>
+        )}
+
+        {/* Complete / Reject — evaluator only */}
+        {sName === 'Submitted' && isEvaluator && (
+          <div className="flex gap-2">
+            <button onClick={() => onAction('complete', job.id)}
+              disabled={busy}
+              className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-400 transition-colors disabled:opacity-50">
+              {busy ? '⏳' : '✅ Complete & Release USDC'}
+            </button>
+            <button onClick={() => onAction('reject', job.id)}
+              disabled={busy}
+              className="flex-1 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-400 transition-colors disabled:opacity-50">
+              {busy ? '⏳' : '❌ Reject & Refund'}
+            </button>
+          </div>
+        )}
+
+        {/* Claim refund — creator after expiry */}
+        {(sName === 'Funded' || sName === 'Submitted') && isExpired && isCreator && (
+          <button onClick={() => onAction('claimRefund', job.id)}
+            disabled={busy}
+            className="w-full py-2 rounded-xl bg-slate-600 text-white text-xs font-bold hover:bg-slate-500 transition-colors disabled:opacity-50">
+            {busy ? '⏳ Claiming…' : '🔙 Claim Refund (expired)'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Main panel ────────────────────────────────────────────────────────────────
+
+export default function HyperliquidPanel() {
+  const { address, isReady, writeContract } = useWallet()
+  const publicClient = usePublicClient()
+
+  const [activeTab, setActiveTab] = useState<AgentTab>('jobs')
+  const [jobs, setJobs]           = useState<OnchainJob[]>([])
+  const [myJobs, setMyJobs]       = useState<OnchainJob[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(false)
+  const [actionLoading, setActionLoading] = useState<bigint | null>(null)
+  const [txHash, setTxHash]       = useState<`0x${string}` | null>(null)
+  const [txError, setTxError]     = useState<string | null>(null)
+  const [txSuccess, setTxSuccess] = useState<string | null>(null)
+
+  // Create job form
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    budget: '',
+    deadlineHours: '24',
+    provider: '',
+    evaluator: '',
+  })
+  const [creating, setCreating] = useState(false)
+
+  // Read total job count from chain
+  const { data: jobCountData, refetch: refetchCount } = useReadContract({
+    address: AGENT_JOBS_ADDRESS,
+    abi: AGENT_JOBS_ABI,
+    functionName: 'jobCount',
+  })
+
+  // Wait for tx confirmation
+  const { isLoading: txPending, isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash ?? undefined })
+
+  // Load recent jobs from chain
+  const loadJobs = useCallback(async () => {
+    if (!publicClient) return
+    setLoadingJobs(true)
+    try {
+      const result = await publicClient.readContract({
+        address: AGENT_JOBS_ADDRESS,
+        abi: AGENT_JOBS_ABI,
+        functionName: 'getRecentJobs',
+        args: [20n],
+      }) as OnchainJob[]
+      setJobs(result.filter(j => j.id > 0n))
+    } catch (e) {
+      console.error('loadJobs', e)
+    } finally {
+      setLoadingJobs(false)
+    }
+  }, [publicClient])
+
+  // Load my jobs
+  const loadMyJobs = useCallback(async () => {
+    if (!publicClient || !address) return
+    try {
+      const ids = await publicClient.readContract({
+        address: AGENT_JOBS_ADDRESS,
+        abi: AGENT_JOBS_ABI,
+        functionName: 'getJobsByCreator',
+        args: [address],
+      }) as bigint[]
+
+      const fetched = await Promise.all(ids.map(id =>
+        publicClient.readContract({
+          address: AGENT_JOBS_ADDRESS,
+          abi: AGENT_JOBS_ABI,
+          functionName: 'getJob',
+          args: [id],
+        }) as Promise<OnchainJob>
+      ))
+      setMyJobs(fetched.filter(j => j.id > 0n).reverse())
+    } catch (e) {
+      console.error('loadMyJobs', e)
+    }
+  }, [publicClient, address])
+
+  useEffect(() => { loadJobs() }, [loadJobs])
+  useEffect(() => { if (address) loadMyJobs() }, [loadMyJobs, address])
+
+  // Reload after tx confirms
+  useEffect(() => {
+    if (txConfirmed) {
+      loadJobs()
+      if (address) loadMyJobs()
+      refetchCount()
+      setActionLoading(null)
+      setTxHash(null)
+    }
+  }, [txConfirmed, loadJobs, loadMyJobs, refetchCount, address])
+
+  // ── Action handler ─────────────────────────────────────────────────────────
+
+  const handleAction = useCallback(async (
+    action: 'fund' | 'submit' | 'complete' | 'reject' | 'claimRefund',
+    jobId: bigint,
+    extra?: string,
+  ) => {
+    if (!isReady) return
+    setTxError(null)
+    setTxSuccess(null)
+    setActionLoading(jobId)
+
+    try {
+      let hash: `0x${string}`
+
+      if (action === 'fund') {
+        // Find the job to get budget
+        const job = [...jobs, ...myJobs].find(j => j.id === jobId)
+        if (!job) throw new Error('Job not found')
+
+        // Approve USDC first
+        await writeContract({
+          address: USDC,
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [AGENT_JOBS_ADDRESS, job.budgetUsdc],
+        })
+
+        // Fund the job
+        hash = await writeContract({
+          address: AGENT_JOBS_ADDRESS,
+          abi: AGENT_JOBS_ABI,
+          functionName: 'fund',
+          args: [jobId],
+        })
+      } else if (action === 'submit') {
+        const deliverable = extra?.trim() || 'deliverable'
+        const deliverableHash = keccak256(toBytes(deliverable))
+        hash = await writeContract({
+          address: AGENT_JOBS_ADDRESS,
+          abi: AGENT_JOBS_ABI,
+          functionName: 'submit',
+          args: [jobId, deliverableHash],
+        })
+      } else {
+        hash = await writeContract({
+          address: AGENT_JOBS_ADDRESS,
+          abi: AGENT_JOBS_ABI,
+          functionName: action,
+          args: [jobId],
+        })
+      }
+
+      setTxHash(hash)
+      setTxSuccess(`Transaction submitted → waiting for confirmation…`)
+    } catch (e) {
+      setTxError(e instanceof Error ? e.message : String(e))
+      setActionLoading(null)
+    }
+  }, [isReady, jobs, myJobs, writeContract])
+
+  // ── Create job ─────────────────────────────────────────────────────────────
+
+  const handleCreate = async () => {
+    if (!isReady) return
+    const budget = parseFloat(form.budget)
+    if (!form.title || !budget || budget <= 0) { setTxError('Title and budget required'); return }
+    setCreating(true)
+    setTxError(null)
+    setTxSuccess(null)
+    try {
+      const budgetUsdc = BigInt(Math.round(budget * 1e6))
+      const hash = await writeContract({
+        address: AGENT_JOBS_ADDRESS,
+        abi: AGENT_JOBS_ABI,
+        functionName: 'createJob',
+        args: [
+          (form.provider as `0x${string}`) || ZERO_ADDR,
+          (form.evaluator as `0x${string}`) || ZERO_ADDR,
+          budgetUsdc,
+          BigInt(parseInt(form.deadlineHours) || 24),
+          form.title,
+          form.description,
+        ],
+      })
+      setTxHash(hash)
+      setTxSuccess('Job created onchain! Waiting for confirmation…')
+      setForm({ title: '', description: '', budget: '', deadlineHours: '24', provider: '', evaluator: '' })
+      setActiveTab('myjobs')
+    } catch (e) {
+      setTxError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  // ── Tabs config ────────────────────────────────────────────────────────────
+
+  const TABS: { key: AgentTab; label: string; icon: string }[] = [
+    { key: 'jobs',    label: 'Job Board',       icon: '📋' },
+    { key: 'create',  label: 'Post a Job',      icon: '➕' },
+    { key: 'myjobs',  label: 'My Jobs',         icon: '👤' },
+    { key: 'nanopay', label: 'Nanopayments',    icon: '💸' },
+    { key: 'erc8183', label: 'ERC-8183 Spec',   icon: '📖' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* Header banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-violet-950 to-blue-950 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl shrink-0">🤖</div>
+          <div>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/30 border border-violet-400/40 text-violet-300 font-bold">Arc Testnet · Chain 5042002</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-white/60 font-semibold">
+                {jobCountData !== undefined ? `${jobCountData.toString()} jobs onchain` : 'Loading…'}
+              </span>
+            </div>
+            <h2 className="text-white font-extrabold text-lg leading-tight">Agentic Economy · Job Marketplace</h2>
+            <p className="text-slate-300 text-sm mt-1">
+              Real onchain jobs powered by <strong className="text-white">ArcAgentJobs</strong> (ERC-8183 style) ·
+              USDC escrow · deterministic ~780ms finality
+            </p>
+          </div>
         </div>
+        <a href={`https://testnet.arcscan.app/address/${AGENT_JOBS_ADDRESS}`} target="_blank" rel="noreferrer"
+          className="shrink-0 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-500 transition-colors">
+          Contract ↗
+        </a>
       </div>
 
-      {/* Column header */}
-      <div className="grid grid-cols-[36px_1fr_110px_72px] text-[10px] text-slate-400 uppercase tracking-wide px-5 py-2 bg-slate-50">
-        <span>#</span>
-        <span>Trader</span>
-        <span className="text-right">PnL</span>
-        <span className="text-right">ROI</span>
-      </div>
-
-      {/* Rows — top 10, no scroll */}
-      {loading && !top10.length ? <Spinner /> : error ? (
-        <div className="text-center py-10 text-red-400/70 text-xs">{error}</div>
-      ) : (
-        <div className="divide-y divide-slate-100">
-          {top10.map((t) => {
-            const pos    = t.windowPnl >= 0
-            const medal  = t.rank === 1 ? '🥇' : t.rank === 2 ? '🥈' : t.rank === 3 ? '🥉' : null
-            const barW   = Math.round(Math.abs(t.windowPnl) / maxPnl * 100)
-            const isTop3 = t.rank <= 3
-
-            return (
-              <div key={t.address + t.rank}
-                className={`grid grid-cols-[36px_1fr_110px_72px] items-center px-5 py-3 transition-colors hover:bg-slate-50 group ${
-                  isTop3 ? 'bg-violet-50/50' : ''
-                }`}>
-
-                {/* Rank */}
-                <div className="font-mono text-sm">
-                  {medal ?? <span className="text-slate-400 text-xs">#{t.rank}</span>}
-                </div>
-
-                {/* Trader */}
-                <div className="min-w-0">
-                  <a href={`https://app.hyperliquid.xyz/stats/${t.address}`}
-                    target="_blank" rel="noreferrer"
-                    className="text-slate-700 text-xs font-medium hover:text-violet-600 transition-colors truncate block">
-                    {shortAddr(t.address, t.displayName)}
-                    <span className="opacity-0 group-hover:opacity-60 text-violet-600 ml-1">↗</span>
-                  </a>
-                  <div className="text-slate-400 text-[10px] mt-0.5 font-mono truncate">
-                    {fmtUSD(t.accountValue)} acct
-                  </div>
-                </div>
-
-                {/* PnL + bar */}
-                <div className="flex flex-col items-end gap-1">
-                  <span className={`font-mono text-xs font-bold ${pos ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {pos ? '+' : ''}{fmtUSD(t.windowPnl)}
-                  </span>
-                  <div className="w-full h-1 rounded-full bg-slate-200 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${pos ? 'bg-gradient-to-r from-green-600 to-green-400' : 'bg-gradient-to-r from-red-600 to-red-400'}`}
-                      style={{ width: `${barW}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* ROI */}
-                <div className={`text-right font-mono text-xs font-semibold ${pos ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {pos ? '+' : ''}{t.roi.toFixed(1)}%
-                </div>
-              </div>
-            )
-          })}
+      {/* Tx status */}
+      {(txError || txSuccess || txPending) && (
+        <div className={`px-4 py-3 rounded-xl text-sm font-medium ${txError ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
+          {txPending && '⏳ Confirming on Arc Testnet…  '}
+          {txSuccess && !txPending && `✅ ${txSuccess}`}
+          {txError && `❌ ${txError.slice(0, 200)}`}
+          {txHash && (
+            <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noreferrer"
+              className="ml-2 underline text-violet-600 text-xs">View tx ↗</a>
+          )}
         </div>
       )}
 
-      {/* Footer */}
-      <div className="px-5 py-2.5 border-t border-slate-200 flex items-center gap-2 text-[11px] text-slate-400 mt-auto">
-        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-        <span>Live · 60s</span>
-        <a href="https://app.hyperliquid.xyz/leaderboard" target="_blank" rel="noreferrer"
-          className="ml-auto hover:text-violet-600 transition-colors">View more ↗</a>
+      {/* Tab switcher */}
+      <div className="flex gap-2 flex-wrap">
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+              activeTab === t.key
+                ? 'bg-violet-600 border-violet-500 text-white shadow-sm'
+                : 'bg-white border-slate-200 text-slate-600 hover:border-violet-300'
+            }`}>
+            <span>{t.icon}</span> {t.label}
+          </button>
+        ))}
       </div>
-    </div>
-  )
-}
 
-// ── Recent Market Trades ──────────────────────────────────────────────────────
-
-function RecentTrades() {
-  const [filterCoin, setFilterCoin] = useState('ALL')
-  const { trades, loading, error } = useHLTrades()
-  const displayed = (filterCoin === 'ALL' ? trades : trades.filter(t => t.coin === filterCoin)).slice(0, 30)
-
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="px-4 pt-4 pb-3 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚡</span>
-            <h3 className="text-slate-900 font-bold text-sm">Market Orders</h3>
+      {/* ── Job Board ── */}
+      {activeTab === 'jobs' && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-slate-900 font-bold text-base">
+              Recent Jobs — {jobs.length > 0 ? `${jobs.length} loaded` : 'Loading…'}
+            </h3>
+            <button onClick={loadJobs} disabled={loadingJobs}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
+              {loadingJobs ? '⏳ Loading…' : '🔄 Refresh'}
+            </button>
           </div>
-          <div className="flex gap-1">
-            {['ALL', 'BTC', 'ETH', 'SOL'].map(c => (
-              <button key={c} onClick={() => setFilterCoin(c)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                  filterCoin === c ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
-                }`}>
-                {c === 'ALL' ? 'All' : c}
+
+          {loadingJobs && jobs.length === 0 && (
+            <div className="flex items-center justify-center py-12 text-slate-400 text-sm">
+              ⏳ Reading from Arc Testnet…
+            </div>
+          )}
+
+          {!loadingJobs && jobs.length === 0 && (
+            <div className="flex flex-col items-center gap-3 py-12 bg-white border border-dashed border-slate-200 rounded-2xl">
+              <span className="text-4xl">📋</span>
+              <p className="text-slate-600 font-semibold">No jobs yet</p>
+              <p className="text-slate-400 text-sm">Be the first — post a job and fund it with USDC</p>
+              <button onClick={() => setActiveTab('create')}
+                className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-500 transition-colors">
+                Post a Job →
               </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {jobs.map(job => (
+              <JobCard key={job.id.toString()} job={job} myAddress={address}
+                onAction={handleAction} loading={actionLoading} />
             ))}
           </div>
         </div>
+      )}
 
-        {/* Column header */}
-        <div className="grid grid-cols-[44px_48px_1fr_70px] text-[10px] text-slate-400 uppercase tracking-wide">
-          <span>Time</span><span>Token</span><span className="text-center">Side</span><span className="text-right">Value</span>
-        </div>
-      </div>
-
-      {/* Rows */}
-      <div className="flex flex-col overflow-y-auto flex-1 max-h-[520px] scrollbar-thin scrollbar-thumb-slate-300">
-        {loading && !trades.length ? <Spinner /> : error ? (
-          <div className="text-center py-10 text-red-400/70 text-xs">{error}</div>
-        ) : displayed.map((t, i) => {
-          const isBuy  = t.side === 'buy'
-          const isWhale = t.value >= 100_000
-          return (
-            <div key={`${t.id}-${i}`}
-              className={`grid grid-cols-[44px_48px_1fr_70px] items-center px-4 py-2 border-b border-slate-100 hover:bg-slate-50 transition-colors ${
-                isWhale ? 'bg-amber-50' : ''
-              }`}>
-
-              {/* Time */}
-              <span className="text-slate-400 font-mono text-[10px]">{fmtTime(t.time)}</span>
-
-              {/* Coin */}
-              <span className="text-slate-700 font-mono text-[11px] font-semibold">
-                {COIN_ICONS[t.coin] ?? ''}{t.coin}
-              </span>
-
-              {/* Direction badge */}
-              <div className="flex justify-center">
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                  isBuy ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {isBuy ? 'BUY' : 'SELL'}
-                </span>
-              </div>
-
-              {/* Value */}
-              <span className={`text-right font-mono text-[11px] font-semibold ${
-                isWhale ? 'text-amber-600' : t.value >= 10_000 ? 'text-slate-700' : 'text-slate-500'
-              }`}>
-                {fmtUSD(t.value)}{isWhale && ' 🐋'}
-              </span>
+      {/* ── Create Job ── */}
+      {activeTab === 'create' && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col gap-4">
+            <div>
+              <h3 className="text-slate-900 font-bold text-base mb-0.5">Post a Job Onchain</h3>
+              <p className="text-slate-400 text-xs">Creates an ERC-8183-style escrow job on Arc Testnet. USDC funded after creation.</p>
             </div>
-          )
-        })}
-      </div>
 
-      <div className="px-4 py-2 border-t border-slate-200 flex items-center gap-1.5 text-[11px] text-slate-400">
-        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-        <span>Live · 5s · {displayed.length} orders</span>
-        <span className="ml-auto text-slate-300">🐋 ≥ $100K</span>
-      </div>
-    </div>
-  )
-}
-
-// ── Copy Trade Signals ────────────────────────────────────────────────────────
-
-interface SignalData {
-  coin: string; dir: 'Open Long' | 'Open Short'
-  traders: Set<string>; totalValue: number; latestTime: number
-}
-
-function CopyTradeSignals({ fills }: { fills: HLTraderFill[] }) {
-  const signals = useMemo((): SignalData[] => {
-    const map = new Map<string, SignalData>()
-    for (const f of fills) {
-      if (f.dir !== 'Open Long' && f.dir !== 'Open Short') continue
-      const key = `${f.coin}|${f.dir}`
-      if (!map.has(key)) map.set(key, { coin: f.coin, dir: f.dir as 'Open Long' | 'Open Short', traders: new Set(), totalValue: 0, latestTime: 0 })
-      const s = map.get(key)!
-      s.traders.add(f.trader)
-      s.totalValue += f.value
-      s.latestTime = Math.max(s.latestTime, f.time)
-    }
-    return [...map.values()].filter(s => s.traders.size >= 2).sort((a, b) => b.traders.size - a.traders.size || b.totalValue - a.totalValue).slice(0, 6)
-  }, [fills])
-
-  if (signals.length === 0) return null
-
-  return (
-    <div className="bg-gradient-to-r from-violet-50 via-indigo-50 to-blue-50 border border-violet-200 rounded-2xl p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-base">🔥</span>
-        <span className="text-slate-900 font-bold text-sm">Copy Trade Signal</span>
-        <span className="px-2 py-0.5 rounded-full bg-violet-100 border border-violet-300 text-violet-700 text-[10px] font-bold animate-pulse">LIVE</span>
-        <span className="text-slate-500 text-xs hidden sm:block">· ≥2 top traders mở cùng vị thế</span>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {signals.map(s => {
-          const isLong = s.dir === 'Open Long'
-          const bars   = '●'.repeat(s.traders.size) + '○'.repeat(Math.max(0, 4 - s.traders.size))
-          return (
-            <div key={`${s.coin}|${s.dir}`}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all hover:scale-[1.02] cursor-default ${
-                isLong ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
-              }`}>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className={`font-bold text-base ${isLong ? 'text-emerald-600' : 'text-red-600'}`}>{isLong ? '▲' : '▼'}</span>
-                  <span className={`font-bold text-sm ${isLong ? 'text-emerald-700' : 'text-red-700'}`}>{s.coin}</span>
-                  <span className={`text-xs ${isLong ? 'text-emerald-600' : 'text-red-600'}`}>{isLong ? 'Long' : 'Short'}</span>
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`text-[11px] tracking-wider ${isLong ? 'text-emerald-500' : 'text-red-500'}`}>{bars}</span>
-                  <span className="text-slate-400 text-[10px]">{fmtUSD(s.totalValue)}</span>
-                  <span className="text-slate-300 text-[10px]">{fmtRelTime(s.latestTime)}</span>
-                </div>
+            {!isReady && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-amber-700 text-sm font-semibold">
+                ⚠ Connect your wallet to post a job
               </div>
-              <div className={`flex flex-col items-center px-2 py-1 rounded-lg ${isLong ? 'bg-emerald-100' : 'bg-red-100'}`}>
-                <span className="text-slate-900 font-bold text-lg leading-none">{s.traders.size}</span>
-                <span className="text-slate-500 text-[9px]">traders</span>
-              </div>
+            )}
+
+            <div>
+              <label className="block text-slate-700 text-xs font-bold mb-1.5">Job Title *</label>
+              <input
+                value={form.title}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="e.g. Summarise risk signals from Arc testnet mempool"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-violet-400 focus:bg-white transition-colors"
+              />
             </div>
-          )
-        })}
-      </div>
-      <p className="text-[10px] text-slate-400 mt-2">⚠️ For reference only · Not investment advice</p>
-    </div>
-  )
-}
 
-// ── Top Trader Fills ──────────────────────────────────────────────────────────
+            <div>
+              <label className="block text-slate-700 text-xs font-bold mb-1.5">Description</label>
+              <textarea
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                rows={3}
+                placeholder="Describe the deliverable, acceptance criteria, and any context…"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-violet-400 focus:bg-white transition-colors resize-none"
+              />
+            </div>
 
-const DIR_CONFIG: Record<string, { icon: string; color: string; bg: string }> = {
-  'Open Long':   { icon: '▲', color: 'text-emerald-700', bg: 'bg-emerald-50' },
-  'Close Long':  { icon: '▽', color: 'text-emerald-600', bg: 'bg-emerald-50/60'  },
-  'Open Short':  { icon: '▼', color: 'text-red-700',   bg: 'bg-red-50'   },
-  'Close Short': { icon: '△', color: 'text-red-600',   bg: 'bg-red-50/60'    },
-}
-
-function TopTraderFills({ traders }: { traders: { address: string; displayName: string | null; rank: number }[] }) {
-  const [filterCoin, setFilterCoin] = useState('All')
-  const [filterDir,  setFilterDir]  = useState('All')
-  const { fills, loading, error } = useHLTraderFills(traders, 10)
-
-  const coins    = ['All', ...Array.from(new Set(fills.map(f => f.coin))).sort().slice(0, 10)]
-  const dirOpts  = ['All', 'Open Long', 'Open Short', 'Close Long', 'Close Short']
-
-  const displayed = fills.filter(f => {
-    if (filterCoin !== 'All' && f.coin !== filterCoin) return false
-    if (filterDir  !== 'All' && f.dir  !== filterDir)  return false
-    return true
-  })
-
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🔭</span>
-            <h3 className="text-slate-900 font-bold text-sm">Top Trader Orders</h3>
-            <span className="text-[11px] bg-violet-50 border border-violet-200 text-violet-600 px-2 py-0.5 rounded-full font-semibold">
-              Top {traders.length}
-            </span>
-            {loading && <svg className="animate-spin h-3.5 w-3.5 text-gray-600" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-            </svg>}
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <span className="w-1.5 h-1.5 bg-violet-600 rounded-full animate-pulse"/>
-            <span>Updates every 15s</span>
-          </div>
-        </div>
-
-        {/* Copy Trade Signals */}
-        <CopyTradeSignals fills={fills} />
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 mt-3">
-          {/* Coin filter */}
-          <div className="flex gap-1 flex-wrap">
-            {coins.map(c => (
-              <button key={c} onClick={() => setFilterCoin(c)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                  filterCoin === c ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
-                }`}>
-                {c === 'All' ? 'All coins' : `${COIN_ICONS[c] ?? ''}${c}`}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-px bg-slate-200 hidden sm:block self-stretch" />
-
-          {/* Direction filter */}
-          <div className="flex gap-1 flex-wrap">
-            {dirOpts.map(d => {
-              const cfg = DIR_CONFIG[d]
-              return (
-                <button key={d} onClick={() => setFilterDir(d)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1 ${
-                    filterDir === d ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
-                  }`}>
-                  {cfg && <span className={filterDir === d ? 'text-white' : cfg.color}>{cfg.icon}</span>}
-                  {d === 'All' ? 'All sides' : d}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Column header */}
-      <div className="grid grid-cols-[28px_120px_80px_56px_100px_80px_80px] text-[10px] text-slate-400 uppercase tracking-wide px-5 py-2 bg-slate-50 gap-2">
-        <span>#</span><span>Trader</span><span>Thời gian</span><span>Coin</span>
-        <span>Chiều</span><span className="text-right">Giá trị</span><span className="text-right">PnL đóng</span>
-      </div>
-
-      {/* Rows */}
-      <div className="divide-y divide-slate-100 max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300">
-        {loading && fills.length === 0 ? <Spinner /> : error ? (
-          <div className="text-center py-10 text-red-400/70 text-xs">{error}</div>
-        ) : displayed.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-sm">Không có lệnh phù hợp</div>
-        ) : displayed.map((f, idx) => {
-          const dirCfg  = DIR_CONFIG[f.dir] ?? { icon: '?', color: 'text-gray-400', bg: 'bg-gray-800/30' }
-          const hasPnl  = f.closedPnl !== 0
-          const pnlPos  = f.closedPnl >= 0
-          const isWhale = f.value >= 100_000
-          const medal   = f.rank === 1 ? '🥇' : f.rank === 2 ? '🥈' : f.rank === 3 ? '🥉' : null
-
-          return (
-            <div key={`${f.id}-${idx}`}
-              className={`grid grid-cols-[28px_120px_80px_56px_100px_80px_80px] items-center px-5 py-3 gap-2 hover:bg-slate-50 transition-colors group ${
-                isWhale ? 'bg-amber-50' : ''
-              }`}>
-
-              {/* Rank */}
-              <span className="text-xs font-mono text-slate-400">{medal ?? `#${f.rank}`}</span>
-
-              {/* Trader */}
-              <a href={`https://app.hyperliquid.xyz/stats/${f.trader}`}
-                target="_blank" rel="noreferrer"
-                className="font-mono text-[11px] text-slate-500 hover:text-violet-600 transition-colors truncate">
-                {shortAddr(f.trader, f.displayName)}
-                <span className="opacity-0 group-hover:opacity-60 text-violet-600 ml-1">↗</span>
-              </a>
-
-              {/* Time */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="text-slate-500 font-mono text-[10px]">{fmtTime(f.time)}</div>
-                <div className="text-slate-300 text-[10px]">{fmtRelTime(f.time)}</div>
+                <label className="block text-slate-700 text-xs font-bold mb-1.5">Budget (USDC) *</label>
+                <input
+                  type="number"
+                  value={form.budget}
+                  onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                  placeholder="25"
+                  min="0.01"
+                  step="0.01"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                />
               </div>
-
-              {/* Coin */}
-              <span className="font-mono font-bold text-slate-700 text-[11px]">
-                {COIN_ICONS[f.coin] ?? ''}{f.coin}
-              </span>
-
-              {/* Direction */}
-              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg w-fit ${dirCfg.bg}`}>
-                <span className={`text-sm ${dirCfg.color}`}>{dirCfg.icon}</span>
-                <span className={`text-[10px] font-semibold ${dirCfg.color}`}>
-                  {f.dir}
-                </span>
+              <div>
+                <label className="block text-slate-700 text-xs font-bold mb-1.5">Deadline (hours)</label>
+                <input
+                  type="number"
+                  value={form.deadlineHours}
+                  onChange={e => setForm(f => ({ ...f, deadlineHours: e.target.value }))}
+                  placeholder="24"
+                  min="1"
+                  max="8760"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                />
               </div>
-
-              {/* Value */}
-              <span className={`text-right font-mono text-[11px] font-bold ${
-                isWhale ? 'text-amber-600' : f.value >= 10_000 ? 'text-slate-700' : 'text-slate-500'
-              }`}>
-                {fmtUSD(f.value)}{isWhale && ' 🐋'}
-              </span>
-
-              {/* Closed PnL */}
-              <span className={`text-right font-mono text-[11px] font-semibold ${
-                !hasPnl ? 'text-slate-300' : pnlPos ? 'text-emerald-600' : 'text-red-600'
-              }`}>
-                {!hasPnl ? '—' : `${pnlPos ? '+' : ''}${fmtUSD(f.closedPnl)}`}
-              </span>
             </div>
-          )
-        })}
-      </div>
 
-      {/* Footer */}
-      <div className="px-5 py-3 border-t border-slate-200 flex items-center gap-2 text-[11px] text-slate-400">
-        <span className="w-1.5 h-1.5 bg-violet-600 rounded-full animate-pulse"/>
-        <span>{displayed.length} orders · Top {traders.length} traders · 15s</span>
-        <span className="ml-auto text-slate-300">▲ Mở Long · ▼ Mở Short · ▽▵ Đóng · 🐋 ≥$100K</span>
-      </div>
-    </div>
-  )
-}
+            <div>
+              <label className="block text-slate-700 text-xs font-bold mb-1.5">Provider Address <span className="text-slate-400 font-normal">(optional — leave blank for open market)</span></label>
+              <input
+                value={form.provider}
+                onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}
+                placeholder="0x… or leave blank"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm font-mono focus:outline-none focus:border-violet-400 transition-colors"
+              />
+            </div>
 
-// ── Main Panel ────────────────────────────────────────────────────────────────
+            <div>
+              <label className="block text-slate-700 text-xs font-bold mb-1.5">Evaluator Address <span className="text-slate-400 font-normal">(optional — defaults to you)</span></label>
+              <input
+                value={form.evaluator}
+                onChange={e => setForm(f => ({ ...f, evaluator: e.target.value }))}
+                placeholder="0x… or leave blank (you evaluate)"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm font-mono focus:outline-none focus:border-violet-400 transition-colors"
+              />
+            </div>
 
-export default function HyperliquidPanel() {
-  const [topTraders, setTopTraders] = useState<
-    { address: string; displayName: string | null; rank: number }[]
-  >([])
+            <button
+              onClick={handleCreate}
+              disabled={!isReady || creating || !form.title || !form.budget}
+              className="w-full py-3 rounded-xl bg-violet-600 text-white font-bold text-sm hover:bg-violet-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {creating ? '⏳ Creating job onchain…' : `🚀 createJob() on Arc Testnet`}
+            </button>
+            <p className="text-slate-400 text-[11px] text-center">
+              Gas paid in USDC · ~780ms finality · ArcAgentJobs contract
+            </p>
+          </div>
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-slate-200" />
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200">
-          <img src="https://app.hyperliquid.xyz/favicon.ico" alt=""
-            className="w-4 h-4 rounded-sm"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <span className="text-slate-400 text-xs font-medium">Live data from Hyperliquid Mainnet</span>
+          {/* Side info */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-slate-900 rounded-xl p-4">
+              <p className="text-emerald-400 text-xs font-bold mb-2">// Job lifecycle after creation:</p>
+              <pre className="text-xs text-slate-300 font-mono leading-relaxed whitespace-pre-wrap">
+{`1. createJob()  → status: Open
+   (no USDC needed yet)
+
+2. fund()       → status: Funded
+   (USDC escrowed onchain)
+   Approve USDC first → then fund()
+
+3. submit()     → status: Submitted
+   (provider posts deliverable hash)
+
+4a. complete()  → USDC → provider ✅
+4b. reject()    → USDC → creator back ❌
+4c. claimRefund() → creator reclaims
+    (only after deadline)`}
+              </pre>
+            </div>
+            <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+              <p className="text-violet-700 text-xs font-bold mb-1">💡 After createJob()</p>
+              <p className="text-slate-600 text-xs leading-relaxed">
+                Go to <strong>My Jobs</strong> tab and click <strong>Fund Job</strong> to escrow USDC.
+                The job is open for any provider to bid once funded.
+              </p>
+            </div>
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+              <p className="text-indigo-700 text-xs font-bold mb-1">🔐 Opt-in Privacy</p>
+              <p className="text-slate-600 text-xs leading-relaxed">
+                Arc's Privacy VM allows agents to shield bid details from competitors while
+                remaining auditable. Full privacy integration coming in next release.
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex-1 h-px bg-slate-200" />
-      </div>
+      )}
 
-      {/* Row 1: Leaderboard (left) + Market Trades (right) */}
-      <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-4">
-        <Leaderboard onTradersLoaded={setTopTraders} />
-        <RecentTrades />
-      </div>
+      {/* ── My Jobs ── */}
+      {activeTab === 'myjobs' && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-slate-900 font-bold text-base">
+              {address ? `Jobs created by ${address.slice(0,6)}…${address.slice(-4)}` : 'Connect wallet to see your jobs'}
+            </h3>
+            {address && (
+              <button onClick={loadMyJobs}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors">
+                🔄 Refresh
+              </button>
+            )}
+          </div>
 
-      {/* Row 2: Top trader fills */}
-      {topTraders.length > 0 && (
-        <TopTraderFills traders={topTraders} />
+          {!address && (
+            <div className="flex flex-col items-center gap-3 py-12 bg-white border border-dashed border-slate-200 rounded-2xl">
+              <span className="text-4xl">👤</span>
+              <p className="text-slate-500 text-sm">Connect wallet to view your jobs</p>
+            </div>
+          )}
+
+          {address && myJobs.length === 0 && (
+            <div className="flex flex-col items-center gap-3 py-12 bg-white border border-dashed border-slate-200 rounded-2xl">
+              <span className="text-4xl">📭</span>
+              <p className="text-slate-600 font-semibold">No jobs yet</p>
+              <button onClick={() => setActiveTab('create')}
+                className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-500 transition-colors">
+                Post your first job →
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {myJobs.map(job => (
+              <JobCard key={job.id.toString()} job={job} myAddress={address}
+                onAction={handleAction} loading={actionLoading} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Nanopayments ── */}
+      {activeTab === 'nanopay' && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-200 rounded-2xl p-6">
+            <h3 className="text-slate-900 font-extrabold text-xl mb-2">Nanopayments: Usage-Based Billing at Internet Scale</h3>
+            <p className="text-slate-500 text-sm leading-relaxed max-w-2xl mb-3">
+              Arc enables transactions as small as <strong>$0.000001</strong> — economically viable because
+              USDC gas fees are stable and dollar-denominated. <strong>Circle Nanopayments</strong> makes
+              what was impossible with volatile ETH gas now production-ready.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {['$0.000001 minimum', 'Circle Nanopayments API', 'Pay-per-byte', 'Pay-per-token', 'M2M flows'].map(t => (
+                <span key={t} className="px-2.5 py-1 rounded-full bg-violet-100 border border-violet-200 text-violet-700 text-[11px] font-semibold">{t}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[
+              { service: 'Pay-per-query AI research',   unit: 'per query',  amount: '$0.000500', volume: '1.2M/day',  icon: '🧠' },
+              { service: 'IoT sensor data stream',       unit: 'per MB',     amount: '$0.000010', volume: '42M/day',   icon: '📡' },
+              { service: 'Agent bandwidth allocation',   unit: 'per second', amount: '$0.000001', volume: '200M/day',  icon: '🔌' },
+              { service: 'Usage-based AI inference',     unit: 'per token',  amount: '$0.000050', volume: '5M/day',    icon: '💡' },
+              { service: 'EV charging (M2M)',            unit: 'per kWh',    amount: '$0.000120', volume: '18M/day',   icon: '⚡' },
+              { service: 'Vehicle tolls (autonomous)',   unit: 'per meter',  amount: '$0.000002', volume: '500M/day',  icon: '🚗' },
+            ].map(d => (
+              <div key={d.service} className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-2 hover:border-violet-200 transition-all">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{d.icon}</span>
+                  <p className="text-slate-700 font-bold text-sm">{d.service}</p>
+                </div>
+                <div className="flex flex-col gap-1 mt-auto pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 text-xs">Per unit ({d.unit})</span>
+                    <span className="text-emerald-600 font-mono font-bold text-sm">{d.amount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 text-xs">Est. daily volume</span>
+                    <span className="text-slate-600 font-mono text-xs">{d.volume}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <NanoTicker />
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: '⚡', label: 'Finality',   value: '~780ms',    sub: 'Deterministic, no reorgs', color: 'bg-blue-50 border-blue-200' },
+                { icon: '💰', label: 'Min payment', value: '$0.000001', sub: 'USDC-denominated gas',      color: 'bg-violet-50 border-violet-200' },
+                { icon: '🔐', label: 'Privacy',     value: 'Opt-in',    sub: 'Shield agent strategies',   color: 'bg-indigo-50 border-indigo-200' },
+                { icon: '🔗', label: 'Standard',    value: 'ERC-8183',  sub: 'Open escrow protocol',      color: 'bg-amber-50 border-amber-200' },
+              ].map(s => (
+                <div key={s.label} className={`${s.color} border rounded-2xl p-4`}>
+                  <span className="text-2xl">{s.icon}</span>
+                  <p className="text-slate-900 font-extrabold text-lg mt-1">{s.value}</p>
+                  <p className="text-slate-700 font-semibold text-xs">{s.label}</p>
+                  <p className="text-slate-400 text-[10px] mt-0.5">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ERC-8183 Spec ── */}
+      {activeTab === 'erc8183' && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-slate-900 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-violet-600/30 border border-violet-500/40 flex items-center justify-center text-xl">🔗</div>
+              <div>
+                <h3 className="text-white font-extrabold text-lg">ArcAgentJobs — ERC-8183 Style Contract</h3>
+                <a href={`https://testnet.arcscan.app/address/${AGENT_JOBS_ADDRESS}`} target="_blank" rel="noreferrer"
+                  className="text-violet-400 text-xs hover:text-violet-300 font-mono">{AGENT_JOBS_ADDRESS} ↗</a>
+              </div>
+            </div>
+
+            {/* Lifecycle */}
+            <div className="mb-5">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Job Lifecycle</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {['Open', 'Funded', 'Submitted', 'Completed'].map((s, i, arr) => (
+                  <div key={s} className="flex items-center gap-2">
+                    <div className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${STATUS_STYLES[s as StatusName]}`}>{s}</div>
+                    {i < arr.length - 1 && <span className="text-slate-600">→</span>}
+                  </div>
+                ))}
+              </div>
+              <p className="text-slate-500 text-xs mt-2">Alternative exits: Rejected (evaluator rejects) · Expired (creator reclaims after deadline)</p>
+            </div>
+
+            {/* Functions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
+              {[
+                { fn: 'createJob()', desc: 'Define job: title, description, budget, deadline, provider (optional), evaluator', color: 'bg-blue-500/10 border-blue-500/30 text-blue-400' },
+                { fn: 'fund()',       desc: 'Escrow USDC onchain. Caller must approve() this contract for budgetUsdc first.', color: 'bg-amber-500/10 border-amber-500/30 text-amber-400' },
+                { fn: 'submit()',     desc: 'Provider submits deliverable as bytes32 hash (keccak256 of IPFS CID).', color: 'bg-violet-500/10 border-violet-500/30 text-violet-400' },
+                { fn: 'complete()',   desc: 'Evaluator approves — USDC released to provider instantly.', color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' },
+                { fn: 'reject()',     desc: 'Evaluator rejects — USDC returned to creator.', color: 'bg-red-500/10 border-red-500/30 text-red-400' },
+                { fn: 'claimRefund()', desc: 'Creator reclaims USDC after deadline passes without completion.', color: 'bg-slate-500/10 border-slate-500/30 text-slate-400' },
+              ].map(f => (
+                <div key={f.fn} className={`${f.color} border rounded-xl p-3`}>
+                  <code className="font-mono font-bold text-sm block mb-1">{f.fn}</code>
+                  <p className="text-slate-400 text-[11px] leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Code example */}
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Example: Full lifecycle in JS (viem)</p>
+            <pre className="bg-black/40 rounded-xl p-4 text-xs text-emerald-400 font-mono overflow-x-auto leading-relaxed">
+{`// 1. Create job
+const jobId = await writeContract({
+  address: '${AGENT_JOBS_ADDRESS}',
+  functionName: 'createJob',
+  args: [providerAddr, evaluatorAddr, 25_000_000n, 24n, "My task", "Details"]
+})
+
+// 2. Approve USDC, then fund
+await writeContract({ address: USDC, functionName: 'approve',
+  args: ['${AGENT_JOBS_ADDRESS}', 25_000_000n] })
+await writeContract({ address: '${AGENT_JOBS_ADDRESS}',
+  functionName: 'fund', args: [jobId] })
+
+// 3. Provider submits deliverable
+const hash = keccak256(toBytes('QmIPFScid...'))
+await writeContract({ address: '${AGENT_JOBS_ADDRESS}',
+  functionName: 'submit', args: [jobId, hash] })
+
+// 4. Evaluator completes → USDC released
+await writeContract({ address: '${AGENT_JOBS_ADDRESS}',
+  functionName: 'complete', args: [jobId] })`}
+            </pre>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { name: 'Circle Agent Stack', icon: '🧠', desc: 'Official Circle quickstart for building financial AI agent infrastructure on Arc. Circle Wallets + ERC-8183.', link: 'https://community.arc.io', color: 'border-violet-200 bg-violet-50' },
+              { name: 'Arc Blueprint', icon: '📄', desc: 'How Arc supports the Agentic Economy — nanopayments, M2M flows, real-time coordination, opt-in privacy.', link: 'https://www.arc.io/blog/how-arc-supports-the-agentic-economy-arc-blueprints', color: 'border-blue-200 bg-blue-50' },
+              { name: 'Agentic Commerce Hackathon', icon: '🎯', desc: 'Build AI agent commerce apps using Circle\'s payment infrastructure on Arc. Active challenge with prizes.', link: 'https://lablab.ai/ai-hackathons/agentic-commerce-on-arc', color: 'border-amber-200 bg-amber-50' },
+            ].map(p => (
+              <a key={p.name} href={p.link} target="_blank" rel="noreferrer"
+                className={`${p.color} border rounded-2xl p-4 hover:shadow-md transition-all flex flex-col gap-3`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{p.icon}</span>
+                  <h4 className="text-slate-900 font-bold text-sm">{p.name}</h4>
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed">{p.desc}</p>
+              </a>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )
