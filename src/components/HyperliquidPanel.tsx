@@ -11,7 +11,7 @@ import { usePerpTrade } from '../hooks/usePerpsContract'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AgentTab = 'jobs' | 'create' | 'myjobs' | 'nanopay' | 'erc8183'
+type AgentTab = 'jobs' | 'create' | 'myjobs' | 'nanopay'
 
 const STATUS_LABEL = ['Open', 'Funded', 'Submitted', 'Completed', 'Rejected', 'Expired'] as const
 type StatusName = typeof STATUS_LABEL[number]
@@ -357,11 +357,10 @@ export default function HyperliquidPanel() {
   // ── Tabs ───────────────────────────────────────────────────────────────────
 
   const TABS: { key: AgentTab; label: string; icon: string }[] = [
-    { key: 'jobs',    label: 'Job Board',     icon: '📋' },
-    { key: 'create',  label: 'Post a Job',    icon: '➕' },
-    { key: 'myjobs',  label: 'My Jobs',       icon: '👤' },
-    { key: 'nanopay', label: 'Nanopayments',  icon: '💸' },
-    { key: 'erc8183', label: 'ERC-8183 Spec', icon: '📖' },
+    { key: 'jobs',    label: 'Job Board',    icon: '📋' },
+    { key: 'create',  label: 'Post a Job',   icon: '➕' },
+    { key: 'myjobs',  label: 'My Jobs',      icon: '👤' },
+    { key: 'nanopay', label: 'Nanopayments', icon: '💸' },
   ]
 
   return (
@@ -446,6 +445,43 @@ export default function HyperliquidPanel() {
               <JobCard key={job.id.toString()} job={job} myAddress={address}
                 onAction={handleAction} loading={actionLoading} />
             ))}
+          </div>
+
+          {/* ── Compact ERC-8183 spec ── */}
+          <div className="bg-slate-900 rounded-2xl p-5 flex flex-col gap-4 mt-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-white font-extrabold text-sm">ArcAgentJobs Contract · ERC-8183</p>
+                <a href={`https://testnet.arcscan.app/address/${AGENT_JOBS_ADDRESS}`} target="_blank" rel="noreferrer"
+                  className="text-violet-400 text-[11px] font-mono hover:text-violet-300">{AGENT_JOBS_ADDRESS} ↗</a>
+              </div>
+              {/* Lifecycle flow */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(['Open','Funded','Submitted','Completed'] as StatusName[]).map((s,i,arr) => (
+                  <div key={s} className="flex items-center gap-1.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${STATUS_STYLES[s]}`}>{s}</span>
+                    {i < arr.length-1 && <span className="text-slate-600 text-xs">→</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 6 functions in 2 rows */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { fn: 'createJob()', color: 'text-blue-400 border-blue-500/30 bg-blue-500/10',     desc: 'Define title, budget, deadline, provider, evaluator' },
+                { fn: 'fund()',      color: 'text-amber-400 border-amber-500/30 bg-amber-500/10',   desc: 'Approve + escrow USDC into contract' },
+                { fn: 'submit()',    color: 'text-violet-400 border-violet-500/30 bg-violet-500/10',desc: 'Provider submits keccak256(IPFS CID)' },
+                { fn: 'complete()', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10', desc: 'Evaluator releases USDC to provider' },
+                { fn: 'reject()',   color: 'text-red-400 border-red-500/30 bg-red-500/10',          desc: 'Evaluator refunds USDC to creator' },
+                { fn: 'claimRefund()', color: 'text-slate-400 border-slate-500/30 bg-slate-500/10',desc: 'Creator reclaims after deadline' },
+              ].map(f => (
+                <div key={f.fn} className={`${f.color} border rounded-xl px-3 py-2 flex flex-col gap-0.5`}>
+                  <code className="font-mono font-bold text-xs">{f.fn}</code>
+                  <p className="text-slate-400 text-[10px] leading-snug">{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -690,78 +726,6 @@ export default function HyperliquidPanel() {
         </div>
       )}
 
-      {/* ── ERC-8183 Spec ── */}
-      {activeTab === 'erc8183' && (
-        <div className="bg-slate-900 rounded-2xl p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-600/30 border border-violet-500/40 flex items-center justify-center text-xl">🔗</div>
-            <div>
-              <h3 className="text-white font-extrabold text-lg">ArcAgentJobs — ERC-8183 Style Contract</h3>
-              <a href={`https://testnet.arcscan.app/address/${AGENT_JOBS_ADDRESS}`} target="_blank" rel="noreferrer"
-                className="text-violet-400 text-xs hover:text-violet-300 font-mono">{AGENT_JOBS_ADDRESS} ↗</a>
-            </div>
-          </div>
-
-          {/* Lifecycle */}
-          <div>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Job Lifecycle</p>
-            <div className="flex items-center gap-2 flex-wrap">
-              {(['Open', 'Funded', 'Submitted', 'Completed'] as StatusName[]).map((s, i, arr) => (
-                <div key={s} className="flex items-center gap-2">
-                  <div className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${STATUS_STYLES[s]}`}>{s}</div>
-                  {i < arr.length - 1 && <span className="text-slate-600">→</span>}
-                </div>
-              ))}
-            </div>
-            <p className="text-slate-500 text-xs mt-2">Alternative exits: Rejected (evaluator rejects) · Expired (creator reclaims after deadline)</p>
-          </div>
-
-          {/* Functions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {[
-              { fn: 'createJob()', desc: 'Define job: title, description, budget, deadline, provider (optional), evaluator', color: 'bg-blue-500/10 border-blue-500/30 text-blue-400' },
-              { fn: 'fund()',      desc: 'Escrow USDC onchain. Caller must approve() this contract for budgetUsdc first.', color: 'bg-amber-500/10 border-amber-500/30 text-amber-400' },
-              { fn: 'submit()',    desc: 'Provider submits deliverable as bytes32 hash (keccak256 of IPFS CID).', color: 'bg-violet-500/10 border-violet-500/30 text-violet-400' },
-              { fn: 'complete()',  desc: 'Evaluator approves — USDC released to provider instantly.', color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' },
-              { fn: 'reject()',    desc: 'Evaluator rejects — USDC returned to creator.', color: 'bg-red-500/10 border-red-500/30 text-red-400' },
-              { fn: 'claimRefund()', desc: 'Creator reclaims USDC after deadline passes without completion.', color: 'bg-slate-500/10 border-slate-500/30 text-slate-400' },
-            ].map(f => (
-              <div key={f.fn} className={`${f.color} border rounded-xl p-3`}>
-                <code className="font-mono font-bold text-sm block mb-1">{f.fn}</code>
-                <p className="text-slate-400 text-[11px] leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Code example */}
-          <div>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Example: Full lifecycle in JS (viem)</p>
-            <pre className="bg-black/40 rounded-xl p-4 text-xs text-emerald-400 font-mono overflow-x-auto leading-relaxed">
-{`// 1. Create job
-const jobId = await writeContract({
-  address: '${AGENT_JOBS_ADDRESS}',
-  functionName: 'createJob',
-  args: [providerAddr, evaluatorAddr, 25_000_000n, 24n, "My task", "Details"]
-})
-
-// 2. Approve USDC, then fund
-await writeContract({ address: USDC, functionName: 'approve',
-  args: ['${AGENT_JOBS_ADDRESS}', 25_000_000n] })
-await writeContract({ address: '${AGENT_JOBS_ADDRESS}',
-  functionName: 'fund', args: [jobId] })
-
-// 3. Provider submits deliverable
-const hash = keccak256(toBytes('QmIPFScid...'))
-await writeContract({ address: '${AGENT_JOBS_ADDRESS}',
-  functionName: 'submit', args: [jobId, hash] })
-
-// 4. Evaluator completes → USDC released
-await writeContract({ address: '${AGENT_JOBS_ADDRESS}',
-  functionName: 'complete', args: [jobId] })`}
-            </pre>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
