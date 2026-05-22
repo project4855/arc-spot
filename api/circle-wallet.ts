@@ -166,6 +166,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ txHash, circleTxId: txResp.data.id })
     }
 
+    // ── execute raw calldata (viem-encoded, handles tuples/bytes/arrays) ──────
+    if (action === 'executeRaw') {
+      const { walletId, contractAddress, callData } = p
+      if (!walletId || !contractAddress || !callData) {
+        return res.status(400).json({ error: 'walletId, contractAddress, callData required' })
+      }
+
+      const txResp = await circle(apiKey, 'POST', '/developer/transactions/contractExecution', {
+        idempotencyKey: uid(),
+        entitySecretCiphertext: cipher,
+        walletId,
+        contractAddress,
+        callData,
+        blockchain: CHAIN,
+        feeLevel: 'MEDIUM',
+      }) as { data: { id: string } }
+
+      const txHash = await pollTxHash(apiKey, txResp.data.id)
+      return res.status(200).json({ txHash, circleTxId: txResp.data.id })
+    }
+
     return res.status(400).json({ error: `Unknown action: ${action}` })
 
   } catch (e) {

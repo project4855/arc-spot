@@ -127,3 +127,18 @@ export async function circleExecuteContract(
   })
   return data.txHash as `0x${string}`
 }
+
+/** Execute contract with raw viem-encoded callData — handles tuples/bytes/arrays correctly */
+export async function circleExecuteContractRaw(
+  walletId: string,
+  contractAddress: string,
+  callData: `0x${string}`,
+): Promise<`0x${string}`> {
+  const data = await post({
+    action: 'executeRaw',
+    walletId,
+    contractAddress,
+    callData,
+  })
+  return data.txHash as `0x${string}`
+}

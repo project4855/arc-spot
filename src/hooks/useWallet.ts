@@ -16,7 +16,7 @@ import {
 } from 'wagmi'
 import { encodeFunctionData } from 'viem'
 import { getTurnkeyAddress, getTurnkeyWalletClient, clearTurnkeySigner } from '../lib/turnkeySigner'
-import { getCircleAddress, loadCircleWallet, circleExecuteContract } from '../lib/circleWalletClient'
+import { getCircleAddress, loadCircleWallet, circleExecuteContractRaw } from '../lib/circleWalletClient'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -109,20 +109,14 @@ export function useWallet() {
       const wallet = loadCircleWallet()
       if (!wallet) throw new Error('Circle wallet not found. Please re-create it in the Wallet tab.')
 
-      // Build ABI function signature string, e.g. "approve(address,uint256)"
-      type AbiEntry = { name: string; inputs: Array<{ type: string }> }
-      const abiEntry = (params.abi as AbiEntry[]).find(
-        (e): e is AbiEntry => e.name === params.functionName,
-      )
-      if (!abiEntry) throw new Error(`ABI entry not found: ${params.functionName}`)
-      const sig = `${abiEntry.name}(${abiEntry.inputs.map(i => i.type).join(',')})`
+      // Encode calldata with viem to handle complex types (tuples, bytes, arrays)
+      const callData = encodeFunctionData({
+        abi: params.abi as Parameters<typeof encodeFunctionData>[0]['abi'],
+        functionName: params.functionName,
+        args: (params.args ?? []) as Parameters<typeof encodeFunctionData>[0]['args'],
+      })
 
-      // Encode each argument as a string (Circle API expects string array)
-      const abiParams = (params.args ?? []).map(a =>
-        typeof a === 'bigint' ? a.toString() : String(a),
-      )
-
-      return circleExecuteContract(wallet.walletId, params.address, sig, abiParams)
+      return circleExecuteContractRaw(wallet.walletId, params.address, callData)
     }
 
     // ── Turnkey HSM ───────────────────────────────────────────────────────────
@@ -188,7 +182,7 @@ export function useWallet() {
       if (!params.to) throw new Error('Circle wallet sendTransaction requires a "to" address')
       // Encode as a raw contract call passing the data hex
       const dataHex = params.data ?? '0x'
-      return circleExecuteContract(wallet.walletId, params.to, 'fallback(bytes)', [dataHex])
+      return circleExecuteContractRaw(wallet.walletId, params.to, dataHex as `0x${string}`)
     }
 
     const client = getTurnkeyWalletClient()
