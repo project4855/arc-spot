@@ -1407,20 +1407,20 @@ function PaymentFlowsSection() {
       </div>
 
       {/* ── Smart Contract features ── */}
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white">
-        <h3 className="font-bold text-sm mb-1">⚙️ Advanced: Build with Smart Contracts</h3>
-        <p className="text-slate-400 text-xs mb-4">These patterns go beyond simple transfers — deploy on Arc for trustless automation</p>
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+        <h3 className="font-bold text-sm mb-1 text-slate-900">⚙️ Advanced: Build with Smart Contracts</h3>
+        <p className="text-slate-500 text-xs mb-4">These patterns go beyond simple transfers — deploy on Arc for trustless automation</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {CONTRACT_FEATURES.map(c => (
-            <div key={c.title} className="bg-white/10 hover:bg-white/15 transition-colors rounded-xl p-3.5 cursor-default group">
+            <div key={c.title} className="bg-white hover:bg-slate-50 border border-slate-200 transition-colors rounded-xl p-3.5 cursor-default group">
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="text-lg">{c.icon}</span>
-                <p className="font-bold text-white text-xs">{c.title}</p>
+                <p className="font-bold text-slate-900 text-xs">{c.title}</p>
               </div>
-              <p className="text-slate-400 text-[11px] leading-relaxed">{c.desc}</p>
+              <p className="text-slate-500 text-[11px] leading-relaxed">{c.desc}</p>
               <div className="flex gap-1.5 mt-2">
                 {c.tags.map(t => (
-                  <span key={t} className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-semibold">{t}</span>
+                  <span key={t} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">{t}</span>
                 ))}
               </div>
             </div>
@@ -1529,8 +1529,8 @@ function PaymentFlowsSection() {
 
             <div>
               <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-3">Solidity Implementation (Part 2)</p>
-              <div className="bg-slate-900 rounded-xl p-4">
-                <pre className="text-xs text-emerald-400 font-mono leading-relaxed overflow-x-auto">
+              <div className="bg-slate-100 border border-slate-200 rounded-xl p-4">
+                <pre className="text-xs text-emerald-700 font-mono leading-relaxed overflow-x-auto">
 {`// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -2600,15 +2600,15 @@ function PayrollTab({ address, onTxSent }: {
   return (
     <div className="flex flex-col gap-4">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-violet-900 to-purple-900 rounded-2xl p-4 flex items-start gap-3">
+      <div className="bg-gradient-to-r from-violet-100 to-purple-50 border border-violet-200 rounded-2xl p-4 flex items-start gap-3">
         <span className="text-2xl shrink-0">💼</span>
         <div className="flex-1">
-          <p className="text-white font-bold text-sm">Global Payroll — Stablecoin Settlement + Receipts</p>
-          <p className="text-violet-200 text-xs mt-0.5">
+          <p className="text-slate-900 font-bold text-sm">Global Payroll — Stablecoin Settlement + Receipts</p>
+          <p className="text-violet-600 text-xs mt-0.5">
             Real USDC transfers on Arc Testnet. Each contractor gets a signed on-chain payment.
           </p>
         </div>
-        <span className="text-[10px] bg-white/15 border border-white/20 text-white font-bold px-2 py-0.5 rounded-full shrink-0">ON-CHAIN ⛓</span>
+        <span className="text-[10px] bg-violet-100 border border-violet-200 text-violet-700 font-bold px-2 py-0.5 rounded-full shrink-0">ON-CHAIN ⛓</span>
       </div>
 
       {/* Wallet prompt */}
@@ -3034,11 +3034,11 @@ function MerchantTab({ address, onTxSent }: {
   return (
     <div className="flex flex-col gap-4">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 to-teal-900 rounded-2xl p-4 flex items-start gap-3">
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3">
         <span className="text-2xl shrink-0">🏦</span>
         <div>
-          <p className="text-white font-bold text-sm">"Pay-in AED, Settle in USDC" — Merchant Prototype</p>
-          <p className="text-emerald-200 text-xs mt-0.5 leading-relaxed">
+          <p className="text-slate-900 font-bold text-sm">"Pay-in AED, Settle in USDC" — Merchant Prototype</p>
+          <p className="text-emerald-600 text-xs mt-0.5 leading-relaxed">
             Customer pays in AED → real USDC transfer on Arc Testnet to merchant wallet.
             No correspondent banks, no 2-3 day settlement float.
           </p>
@@ -3353,7 +3353,7 @@ function UseCasesSection({ address, balanceUsdc, onTxSent }: {
           <button key={t.key} onClick={() => setUc(t.key)}
             className={`flex flex-col items-center gap-0.5 py-3 px-2 rounded-2xl border transition-all text-center ${
               uc === t.key
-                ? 'bg-slate-900 border-slate-900 text-white shadow-lg'
+                ? 'bg-violet-600 border-violet-600 text-white shadow-lg'
                 : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
             }`}>
             <span className="text-xl">{t.icon}</span>
@@ -3544,14 +3544,14 @@ function UnifiedBalanceSection({ address, onTxSent }: {
   return (
     <div className="flex flex-col gap-4">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-violet-900 via-purple-900 to-indigo-900 rounded-2xl p-4 flex items-start gap-3">
+      <div className="bg-gradient-to-r from-violet-100 via-purple-50 to-indigo-50 border border-violet-200 rounded-2xl p-4 flex items-start gap-3">
         <span className="text-2xl shrink-0">⚡</span>
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-white font-bold text-sm">Unified Balance Kit</p>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/50 text-violet-200 font-bold uppercase tracking-wider">Arc × Circle</span>
+            <p className="text-slate-900 font-bold text-sm">Unified Balance Kit</p>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 font-bold uppercase tracking-wider">Arc × Circle</span>
           </div>
-          <p className="text-violet-200 text-xs mt-1 leading-relaxed">
+          <p className="text-violet-600 text-xs mt-1 leading-relaxed">
             One interface to deposit USDC from any chain (Base, Arbitrum, Ethereum…) into a chain-agnostic Unified Balance, then spend instantly on Arc Testnet. Powered by Circle Gateway.
           </p>
         </div>

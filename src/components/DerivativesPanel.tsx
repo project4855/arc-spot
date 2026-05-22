@@ -115,11 +115,11 @@ function ChartTooltip({ active, payload }: any) {
   const d = payload[0]?.payload
   if (!d) return null
   return (
-    <div className="bg-slate-900 text-white rounded-xl px-3 py-2 text-[11px] shadow-xl border border-slate-700">
-      <p className="text-slate-400 mb-1">{new Date(d.time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+    <div className="bg-white text-slate-900 rounded-xl px-3 py-2 text-[11px] shadow-xl border border-slate-200">
+      <p className="text-slate-500 mb-1">{new Date(d.time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</p>
       <p className="font-bold">{fmtPrice(d.close)}</p>
-      <p className="text-slate-400">O: {fmtPrice(d.open)} H: {fmtPrice(d.high)}</p>
-      <p className="text-slate-400">L: {fmtPrice(d.low)}  V: {fmtUSD(d.volume)}</p>
+      <p className="text-slate-500">O: {fmtPrice(d.open)} H: {fmtPrice(d.high)}</p>
+      <p className="text-slate-500">L: {fmtPrice(d.low)}  V: {fmtUSD(d.volume)}</p>
     </div>
   )
 }

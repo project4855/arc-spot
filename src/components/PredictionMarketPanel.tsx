@@ -503,25 +503,25 @@ function MyBetsSection({
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
       {/* ── Portfolio summary bar ── */}
-      <div className="bg-gradient-to-r from-slate-900 to-violet-900 px-5 py-4">
+      <div className="bg-gradient-to-r from-violet-50 to-blue-50 border-b border-slate-200 px-5 py-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-white text-sm">🎯 My Portfolio</h3>
+          <h3 className="font-bold text-slate-900 text-sm">🎯 My Portfolio</h3>
           <button onClick={onClear}
-            className="text-[10px] text-white/50 hover:text-white/80 transition-colors px-2 py-0.5 rounded border border-white/20 hover:border-white/40">
+            className="text-[10px] text-slate-500 hover:text-slate-700 transition-colors px-2 py-0.5 rounded border border-slate-200 hover:border-slate-400">
             Clear all
           </button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Total Wagered',    value: `$${totalBetAmount.toFixed(2)}`,  sub: `${myBets.length} position${myBets.length > 1 ? 's' : ''}`,          color: 'text-white' },
-            { label: 'Current Value',    value: `$${totalCurValue.toFixed(2)}`,   sub: 'mark-to-market',                                                     color: 'text-white' },
-            { label: 'Unrealized P&L',   value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, sub: `${totalPnl >= 0 ? '+' : ''}${totalBetAmount > 0 ? ((totalPnl / totalBetAmount) * 100).toFixed(1) : '0'}%`, color: totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400' },
-            { label: 'Max Payout',       value: `$${totalPayout.toFixed(2)}`,     sub: 'if all win',                                                          color: 'text-amber-400' },
+            { label: 'Total Wagered',    value: `$${totalBetAmount.toFixed(2)}`,  sub: `${myBets.length} position${myBets.length > 1 ? 's' : ''}`,          color: 'text-slate-900' },
+            { label: 'Current Value',    value: `$${totalCurValue.toFixed(2)}`,   sub: 'mark-to-market',                                                     color: 'text-slate-900' },
+            { label: 'Unrealized P&L',   value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, sub: `${totalPnl >= 0 ? '+' : ''}${totalBetAmount > 0 ? ((totalPnl / totalBetAmount) * 100).toFixed(1) : '0'}%`, color: totalPnl >= 0 ? 'text-emerald-600' : 'text-red-500' },
+            { label: 'Max Payout',       value: `$${totalPayout.toFixed(2)}`,     sub: 'if all win',                                                          color: 'text-amber-600' },
           ].map(s => (
-            <div key={s.label} className="bg-white/10 rounded-xl px-3 py-2.5">
+            <div key={s.label} className="bg-white border border-slate-200 rounded-xl px-3 py-2.5">
               <p className={`font-extrabold text-base ${s.color}`}>{s.value}</p>
-              <p className="text-white/50 text-[10px]">{s.label}</p>
-              <p className="text-white/35 text-[10px]">{s.sub}</p>
+              <p className="text-slate-500 text-[10px]">{s.label}</p>
+              <p className="text-slate-400 text-[10px]">{s.sub}</p>
             </div>
           ))}
         </div>

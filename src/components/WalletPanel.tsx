@@ -378,35 +378,35 @@ function TurnkeyWalletSection() {
     <div className="flex flex-col gap-0 rounded-3xl overflow-hidden border border-indigo-200 shadow-lg">
 
       {/* Header strip */}
-      <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 px-5 pt-5 pb-4">
+      <div className="bg-gradient-to-br from-indigo-100 via-indigo-50 to-violet-100 border-b border-indigo-200 px-5 pt-5 pb-4">
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-xl shrink-0">🏛</div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-xl shrink-0">🏛</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-white font-extrabold text-sm">Wallet Infrastructure</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/50 text-indigo-200 font-bold uppercase tracking-wider">Turnkey HSM</span>
+              <span className="text-slate-900 font-extrabold text-sm">Wallet Infrastructure</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600 font-bold uppercase tracking-wider">Turnkey HSM</span>
             </div>
             {isLoggedIn ? (
-              <p className="text-indigo-300 text-[11px] font-mono mt-0.5 truncate">{walletAddress!.slice(0,14)}…{walletAddress!.slice(-8)}</p>
+              <p className="text-indigo-600 text-[11px] font-mono mt-0.5 truncate">{walletAddress!.slice(0,14)}…{walletAddress!.slice(-8)}</p>
             ) : (
-              <p className="text-indigo-400 text-[11px] mt-0.5">Email OTP · Passkey · No seed phrase</p>
+              <p className="text-indigo-500 text-[11px] mt-0.5">Email OTP · Passkey · No seed phrase</p>
             )}
           </div>
           {isLoggedIn && (
             <div className="flex items-center gap-1 shrink-0">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-emerald-300 text-[10px] font-semibold">Active</span>
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-emerald-600 text-[10px] font-semibold">Active</span>
             </div>
           )}
         </div>
 
         {/* Sub-tab bar (inside header) */}
         {isLoggedIn && (
-          <div className="flex gap-1 bg-white/10 p-1 rounded-xl">
+          <div className="flex gap-1 bg-indigo-100 p-1 rounded-xl">
             {SUBTABS.map(t => (
               <button key={t.key} onClick={() => setSubTab(t.key)}
                 className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-all ${
-                  subTab === t.key ? 'bg-white text-indigo-700 shadow' : 'text-indigo-300 hover:text-white hover:bg-white/10'
+                  subTab === t.key ? 'bg-white text-indigo-700 shadow' : 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'
                 }`}>
                 <span>{t.icon}</span><span className="hidden sm:inline">{t.label}</span>
               </button>
@@ -685,37 +685,37 @@ function CircleWalletSection() {
     <div className="flex flex-col gap-0 rounded-3xl overflow-hidden border border-emerald-200 shadow-lg">
 
       {/* Header strip */}
-      <div className="bg-gradient-to-br from-emerald-700 via-teal-600 to-cyan-700 px-5 pt-5 pb-4">
+      <div className="bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-50 border-b border-emerald-200 px-5 pt-5 pb-4">
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-xl shrink-0">⭕</div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-xl shrink-0">⭕</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-white font-extrabold text-sm">Circle Wallet</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/50 text-emerald-100 font-bold uppercase tracking-wider">Developer-Controlled · No Quota</span>
+              <span className="text-slate-900 font-extrabold text-sm">Circle Wallet</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold uppercase tracking-wider">Developer-Controlled · No Quota</span>
             </div>
             {wallet ? (
-              <p className="text-emerald-200 text-[11px] font-mono mt-0.5 truncate">
+              <p className="text-emerald-700 text-[11px] font-mono mt-0.5 truncate">
                 {wallet.address.slice(0, 14)}…{wallet.address.slice(-8)}
               </p>
             ) : (
-              <p className="text-emerald-300 text-[11px] mt-0.5">Circle HSM · No seed phrase · No signing quota</p>
+              <p className="text-emerald-600 text-[11px] mt-0.5">Circle HSM · No seed phrase · No signing quota</p>
             )}
           </div>
           {wallet && (
             <div className="flex items-center gap-1 shrink-0">
-              <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse" />
-              <span className="text-emerald-200 text-[10px] font-semibold">Active</span>
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-emerald-600 text-[10px] font-semibold">Active</span>
             </div>
           )}
         </div>
 
         {/* Sub-tabs (only when wallet exists) */}
         {wallet && (
-          <div className="flex gap-1 bg-white/10 p-1 rounded-xl">
+          <div className="flex gap-1 bg-emerald-100 p-1 rounded-xl">
             {SUBTABS.map(t => (
               <button key={t.key} onClick={() => setSubTab(t.key)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all ${
-                  subTab === t.key ? 'bg-white text-emerald-700 shadow' : 'text-emerald-200 hover:text-white hover:bg-white/10'
+                  subTab === t.key ? 'bg-white text-emerald-700 shadow' : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50'
                 }`}>
                 <span>{t.icon}</span><span>{t.label}</span>
               </button>
@@ -1066,35 +1066,35 @@ function MetaMaskWalletSection() {
     <div className="flex flex-col gap-0 rounded-3xl overflow-hidden border border-violet-200 shadow-lg">
 
       {/* Header strip */}
-      <div className="bg-gradient-to-br from-violet-700 via-violet-600 to-blue-700 px-5 pt-5 pb-4">
+      <div className="bg-gradient-to-br from-violet-100 via-violet-50 to-blue-50 border-b border-violet-200 px-5 pt-5 pb-4">
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-xl shrink-0">🦊</div>
+          <div className="w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center text-xl shrink-0">🦊</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-white font-extrabold text-sm">External Wallet</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/50 text-violet-200 font-bold uppercase tracking-wider">MetaMask · WalletConnect</span>
+              <span className="text-slate-900 font-extrabold text-sm">External Wallet</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-600 font-bold uppercase tracking-wider">MetaMask · WalletConnect</span>
             </div>
             {isConnected && address ? (
-              <p className="text-violet-300 text-[11px] font-mono mt-0.5 truncate">{address.slice(0,14)}…{address.slice(-8)}</p>
+              <p className="text-violet-600 text-[11px] font-mono mt-0.5 truncate">{address.slice(0,14)}…{address.slice(-8)}</p>
             ) : (
-              <p className="text-violet-400 text-[11px] mt-0.5">Connect MetaMask, Coinbase, or any WalletConnect wallet</p>
+              <p className="text-violet-500 text-[11px] mt-0.5">Connect MetaMask, Coinbase, or any WalletConnect wallet</p>
             )}
           </div>
           {isConnected && (
             <div className="flex items-center gap-1 shrink-0">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-emerald-300 text-[10px] font-semibold">Connected</span>
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-emerald-600 text-[10px] font-semibold">Connected</span>
             </div>
           )}
         </div>
 
         {/* Sub-tab bar */}
         {isConnected && address && (
-          <div className="flex gap-1 bg-white/10 p-1 rounded-xl">
+          <div className="flex gap-1 bg-violet-100 p-1 rounded-xl">
             {SUBTABS.map(t => (
               <button key={t.key} onClick={() => setSubTab(t.key)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all ${
-                  subTab === t.key ? 'bg-white text-violet-700 shadow' : 'text-violet-300 hover:text-white hover:bg-white/10'
+                  subTab === t.key ? 'bg-white text-violet-700 shadow' : 'text-violet-500 hover:text-violet-700 hover:bg-violet-50'
                 }`}>
                 <span>{t.icon}</span><span>{t.label}</span>
               </button>

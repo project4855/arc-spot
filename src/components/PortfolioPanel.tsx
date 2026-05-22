@@ -364,16 +364,16 @@ export default function PortfolioPanel() {
     <div className="flex flex-col gap-5">
 
       {/* ── Arc Blueprint Banner ── */}
-      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-teal-950 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl shrink-0">🏛️</div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-2xl shrink-0">🏛️</div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 font-bold">Arc Blueprint · Treasury Management</span>
-              <span className="text-[10px] text-slate-400">13.9% CAGR market</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-600 font-bold">Arc Blueprint · Treasury Management</span>
+              <span className="text-[10px] text-slate-500">13.9% CAGR market</span>
             </div>
-            <h2 className="text-white font-extrabold text-lg leading-tight">Treasury Management on Arc</h2>
-            <p className="text-slate-300 text-sm mt-1 max-w-xl">
+            <h2 className="text-slate-900 font-extrabold text-lg leading-tight">Treasury Management on Arc</h2>
+            <p className="text-slate-600 text-sm mt-1 max-w-xl">
               Deterministic sub-second finality enables real-time cash position updates.
               Automate multi-entity sweeps, idle cash yield strategies, and 24/7 cross-jurisdiction transfers in USDC and EURC.
             </p>

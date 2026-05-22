@@ -42,15 +42,15 @@ function ConnectPopup({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 pt-6 pb-5">
+        <div className="bg-gradient-to-r from-violet-50 to-blue-50 border-b border-violet-200 px-6 pt-6 pb-5">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-white font-extrabold text-lg">Connect Wallet</h2>
+            <h2 className="text-slate-900 font-extrabold text-lg">Connect Wallet</h2>
             <button onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg transition-colors">
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-lg transition-colors">
               ×
             </button>
           </div>
-          <p className="text-slate-400 text-sm">Choose your wallet type to get started on Arc Testnet</p>
+          <p className="text-slate-500 text-sm">Choose your wallet type to get started on Arc Testnet</p>
         </div>
 
         {/* Options */}

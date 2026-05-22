@@ -120,7 +120,7 @@ export default function App() {
 
             {/* ── HERO ───────────────────────────────────────────────────────── */}
             <div className="relative rounded-3xl overflow-hidden shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-violet-950 to-blue-950" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-blue-50 to-indigo-50" />
               <div className="absolute inset-0 opacity-[0.05] pointer-events-none"
                 style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
               <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
@@ -130,31 +130,31 @@ export default function App() {
               <div className="relative z-10 px-6 sm:px-10 py-14 sm:py-18">
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2 mb-6">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[11px] font-semibold backdrop-blur-sm">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-100 border border-violet-200 text-violet-700 text-[11px] font-semibold backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                     Live on Arc Testnet
                   </span>
-                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/70 text-[11px] backdrop-blur-sm">
+                  <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-[11px] backdrop-blur-sm">
                     Built by Circle
                   </span>
-                  <span className="px-3 py-1 rounded-full bg-violet-500/20 border border-violet-400/30 text-violet-300 text-[11px] backdrop-blur-sm">
+                  <span className="px-3 py-1 rounded-full bg-violet-100 border border-violet-200 text-violet-600 text-[11px] backdrop-blur-sm">
                     Post-Quantum Secure
                   </span>
                 </div>
 
                 {/* Headline */}
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.1] mb-4 max-w-3xl">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-4 max-w-3xl">
                   Build real-world<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-400 to-blue-400">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-cyan-600 to-blue-600">
                     finance onchain
                   </span>
                 </h1>
 
-                <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed mb-3">
-                  Arc is the stablecoin-native Layer-1 blockchain — the <strong className="text-white">Economic OS for the internet</strong>.
+                <p className="text-slate-600 text-base sm:text-lg max-w-2xl leading-relaxed mb-3">
+                  Arc is the stablecoin-native Layer-1 blockchain — the <strong className="text-slate-900">Economic OS for the internet</strong>.
                   USDC-denominated gas. Sub-second finality. Opt-in privacy. Native Circle stack integration.
                 </p>
-                <p className="text-slate-400 text-sm max-w-2xl leading-relaxed mb-8">
+                <p className="text-slate-500 text-sm max-w-2xl leading-relaxed mb-8">
                   Backed by Goldman Sachs, Mastercard, and Visa. Trusted by BlackRock, Aave, Morpho, Chainlink and 70+ ecosystem partners.
                 </p>
 
@@ -165,7 +165,7 @@ export default function App() {
                     Start building ↗
                   </a>
                   <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold hover:bg-white/15 transition-colors backdrop-blur-sm">
+                    className="px-5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition-colors backdrop-blur-sm">
                     💧 Get testnet USDC
                   </a>
                   <button onClick={() => document.getElementById('swap')?.scrollIntoView({ behavior: 'smooth' })}
@@ -173,7 +173,7 @@ export default function App() {
                     🔄 Try the DEX
                   </button>
                   <a href="https://community.arc.io" target="_blank" rel="noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-600/40 transition-colors">
+                    className="px-5 py-2.5 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition-colors">
                     🏠 Join Arc House
                   </a>
                 </div>
@@ -190,11 +190,11 @@ export default function App() {
                     { icon: '🔵', label: 'Execution',    value: 'Reth (EVM)'      },
                     { icon: '🤝', label: 'Partners',     value: '70+ Ecosystem'   },
                   ].map(s => (
-                    <div key={s.label} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <div key={s.label} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 backdrop-blur-sm">
                       <span className="text-sm">{s.icon}</span>
                       <div>
-                        <p className="text-white/40 text-[9px] uppercase tracking-wide leading-none">{s.label}</p>
-                        <p className="text-white text-[11px] font-semibold leading-none mt-0.5">{s.value}</p>
+                        <p className="text-slate-400 text-[9px] uppercase tracking-wide leading-none">{s.label}</p>
+                        <p className="text-slate-900 text-[11px] font-semibold leading-none mt-0.5">{s.value}</p>
                       </div>
                     </div>
                   ))}
@@ -473,33 +473,33 @@ export default function App() {
                     </div>
                     <h3 className="text-slate-900 font-bold text-sm">{t.name}</h3>
                     <p className="text-slate-500 text-xs leading-relaxed flex-1">{t.desc}</p>
-                    <code className="text-[10px] bg-slate-900 text-emerald-400 px-3 py-1.5 rounded-lg font-mono block">{t.code}</code>
+                    <code className="text-[10px] bg-slate-100 text-emerald-700 px-3 py-1.5 rounded-lg font-mono block border border-slate-200">{t.code}</code>
                   </div>
                 ))}
               </div>
 
               {/* USDC dual interface note */}
-              <div className="mt-4 bg-slate-900 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="mt-4 bg-slate-50 border border-slate-200 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-2">USDC on Arc: Two Interfaces, One Token</p>
-                  <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                  <p className="text-emerald-700 text-xs font-bold uppercase tracking-widest mb-2">USDC on Arc: Two Interfaces, One Token</p>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-3">
                     USDC is Arc's native gas token AND an ERC-20 — both synchronized in real-time by a precompile.
                     Use the native interface for gas, the ERC-20 for application logic.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <div className="bg-slate-800 rounded-xl p-3">
-                      <p className="text-slate-400 text-[10px] mb-1">Native gas balance (18 decimals)</p>
-                      <code className="text-cyan-400 text-xs font-mono">publicClient.getBalance(address)</code>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3">
+                      <p className="text-slate-500 text-[10px] mb-1">Native gas balance (18 decimals)</p>
+                      <code className="text-cyan-700 text-xs font-mono">publicClient.getBalance(address)</code>
                     </div>
-                    <div className="bg-slate-800 rounded-xl p-3">
-                      <p className="text-slate-400 text-[10px] mb-1">ERC-20 at 0x3600...0000 (6 decimals)</p>
-                      <code className="text-cyan-400 text-xs font-mono">balanceOf(address) → uint256</code>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3">
+                      <p className="text-slate-500 text-[10px] mb-1">ERC-20 at 0x3600...0000 (6 decimals)</p>
+                      <code className="text-cyan-700 text-xs font-mono">balanceOf(address) → uint256</code>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <p className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">Malachite BFT Consensus</p>
-                  <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                  <p className="text-violet-600 text-xs font-bold uppercase tracking-widest mb-2">Malachite BFT Consensus</p>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-3">
                     Arc's bespoke consensus layer built on Malachite — a Rust-based BFT engine by Informal Systems.
                     Two-binary architecture separates consensus from execution (Reth).
                   </p>
@@ -510,9 +510,9 @@ export default function App() {
                       { label: 'Max Throughput', val: '13.5 MB/s' },
                       { label: 'Equivalent TPS', val: '~50k TPS' },
                     ].map(m => (
-                      <div key={m.label} className="bg-slate-800 rounded-xl p-2.5">
-                        <p className="text-slate-400 text-[9px] leading-tight mb-0.5">{m.label}</p>
-                        <p className="text-white font-bold text-sm">{m.val}</p>
+                      <div key={m.label} className="bg-white border border-slate-200 rounded-xl p-2.5">
+                        <p className="text-slate-500 text-[9px] leading-tight mb-0.5">{m.label}</p>
+                        <p className="text-slate-900 font-bold text-sm">{m.val}</p>
                       </div>
                     ))}
                   </div>
@@ -619,11 +619,11 @@ export default function App() {
               </div>
 
               {/* Challenge banner */}
-              <div className="mt-4 bg-gradient-to-r from-violet-900 via-blue-900 to-slate-900 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="mt-4 bg-gradient-to-r from-violet-100 via-blue-50 to-indigo-50 border border-violet-200 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <p className="text-[11px] text-violet-300 font-bold uppercase tracking-widest mb-1">🏆 Active Until Jul 13, 2026</p>
-                  <h3 className="text-white font-bold text-lg">The Stablecoins Commerce Stack Challenge</h3>
-                  <p className="text-slate-300 text-sm mt-1">Build the next great commerce app on Arc. Prizes, Arc Builders Fund backing, and Circle developer support.</p>
+                  <p className="text-[11px] text-violet-600 font-bold uppercase tracking-widest mb-1">🏆 Active Until Jul 13, 2026</p>
+                  <h3 className="text-slate-900 font-bold text-lg">The Stablecoins Commerce Stack Challenge</h3>
+                  <p className="text-slate-600 text-sm mt-1">Build the next great commerce app on Arc. Prizes, Arc Builders Fund backing, and Circle developer support.</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <a href="https://community.arc.io" target="_blank" rel="noreferrer"
@@ -728,42 +728,42 @@ export default function App() {
             {/* ── COMMUNITY — ARC HOUSE & ARCHITECTS ────────────────────────── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Arc House */}
-              <div className="bg-gradient-to-br from-violet-900 to-blue-900 rounded-2xl p-6 flex flex-col gap-4">
+              <div className="bg-gradient-to-br from-violet-100 to-blue-50 border border-violet-200 rounded-2xl p-6 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl">🏠</div>
+                  <div className="w-12 h-12 rounded-xl bg-violet-200 flex items-center justify-center text-2xl">🏠</div>
                   <div>
-                    <h3 className="text-white font-extrabold text-lg">Arc House</h3>
-                    <p className="text-violet-300 text-xs">Central hub for the Arc ecosystem</p>
+                    <h3 className="text-slate-900 font-extrabold text-lg">Arc House</h3>
+                    <p className="text-violet-600 text-xs">Central hub for the Arc ecosystem</p>
                   </div>
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   Your home base for everything happening in Arc — tutorials, ArcTalks, ArcShops developer office hours,
                   community meetups, hackathons, builder spotlights, and partner announcements. Join 1000s of builders.
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {['ArcTalks', 'ArcShops Dev Hours', 'Builder Spotlights', 'Partner Spotlights', 'Stablecoin 101', 'Arc Blueprints'].map(item => (
                     <div key={item} className="flex items-center gap-1.5">
-                      <span className="w-1 h-1 bg-violet-400 rounded-full" />
-                      <span className="text-slate-300 text-[11px]">{item}</span>
+                      <span className="w-1 h-1 bg-violet-500 rounded-full" />
+                      <span className="text-slate-600 text-[11px]">{item}</span>
                     </div>
                   ))}
                 </div>
                 <a href="https://community.arc.io" target="_blank" rel="noreferrer"
-                  className="mt-auto px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-bold hover:bg-white/20 transition-colors text-center">
+                  className="mt-auto px-4 py-2 rounded-xl bg-violet-600 border border-violet-500 text-white text-sm font-bold hover:bg-violet-700 transition-colors text-center">
                   Join Arc House ↗
                 </a>
               </div>
 
               {/* Architects Program */}
-              <div className="bg-gradient-to-br from-emerald-900 to-teal-900 rounded-2xl p-6 flex flex-col gap-4">
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl">🏛️</div>
+                  <div className="w-12 h-12 rounded-xl bg-emerald-200 flex items-center justify-center text-2xl">🏛️</div>
                   <div>
-                    <h3 className="text-white font-extrabold text-lg">Architects Program</h3>
-                    <p className="text-emerald-300 text-xs">Arc's community ambassador initiative · Launched Apr 2026</p>
+                    <h3 className="text-slate-900 font-extrabold text-lg">Architects Program</h3>
+                    <p className="text-emerald-600 text-xs">Arc's community ambassador initiative · Launched Apr 2026</p>
                   </div>
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   Merit-based recognition for those who actively contribute to Arc's growth. Earn points, unlock
                   tiers, and gain exclusive access. Not application-driven — earn your way in by building and contributing.
                 </p>
@@ -774,14 +774,14 @@ export default function App() {
                     { role: '🛡️ Community Moderator', desc: 'Guide the community' },
                     { role: '🌍 Regional Lead', desc: 'Expand Arc globally' },
                   ].map(r => (
-                    <div key={r.role} className="bg-white/5 rounded-xl p-2.5">
-                      <p className="text-white text-[11px] font-semibold">{r.role}</p>
-                      <p className="text-slate-400 text-[10px]">{r.desc}</p>
+                    <div key={r.role} className="bg-white border border-emerald-100 rounded-xl p-2.5">
+                      <p className="text-slate-900 text-[11px] font-semibold">{r.role}</p>
+                      <p className="text-slate-500 text-[10px]">{r.desc}</p>
                     </div>
                   ))}
                 </div>
                 <a href="https://community.arc.io" target="_blank" rel="noreferrer"
-                  className="mt-auto px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-bold hover:bg-white/20 transition-colors text-center">
+                  className="mt-auto px-4 py-2 rounded-xl bg-emerald-600 border border-emerald-500 text-white text-sm font-bold hover:bg-emerald-700 transition-colors text-center">
                   Become an Architect ↗
                 </a>
               </div>

@@ -699,17 +699,17 @@ export default function BridgePanel() {
     <div className="flex flex-col gap-5">
 
       {/* Blueprint banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-violet-950 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-violet-50 via-blue-50 to-indigo-50 border border-violet-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl shrink-0">🌉</div>
+          <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center text-2xl shrink-0">🌉</div>
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/30 border border-blue-400/40 text-blue-300 font-bold">Circle CCTP Native</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/30 border border-teal-400/40 text-teal-300 font-bold">⛽ Gas Coverage</span>
-              <span className="text-[10px] text-slate-400">Multichain · Any direction</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 border border-blue-200 text-blue-600 font-bold">Circle CCTP Native</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-100 border border-teal-200 text-teal-600 font-bold">⛽ Gas Coverage</span>
+              <span className="text-[10px] text-slate-500">Multichain · Any direction</span>
             </div>
-            <h2 className="text-white font-extrabold text-lg leading-tight">Multichain USDC Bridge</h2>
-            <p className="text-slate-300 text-sm mt-1 max-w-xl">
+            <h2 className="text-slate-900 font-extrabold text-lg leading-tight">Multichain USDC Bridge</h2>
+            <p className="text-slate-600 text-sm mt-1 max-w-xl">
               Bridge USDC between any supported chains. Use your Arc USDC to cover gas on other chains —
               no ETH or native tokens needed. Powered by Circle CCTP + Paymaster.
             </p>
@@ -966,39 +966,39 @@ export default function BridgePanel() {
 
           {/* Arc Balance Summary */}
           {isConnected && (
-            <div className="bg-gradient-to-r from-teal-900/80 to-emerald-900/80 rounded-2xl p-4 shadow-sm border border-teal-700/40">
+            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl p-4 shadow-sm border border-teal-200">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg shrink-0">🔮</div>
+                <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center text-lg shrink-0">🔮</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-teal-300 text-[10px] font-bold uppercase tracking-wider">Arc Testnet USDC</p>
-                  <p className="text-white font-bold text-lg">
+                  <p className="text-teal-700 text-[10px] font-bold uppercase tracking-wider">Arc Testnet USDC</p>
+                  <p className="text-slate-900 font-bold text-lg">
                     {arcBalLoading ? (
-                      <span className="text-teal-400 text-sm">Loading…</span>
+                      <span className="text-teal-600 text-sm">Loading…</span>
                     ) : arcBalance ? (
                       `${arcBalance} USDC`
                     ) : (
-                      <span className="text-teal-400 text-sm">—</span>
+                      <span className="text-teal-600 text-sm">—</span>
                     )}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-teal-400 text-[10px]">Native gas token</p>
-                  <p className="text-teal-300 text-[11px] font-semibold">⛽ Used for gas</p>
+                  <p className="text-teal-600 text-[10px]">Native gas token</p>
+                  <p className="text-teal-700 text-[11px] font-semibold">⛽ Used for gas</p>
                 </div>
               </div>
               {arcBalance && !isArcSrc && !isNonEvm && (
-                <div className="mt-3 pt-3 border-t border-teal-700/40">
+                <div className="mt-3 pt-3 border-t border-teal-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-teal-400 text-xs">Available to cover gas</span>
-                    <span className="text-teal-200 text-xs font-bold">{arcBalance} USDC</span>
+                    <span className="text-teal-600 text-xs">Available to cover gas</span>
+                    <span className="text-teal-700 text-xs font-bold">{arcBalance} USDC</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-teal-400 text-xs">Est. gas on {fromChain.shortName}</span>
-                    <span className="text-amber-300 text-xs font-bold">
+                    <span className="text-teal-600 text-xs">Est. gas on {fromChain.shortName}</span>
+                    <span className="text-amber-600 text-xs font-bold">
                       ~${(GAS_ESTIMATES[fromId]?.high ?? 0.20).toFixed(2)} USDC
                     </span>
                   </div>
-                  <div className="mt-2 h-1.5 rounded-full bg-teal-800 overflow-hidden">
+                  <div className="mt-2 h-1.5 rounded-full bg-teal-200 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-teal-400 to-emerald-400"
                       style={{ width: `${Math.min(100, (parseFloat(arcBalance) / Math.max(parseFloat(arcBalance), GAS_ESTIMATES[fromId]?.high ?? 1)) * 100)}%` }}

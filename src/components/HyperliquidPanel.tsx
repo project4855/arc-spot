@@ -437,19 +437,19 @@ export default function HyperliquidPanel() {
     <div className="flex flex-col gap-5">
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-violet-950 to-blue-950 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-violet-50 via-blue-50 to-indigo-50 border border-violet-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl shrink-0">🤖</div>
+          <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center text-2xl shrink-0">🤖</div>
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/30 border border-violet-400/40 text-violet-300 font-bold">Arc Testnet · Chain 5042002</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-white/60 font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 border border-violet-200 text-violet-600 font-bold">Arc Testnet · Chain 5042002</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500 font-semibold">
                 {jobCountData !== undefined ? `${jobCountData.toString()} jobs onchain` : 'Loading…'}
               </span>
             </div>
-            <h2 className="text-white font-extrabold text-lg leading-tight">Agentic Economy · Job Marketplace</h2>
-            <p className="text-slate-300 text-sm mt-1">
-              Real onchain jobs powered by <strong className="text-white">ArcAgentJobs</strong> (ERC-8183 style) ·
+            <h2 className="text-slate-900 font-extrabold text-lg leading-tight">Agentic Economy · Job Marketplace</h2>
+            <p className="text-slate-600 text-sm mt-1">
+              Real onchain jobs powered by <strong className="text-slate-900">ArcAgentJobs</strong> (ERC-8183 style) ·
               USDC escrow · deterministic ~780ms finality
             </p>
           </div>
@@ -537,12 +537,12 @@ export default function HyperliquidPanel() {
           </div>
 
           {/* ── Compact ERC-8183 spec ── */}
-          <div className="bg-slate-900 rounded-2xl p-5 flex flex-col gap-4 mt-2">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 mt-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <p className="text-white font-extrabold text-sm">ArcAgentJobs Contract · ERC-8183</p>
+                <p className="text-slate-900 font-extrabold text-sm">ArcAgentJobs Contract · ERC-8183</p>
                 <a href={`https://testnet.arcscan.app/address/${AGENT_JOBS_ADDRESS}`} target="_blank" rel="noreferrer"
-                  className="text-violet-400 text-[11px] font-mono hover:text-violet-300">{AGENT_JOBS_ADDRESS} ↗</a>
+                  className="text-violet-600 text-[11px] font-mono hover:text-violet-500">{AGENT_JOBS_ADDRESS} ↗</a>
               </div>
               {/* Lifecycle flow */}
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -558,16 +558,16 @@ export default function HyperliquidPanel() {
             {/* 6 functions in 2 rows */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
-                { fn: 'createJob()', color: 'text-blue-400 border-blue-500/30 bg-blue-500/10',     desc: 'Define title, budget, deadline, provider, evaluator' },
-                { fn: 'fund()',      color: 'text-amber-400 border-amber-500/30 bg-amber-500/10',   desc: 'Approve + escrow USDC into contract' },
-                { fn: 'submit()',    color: 'text-violet-400 border-violet-500/30 bg-violet-500/10',desc: 'Provider submits keccak256(IPFS CID)' },
-                { fn: 'complete()', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10', desc: 'Evaluator releases USDC to provider' },
-                { fn: 'reject()',   color: 'text-red-400 border-red-500/30 bg-red-500/10',          desc: 'Evaluator refunds USDC to creator' },
-                { fn: 'claimRefund()', color: 'text-slate-400 border-slate-500/30 bg-slate-500/10',desc: 'Creator reclaims after deadline' },
+                { fn: 'createJob()', color: 'text-blue-600 border-blue-200 bg-blue-50',     desc: 'Define title, budget, deadline, provider, evaluator' },
+                { fn: 'fund()',      color: 'text-amber-600 border-amber-200 bg-amber-50',   desc: 'Approve + escrow USDC into contract' },
+                { fn: 'submit()',    color: 'text-violet-600 border-violet-200 bg-violet-50',desc: 'Provider submits keccak256(IPFS CID)' },
+                { fn: 'complete()', color: 'text-emerald-600 border-emerald-200 bg-emerald-50', desc: 'Evaluator releases USDC to provider' },
+                { fn: 'reject()',   color: 'text-red-600 border-red-200 bg-red-50',          desc: 'Evaluator refunds USDC to creator' },
+                { fn: 'claimRefund()', color: 'text-slate-600 border-slate-200 bg-slate-100',desc: 'Creator reclaims after deadline' },
               ].map(f => (
                 <div key={f.fn} className={`${f.color} border rounded-xl px-3 py-2 flex flex-col gap-0.5`}>
                   <code className="font-mono font-bold text-xs">{f.fn}</code>
-                  <p className="text-slate-400 text-[10px] leading-snug">{f.desc}</p>
+                  <p className="text-slate-500 text-[10px] leading-snug">{f.desc}</p>
                 </div>
               ))}
             </div>
@@ -639,9 +639,9 @@ export default function HyperliquidPanel() {
 
           {/* Side — lifecycle only */}
           <div className="flex flex-col gap-4">
-            <div className="bg-slate-900 rounded-xl p-4">
-              <p className="text-emerald-400 text-xs font-bold mb-2">// Job lifecycle after creation:</p>
-              <pre className="text-xs text-slate-300 font-mono leading-relaxed whitespace-pre-wrap">
+            <div className="bg-slate-100 border border-slate-200 rounded-xl p-4">
+              <p className="text-emerald-700 text-xs font-bold mb-2">// Job lifecycle after creation:</p>
+              <pre className="text-xs text-slate-600 font-mono leading-relaxed whitespace-pre-wrap">
 {`1. createJob()  → status: Open
    (no USDC needed yet)
 

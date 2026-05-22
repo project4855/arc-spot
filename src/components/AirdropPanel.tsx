@@ -99,12 +99,12 @@ export default function AirdropPanel() {
     <div className="flex flex-col gap-6">
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-violet-950 to-blue-950 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-violet-50 via-blue-50 to-indigo-50 border border-violet-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl shrink-0">🏠</div>
+          <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center text-2xl shrink-0">🏠</div>
           <div>
-            <h2 className="text-white font-extrabold text-xl leading-tight">Arc House Community</h2>
-            <p className="text-slate-300 text-sm mt-1 max-w-xl">
+            <h2 className="text-slate-900 font-extrabold text-xl leading-tight">Arc House Community</h2>
+            <p className="text-slate-600 text-sm mt-1 max-w-xl">
               The central hub for everything happening in the Arc ecosystem — content, events, programs, and the community of builders
               shaping the internet financial system.
             </p>
@@ -234,16 +234,16 @@ export default function AirdropPanel() {
       {/* ── Architects Program ── */}
       {activeTab === 'architects' && (
         <div className="flex flex-col gap-6">
-          <div className="bg-gradient-to-br from-emerald-900 to-teal-900 rounded-2xl p-6">
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl">🏛️</div>
+              <div className="w-14 h-14 rounded-2xl bg-emerald-200 flex items-center justify-center text-3xl">🏛️</div>
               <div>
-                <h3 className="text-white font-extrabold text-xl">The Architects Program</h3>
-                <p className="text-emerald-300 text-sm">Arc's community ambassador initiative · Launched April 2, 2026</p>
+                <h3 className="text-slate-900 font-extrabold text-xl">The Architects Program</h3>
+                <p className="text-emerald-600 text-sm">Arc's community ambassador initiative · Launched April 2, 2026</p>
               </div>
             </div>
-            <p className="text-slate-200 text-sm leading-relaxed mb-4 max-w-2xl">
-              Architects is a <strong className="text-white">merit-based recognition system</strong> for contributors who actively grow the Arc ecosystem.
+            <p className="text-slate-600 text-sm leading-relaxed mb-4 max-w-2xl">
+              Architects is a <strong className="text-slate-900">merit-based recognition system</strong> for contributors who actively grow the Arc ecosystem.
               It's not application-driven — you earn your place through contributions, building, and community engagement.
               Points are tracked transparently within Arc House.
             </p>
@@ -253,7 +253,7 @@ export default function AirdropPanel() {
                 Join Architects ↗
               </a>
               <a href="https://community.arc.io" target="_blank" rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-colors">
+                className="px-4 py-2 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition-colors">
                 View Program Details ↗
               </a>
             </div>
@@ -330,17 +330,17 @@ export default function AirdropPanel() {
       {/* ── Builders Fund ── */}
       {activeTab === 'builders' && (
         <div className="flex flex-col gap-6">
-          <div className="bg-gradient-to-br from-slate-900 to-violet-950 rounded-2xl p-6">
+          <div className="bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-200 rounded-2xl p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl">💰</div>
+              <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl">💰</div>
               <div>
-                <h3 className="text-white font-extrabold text-xl">Arc Builders Fund</h3>
-                <p className="text-violet-300 text-sm">A Circle Ventures corporate initiative · Backs early-stage teams</p>
+                <h3 className="text-slate-900 font-extrabold text-xl">Arc Builders Fund</h3>
+                <p className="text-violet-600 text-sm">A Circle Ventures corporate initiative · Backs early-stage teams</p>
               </div>
             </div>
-            <p className="text-slate-200 text-sm leading-relaxed mb-4 max-w-2xl">
+            <p className="text-slate-600 text-sm leading-relaxed mb-4 max-w-2xl">
               The Arc Builders Fund backs early-stage teams building real-world financial apps on Arc.
-              Recipients receive <strong className="text-white">capital, hands-on support from Arc's core teams</strong>, and
+              Recipients receive <strong className="text-slate-900">capital, hands-on support from Arc's core teams</strong>, and
               a front-row seat in shaping the new Economic OS for the internet. Focus areas: stablecoin-based gas,
               deterministic sub-second finality, and opt-in privacy applications.
             </p>
