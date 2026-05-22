@@ -810,8 +810,8 @@ function CircleWalletSection() {
                 <span className="text-[10px] text-emerald-600">Arc Testnet</span>
               </div>
               <button onClick={handleDisconnect}
-                className="mt-1 py-2 rounded-xl border border-red-200 text-red-500 text-xs font-semibold hover:bg-red-50 transition-colors">
-                🗑 Remove Wallet (local only)
+                className="mt-1 py-2.5 rounded-xl border border-red-200 bg-white text-red-500 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center gap-2">
+                🔌 Ngắt kết nối Circle Wallet
               </button>
             </div>
           </div>

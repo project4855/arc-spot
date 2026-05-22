@@ -170,19 +170,19 @@ function ConnectedDropdown({
 
         {/* Circle wallet row */}
         {circleAddress ? (
-          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-lg shrink-0">⭕</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-emerald-700 text-[11px] font-bold uppercase tracking-wide">Circle Wallet · No Quota</p>
-              <p className="text-slate-800 text-sm font-mono font-bold mt-0.5">{shortAddr(circleAddress)}</p>
+          <div className="flex flex-col gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-lg shrink-0">⭕</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-emerald-700 text-[11px] font-bold uppercase tracking-wide">Circle Wallet · No Quota</p>
+                <p className="text-slate-800 text-sm font-mono font-bold mt-0.5">{shortAddr(circleAddress)}</p>
+              </div>
+              <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-              <button onClick={onDisconnectCircle}
-                className="text-[11px] text-red-400 hover:text-red-600 font-semibold transition-colors">
-                Remove
-              </button>
-            </div>
+            <button onClick={onDisconnectCircle}
+              className="w-full py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-xs font-bold hover:bg-red-50 hover:border-red-300 transition-colors">
+              🔌 Ngắt kết nối Circle Wallet
+            </button>
           </div>
         ) : (
           <button onClick={onConnectCircle}
