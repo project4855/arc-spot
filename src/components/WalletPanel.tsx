@@ -1028,7 +1028,7 @@ function MetaMaskWalletSection() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function WalletPanel() {
-  const [kind, setKind] = useState<WalletKind>('infra')
+  const [kind, setKind] = useState<WalletKind>('circle')
 
   return (
     <div className="flex flex-col gap-5">
@@ -1062,7 +1062,7 @@ export default function WalletPanel() {
           </div>
           <div className="flex gap-1 flex-wrap">
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">HSM</span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">Recommended</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-bold">Quota Limit</span>
           </div>
         </button>
 
@@ -1087,7 +1087,7 @@ export default function WalletPanel() {
           </div>
           <div className="flex gap-1 flex-wrap">
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">No Quota</span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 font-bold">Circle HSM</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-800 font-bold">Recommended</span>
           </div>
         </button>
 
