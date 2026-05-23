@@ -694,9 +694,7 @@ function CircleWalletSection() {
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold uppercase tracking-wider">Developer-Controlled · No Quota</span>
             </div>
             {wallet ? (
-              <p className="text-emerald-700 text-[11px] font-mono mt-0.5 truncate">
-                {wallet.address.slice(0, 14)}…{wallet.address.slice(-8)}
-              </p>
+              <p className="text-emerald-600 text-[11px] mt-0.5">Circle HSM · No seed phrase · No signing quota</p>
             ) : (
               <p className="text-emerald-600 text-[11px] mt-0.5">Circle HSM · No seed phrase · No signing quota</p>
             )}
