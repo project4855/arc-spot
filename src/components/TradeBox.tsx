@@ -196,14 +196,15 @@ export default function TradeBox({ pair, basePrice = 0, onSwapComplete }: Props)
         setBusy(false)
         return
       }
-      // Send as decimal string (e.g. "0.850000") — Circle Swap Kit uses human-readable amounts
-      const amountStr = tokenInAmt.toFixed(6)
+      // Circle Swap Kit requires integer base units (e.g. "850000" for 0.85 EURC)
+      // Chain name must be 'Arc_Testnet' (not 'ARC-TESTNET')
+      const amountStr = Math.round(tokenInAmt * 1e6).toString()
 
       const swapPayload = {
         tokenInAddress:  inAddr,
-        tokenInChain:    'ARC-TESTNET',
+        tokenInChain:    'Arc_Testnet',
         tokenOutAddress: outAddr,
-        tokenOutChain:   'ARC-TESTNET',
+        tokenOutChain:   'Arc_Testnet',
         amount:          amountStr,
         fromAddress:     address,
         toAddress:       address,

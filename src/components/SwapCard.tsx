@@ -196,17 +196,17 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
         )
       }
 
-      // Send amount as human-readable decimal string (Circle Swap Kit format)
+      // Circle Swap Kit requires integer base units and chain name 'Arc_Testnet'
       const inDecimals = fromToken === 'cirBTC' ? 8 : 6
-      const amountStr  = parseFloat(fromAmount).toFixed(inDecimals)
+      const amountStr  = Math.round(parseFloat(fromAmount) * 10 ** inDecimals).toString()
 
       // ── Step 1: Call /api/swap proxy (server holds CIRCLE_KIT_KEY securely) ─
       addStep('📡 Requesting swap route from Circle API…')
       const swapPayload = {
         tokenInAddress:  tokenInAddr,
-        tokenInChain:    'ARC-TESTNET',
+        tokenInChain:    'Arc_Testnet',
         tokenOutAddress: tokenOutAddr,
-        tokenOutChain:   'ARC-TESTNET',
+        tokenOutChain:   'Arc_Testnet',
         amount:          amountStr,
         fromAddress:     address,
         toAddress:       address,
