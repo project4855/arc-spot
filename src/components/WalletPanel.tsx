@@ -855,37 +855,48 @@ function CircleWalletSection() {
               </div>
 
               {/* Address + QR */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-3 flex-1">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Circle Wallet Address</p>
-                <div className="flex items-center gap-4">
-                  <div className="shrink-0 p-2 bg-white border-2 border-emerald-300 rounded-xl">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 flex-1">
+                {/* QR + Address block */}
+                <div className="flex gap-4 items-stretch">
+                  {/* QR code */}
+                  <div className="shrink-0 p-2 bg-white border-2 border-emerald-300 rounded-2xl flex items-center justify-center">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&format=svg&data=${encodeURIComponent(wallet.address)}`}
-                      alt="QR" width={100} height={100} className="rounded-lg"
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&format=svg&data=${encodeURIComponent(wallet.address)}`}
+                      alt="QR" width={120} height={120} className="rounded-lg"
                     />
                   </div>
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="flex flex-col gap-1 bg-emerald-50 border-2 border-emerald-200 rounded-xl px-4 py-3">
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Wallet Address</p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-mono text-sm font-bold text-emerald-900 flex-1 break-all leading-snug">{wallet.address}</p>
-                        <CopyBtnLight value={wallet.address} />
-                      </div>
+                  {/* Address box */}
+                  <div className="flex-1 flex flex-col justify-between gap-3">
+                    <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-4 py-3 flex flex-col gap-2">
+                      <p className="text-[10px] font-extrabold text-emerald-500 uppercase tracking-widest">Wallet Address</p>
+                      {/* Split address into two lines for readability */}
+                      <p className="font-mono text-base font-bold text-emerald-900 leading-relaxed tracking-wide break-all">
+                        {wallet.address.slice(0, 21)}<br />{wallet.address.slice(21)}
+                      </p>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(wallet.address)}
+                        className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-colors">
+                        📋 Copy Address
+                      </button>
                     </div>
-                    <button onClick={loadBalances} disabled={loadingBal}
-                      className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
-                      {loadingBal ? '⏳ Loading…' : '🔄 Refresh Balance'}
-                    </button>
                   </div>
                 </div>
-                <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
-                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold hover:opacity-90 transition-all">
-                  💧 Get Testnet USDC — faucet.circle.com
-                </a>
-                <a href={`https://testnet.arcscan.app/address/${wallet.address}`} target="_blank" rel="noreferrer"
-                  className="text-center py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-sm hover:text-slate-700 transition-colors">
-                  🔍 View on ArcScan ↗
-                </a>
+
+                {/* Action buttons */}
+                <div className="flex flex-col gap-2">
+                  <button onClick={loadBalances} disabled={loadingBal}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
+                    {loadingBal ? '⏳ Loading…' : '🔄 Refresh Balance'}
+                  </button>
+                  <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
+                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold hover:opacity-90 transition-all">
+                    💧 Get Testnet USDC — faucet.circle.com
+                  </a>
+                  <a href={`https://testnet.arcscan.app/address/${wallet.address}`} target="_blank" rel="noreferrer"
+                    className="text-center py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-sm hover:text-slate-700 transition-colors">
+                    🔍 View on ArcScan ↗
+                  </a>
+                </div>
               </div>
             </div>
 
