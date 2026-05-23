@@ -14,6 +14,7 @@ import WalletPanel from './components/WalletPanel'
 import PredictionMarketPanel from './components/PredictionMarketPanel'
 import PortfolioPanel from './components/PortfolioPanel'
 import PaymentsPanel from './components/PaymentsPanel'
+import TradeBox from './components/TradeBox'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,8 +58,9 @@ function getTabFromHash(): AppTab {
 // ── App ───────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [tab,   setTab]   = useState<AppTab>(getTabFromHash)
-  const [pair,  setPair]  = useState<Pair>('USDC/EURC')
+  const [tab,       setTab]      = useState<AppTab>(getTabFromHash)
+  const [tradeMode, setTradeMode] = useState<'swap' | 'trade'>('swap')
+  const [pair,  setPair]  = useState<Pair>('cirBTC/USDC')
   const [myTxs, setMyTxs] = useState<SwapRecord[]>([])
   const { prices } = useLivePrices(15_000)  // refresh every 15s
   const [fromToken, toToken] = pair.split('/') as [string, string]
@@ -116,6 +118,20 @@ export default function App() {
                 <h2 className="text-2xl font-extrabold text-slate-900">Stablecoin FX on Arc Testnet</h2>
               </div>
 
+              {/* ── Swap / Trade mode toggle ── */}
+              <div className="flex items-center gap-1 mb-3">
+                {(['swap', 'trade'] as const).map(m => (
+                  <button key={m} onClick={() => setTradeMode(m)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                      tradeMode === m
+                        ? 'bg-violet-600 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+                    }`}>
+                    {m === 'swap' ? '⇅ Swap' : '📊 Trade'}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex gap-3">
                 {/* Pair selector — vertical left column with live prices */}
                 <div className="flex flex-col gap-1.5 shrink-0 w-[150px]">
@@ -124,7 +140,7 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Chart + Swap + OrderBook */}
+                {/* Chart + Swap/Trade + OrderBook */}
                 <div className="flex-1 min-w-0">
                   <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px_260px] gap-4">
                     <div className="flex flex-col gap-4 min-w-0">
@@ -132,7 +148,11 @@ export default function App() {
                       <TransactionHistory pair={pair} myTxs={myTxs} />
                     </div>
                     <div className="min-w-0">
-                      <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
+                      {tradeMode === 'swap' ? (
+                        <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
+                      ) : (
+                        <TradeBox pair={pair} basePrice={prices[pair as keyof typeof prices]} onSwapComplete={handleSwapComplete} />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <OrderBook pair={pair} basePrice={prices[pair as keyof typeof prices]} />
