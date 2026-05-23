@@ -97,9 +97,9 @@ const LS_BETS_KEY = 'arc_predict_bets_5042002'
 function loadBets(address?: string): MyBet[] {
   try {
     const all: MyBet[] = JSON.parse(localStorage.getItem(LS_BETS_KEY) ?? '[]')
-    if (!address) return all
-    // Show bets for this wallet, plus legacy bets that have no walletAddress
-    return all.filter(b => !b.walletAddress || b.walletAddress.toLowerCase() === address.toLowerCase())
+    if (!address) return []
+    // Only show bets belonging to the connected wallet
+    return all.filter(b => b.walletAddress?.toLowerCase() === address.toLowerCase())
   } catch { return [] }
 }
 
