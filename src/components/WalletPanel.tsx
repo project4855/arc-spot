@@ -848,7 +848,9 @@ function CircleWalletSection() {
                       <span className="text-sm font-bold uppercase tracking-wider">{b.sym}</span>
                       {loadingBal && <span className="text-xs animate-pulse">…</span>}
                     </div>
-                    <p className="font-extrabold text-3xl">{b.bal}</p>
+                    <p className="font-extrabold text-3xl">
+                      {isNaN(parseFloat(b.bal)) ? b.bal : parseFloat(b.bal).toFixed(3)}
+                    </p>
                     <p className="text-xs opacity-60 mt-1">Arc Testnet · Circle</p>
                   </div>
                 ))}
@@ -869,9 +871,8 @@ function CircleWalletSection() {
                   <div className="flex-1 flex flex-col justify-between gap-3">
                     <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl px-4 py-3 flex flex-col gap-2">
                       <p className="text-[10px] font-extrabold text-emerald-500 uppercase tracking-widest">Wallet Address</p>
-                      {/* Split address into two lines for readability */}
-                      <p className="font-mono text-base font-bold text-emerald-900 leading-relaxed tracking-wide break-all">
-                        {wallet.address.slice(0, 21)}<br />{wallet.address.slice(21)}
+                      <p className="font-mono text-sm font-bold text-emerald-900 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                        {wallet.address}
                       </p>
                       <button
                         onClick={() => navigator.clipboard.writeText(wallet.address)}
