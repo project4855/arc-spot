@@ -13,6 +13,7 @@ function fmtPrice(p: number) {
 
 interface Props {
   pair: string
+  basePrice?: number
 }
 
 const INTERVALS = ['1m', '5m', '15m', '1h'] as const
@@ -39,9 +40,9 @@ function CustomTooltip({ active, payload, label }: {
   )
 }
 
-export default function PriceChart({ pair }: Props) {
+export default function PriceChart({ pair, basePrice }: Props) {
   const [interval, setInterval] = useState<typeof INTERVALS[number]>('1m')
-  const { candles, lastPrice, priceChange } = useMarketData(pair)
+  const { candles, lastPrice, priceChange } = useMarketData(pair, basePrice)
   const isUp = priceChange >= 0
 
   // Thin candles for display

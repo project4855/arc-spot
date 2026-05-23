@@ -2,6 +2,7 @@ import { useMarketData } from '../hooks/useMarketData'
 
 interface Props {
   pair: string
+  basePrice?: number
 }
 
 function fmtPrice(p: number) {
@@ -10,8 +11,8 @@ function fmtPrice(p: number) {
   return p.toFixed(6)
 }
 
-export default function OrderBook({ pair }: Props) {
-  const { asks, bids, lastPrice, priceChange } = useMarketData(pair)
+export default function OrderBook({ pair, basePrice }: Props) {
+  const { asks, bids, lastPrice, priceChange } = useMarketData(pair, basePrice)
   const [, quoteCurrency] = pair.split('/')
   const isUp = priceChange >= 0
   const maxTotal = Math.max(...bids.map((b) => b.total), ...asks.map((a) => a.total))

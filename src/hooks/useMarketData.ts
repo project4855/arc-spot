@@ -65,47 +65,72 @@ function genCandles(base: number, count = 60): Candle[] {
   return candles
 }
 
-const PAIR_MID: Record<string, number> = {
-  'USDC/EURC':   0.8592,       // 1 USDC = 0.8592 EURC  (EUR/USD 1.1639)
-  'EURC/USDC':   1.1639,       // 1 EURC = 1.1639 USDC
-  'USDC/cirBTC': 0.00001279,   // 1 USDC = 1/78200 BTC
-  'cirBTC/USDC': 78200,        // BTC ~$78,200
-  'EURC/cirBTC': 0.00001489,   // 1 EURC = 1.164/78200 BTC
-  'cirBTC/EURC': 67183,        // 1 BTC = 78200/1.164 EURC
-  'ETH/USDC':    2293,         // ETH ~$2,293
-  'USDC/ETH':    0.000436,     // 1 USDC = 1/2293 ETH
-  'ETH/EURC':    1970,         // 1 ETH = 2293/1.164 EURC
-  'SOL/USDC':    90.5,         // SOL ~$90.5
-  'USDC/SOL':    0.01105,      // 1 USDC = 1/90.5 SOL
-  'SOL/EURC':    77.75,        // 1 SOL = 90.5/1.164 EURC
+// Fallback mid prices (used only when live prices haven't loaded yet)
+const PAIR_MID_FALLBACK: Record<string, number> = {
+  'USDC/EURC':   0.9259,
+  'EURC/USDC':   1.08,
+  'USDC/cirBTC': 1 / 75500,
+  'cirBTC/USDC': 75500,
+  'EURC/cirBTC': 1.08 / 75500,
+  'cirBTC/EURC': 75500 / 1.08,
+  'ETH/USDC':    2064,
+  'USDC/ETH':    1 / 2064,
+  'ETH/EURC':    2064 / 1.08,
+  'SOL/USDC':    84.25,
+  'USDC/SOL':    1 / 84.25,
+  'SOL/EURC':    84.25 / 1.08,
 }
 
-export function useMarketData(pair: string) {
-  const mid = PAIR_MID[pair] ?? 1
-  const [asks, setAsks] = useState<OrderLevel[]>(() => genOrders(mid, 'ask'))
-  const [bids, setBids] = useState<OrderLevel[]>(() => genOrders(mid, 'bid'))
-  const [candles, setCandles] = useState<Candle[]>(() => genCandles(mid))
-  const [lastPrice, setLastPrice] = useState(mid)
-  const [priceChange, setPriceChange] = useState(0)
-  const tickRef = useRef(0)
+// basePrice: real live price from Hyperliquid (optional — falls back to PAIR_MID_FALLBACK)
+export function useMarketData(pair: string, basePrice?: number) {
+  const getEffectiveMid = () =>
+    basePrice && basePrice > 0 ? basePrice : (PAIR_MID_FALLBACK[pair] ?? 1)
 
+  const [asks, setAsks]           = useState<OrderLevel[]>(() => genOrders(getEffectiveMid(), 'ask'))
+  const [bids, setBids]           = useState<OrderLevel[]>(() => genOrders(getEffectiveMid(), 'bid'))
+  const [candles, setCandles]     = useState<Candle[]>(() => genCandles(getEffectiveMid()))
+  const [lastPrice, setLastPrice] = useState(() => getEffectiveMid())
+  const [priceChange, setPriceChange] = useState(0)
+  const tickRef      = useRef(0)
+  const lastPriceRef = useRef(getEffectiveMid())   // tracks current sim price for drift-check
+
+  // ── Reset when trading pair changes ──────────────────────────────────────
   useEffect(() => {
-    const mid = PAIR_MID[pair] ?? 1
+    const mid = basePrice && basePrice > 0 ? basePrice : (PAIR_MID_FALLBACK[pair] ?? 1)
     setAsks(genOrders(mid, 'ask'))
     setBids(genOrders(mid, 'bid'))
     setCandles(genCandles(mid))
     setLastPrice(mid)
     setPriceChange(0)
     tickRef.current = 0
-  }, [pair])
+    lastPriceRef.current = mid
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pair])   // intentionally NOT including basePrice — pair change resets; price updates snap below
 
-  // Live tick every 1.5s
+  // ── Snap to real price when live data arrives / refreshes ───────────────
   useEffect(() => {
+    if (!basePrice || basePrice <= 0) return
+    const ratio = Math.abs(lastPriceRef.current - basePrice) / basePrice
+    if (ratio > 0.02) {           // >2 % drift → snap chart to real price
+      setCandles(genCandles(basePrice))
+      setLastPrice(basePrice)
+      setPriceChange(0)
+      tickRef.current = 0
+      setAsks(genOrders(basePrice, 'ask'))
+      setBids(genOrders(basePrice, 'bid'))
+      lastPriceRef.current = basePrice
+    }
+  }, [basePrice])
+
+  // ── Live tick every 1.5 s ────────────────────────────────────────────────
+  useEffect(() => {
+    const mid = basePrice && basePrice > 0 ? basePrice : (PAIR_MID_FALLBACK[pair] ?? 1)
     const id = setInterval(() => {
       tickRef.current++
       const drift = (Math.random() - 0.49) * 0.001
       setLastPrice((p) => {
         const next = parseFloat((p * (1 + drift)).toFixed(6))
+        lastPriceRef.current = next
         setPriceChange(parseFloat(((next / mid - 1) * 100).toFixed(4)))
         setAsks(genOrders(next, 'ask'))
         setBids(genOrders(next, 'bid'))
@@ -129,7 +154,7 @@ export function useMarketData(pair: string) {
       })
     }, 1500)
     return () => clearInterval(id)
-  }, [mid, pair])
+  }, [basePrice, pair])
 
-  return { asks, bids, candles, lastPrice, priceChange, mid }
+  return { asks, bids, candles, lastPrice, priceChange, mid: getEffectiveMid() }
 }

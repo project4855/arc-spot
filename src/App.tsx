@@ -128,14 +128,14 @@ export default function App() {
                 <div className="flex-1 min-w-0">
                   <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px_260px] gap-4">
                     <div className="flex flex-col gap-4 min-w-0">
-                      <PriceChart pair={pair} />
+                      <PriceChart pair={pair} basePrice={prices[pair as keyof typeof prices]} />
                       <TransactionHistory pair={pair} myTxs={myTxs} />
                     </div>
                     <div className="min-w-0">
                       <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
                     </div>
                     <div className="min-w-0">
-                      <OrderBook pair={pair} />
+                      <OrderBook pair={pair} basePrice={prices[pair as keyof typeof prices]} />
                     </div>
                   </div>
                 </div>
