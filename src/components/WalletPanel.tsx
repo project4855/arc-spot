@@ -865,9 +865,12 @@ function CircleWalletSection() {
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-2">
-                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
-                      <p className="font-mono text-xs flex-1 break-all text-emerald-800">{wallet.address}</p>
-                      <CopyBtnLight value={wallet.address} />
+                    <div className="flex flex-col gap-1 bg-emerald-50 border-2 border-emerald-200 rounded-xl px-4 py-3">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Wallet Address</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-sm font-bold text-emerald-900 flex-1 break-all leading-snug">{wallet.address}</p>
+                        <CopyBtnLight value={wallet.address} />
+                      </div>
                     </div>
                     <button onClick={loadBalances} disabled={loadingBal}
                       className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
