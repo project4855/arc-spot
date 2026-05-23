@@ -69,10 +69,8 @@ function genCandles(base: number, count = 60): Candle[] {
 const PAIR_MID_FALLBACK: Record<string, number> = {
   'USDC/EURC':   0.9259,
   'EURC/USDC':   1.08,
-  'USDC/cirBTC': 1 / 75500,
   'cirBTC/USDC': 75500,
-  'EURC/cirBTC': 1.08 / 75500,
-  'cirBTC/EURC': 75500 / 1.08,
+  'cirBTC/EURC': 75500 / 1.08,   // ~69,907
   'ETH/USDC':    2064,
   'USDC/ETH':    1 / 2064,
   'ETH/EURC':    2064 / 1.08,

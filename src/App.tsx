@@ -17,7 +17,7 @@ import PaymentsPanel from './components/PaymentsPanel'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'USDC/cirBTC', 'EURC/cirBTC'] as const
+const PAIRS = ['USDC/EURC', 'ETH/USDC', 'SOL/USDC', 'cirBTC/USDC', 'cirBTC/EURC'] as const
 type Pair   = typeof PAIRS[number]
 
 function fmtPrice(p: number): string {

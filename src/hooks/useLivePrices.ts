@@ -6,17 +6,15 @@ export interface LivePrices {
   'ETH/USDC':    number
   'SOL/USDC':    number
   'cirBTC/USDC': number
-  'USDC/cirBTC': number
-  'EURC/cirBTC': number
+  'cirBTC/EURC': number
 }
 
 const FALLBACK: LivePrices = {
-  'USDC/EURC':   0.9259,  // 1/1.08
+  'USDC/EURC':   0.9259,       // 1/1.08
   'ETH/USDC':    2064,
   'SOL/USDC':    84.25,
   'cirBTC/USDC': 75500,
-  'USDC/cirBTC': 1 / 75500,
-  'EURC/cirBTC': 1 / (75500 * 0.9259),
+  'cirBTC/EURC': parseFloat((75500 / 1.08).toFixed(2)),  // ~69,907
 }
 
 async function fetchPrices(): Promise<LivePrices> {
@@ -51,8 +49,7 @@ async function fetchPrices(): Promise<LivePrices> {
     'ETH/USDC':    eth,
     'SOL/USDC':    sol,
     'cirBTC/USDC': btc,
-    'USDC/cirBTC': parseFloat((1 / btc).toFixed(10)),
-    'EURC/cirBTC': parseFloat((eurUsd / btc).toFixed(10)),
+    'cirBTC/EURC': parseFloat((btc / eurUsd).toFixed(2)),  // e.g. 75500/1.08 ≈ 69,907
   }
 }
 
