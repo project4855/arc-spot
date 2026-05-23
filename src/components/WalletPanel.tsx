@@ -829,67 +829,71 @@ function CircleWalletSection() {
           </div>
         )}
 
-        {/* ── Wallet active: Receive tab ── */}
+        {/* ── Wallet active: Receive tab — 2-col on large screens ── */}
         {wallet && subTab === 'receive' && (
-          <div className="flex flex-col gap-4">
-            {/* Balances */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { icon: '💵', sym: 'USDC', bal: usdcBal, color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-                { icon: '💶', sym: 'EURC', bal: eurcBal, color: 'bg-teal-50 border-teal-200 text-teal-700' },
-              ].map(b => (
-                <div key={b.sym} className={`${b.color} border rounded-2xl p-4`}>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-lg">{b.icon}</span>
-                    <span className="text-xs font-bold uppercase tracking-wider">{b.sym}</span>
-                    {loadingBal && <span className="text-[10px] animate-pulse">…</span>}
-                  </div>
-                  <p className="font-extrabold text-2xl">{b.bal}</p>
-                  <p className="text-[10px] opacity-60 mt-0.5">Arc Testnet · Circle</p>
-                </div>
-              ))}
-            </div>
+          <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            {/* Address + QR */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Your Circle Wallet Address</p>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="shrink-0 p-2.5 bg-white border-2 border-emerald-300 rounded-xl">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&format=svg&data=${encodeURIComponent(wallet.address)}`}
-                    alt="QR" width={120} height={120} className="rounded-lg"
-                  />
-                </div>
-                <div className="flex-1 w-full flex flex-col gap-2.5">
-                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
-                    <p className="font-mono text-xs flex-1 break-all text-emerald-800">{wallet.address}</p>
-                    <CopyBtnLight value={wallet.address} />
+            {/* LEFT — balances + address + QR */}
+            <div className="flex flex-col gap-4">
+              {/* Balances */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: '💵', sym: 'USDC', bal: usdcBal, color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+                  { icon: '💶', sym: 'EURC', bal: eurcBal, color: 'bg-teal-50 border-teal-200 text-teal-700' },
+                ].map(b => (
+                  <div key={b.sym} className={`${b.color} border rounded-2xl p-5`}>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-xl">{b.icon}</span>
+                      <span className="text-sm font-bold uppercase tracking-wider">{b.sym}</span>
+                      {loadingBal && <span className="text-xs animate-pulse">…</span>}
+                    </div>
+                    <p className="font-extrabold text-3xl">{b.bal}</p>
+                    <p className="text-xs opacity-60 mt-1">Arc Testnet · Circle</p>
                   </div>
-                  <button onClick={loadBalances} disabled={loadingBal}
-                    className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
-                    {loadingBal ? '⏳ Loading…' : '🔄 Refresh Balance'}
-                  </button>
-                  <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-bold hover:opacity-90 transition-all">
-                    💧 Get Testnet USDC — faucet.circle.com
-                  </a>
-                  <a href={`https://testnet.arcscan.app/address/${wallet.address}`} target="_blank" rel="noreferrer"
-                    className="text-center py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs hover:text-slate-700 transition-colors">
-                    🔍 View on ArcScan ↗
-                  </a>
+                ))}
+              </div>
+
+              {/* Address + QR */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-3 flex-1">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Circle Wallet Address</p>
+                <div className="flex items-center gap-4">
+                  <div className="shrink-0 p-2 bg-white border-2 border-emerald-300 rounded-xl">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&format=svg&data=${encodeURIComponent(wallet.address)}`}
+                      alt="QR" width={100} height={100} className="rounded-lg"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
+                      <p className="font-mono text-xs flex-1 break-all text-emerald-800">{wallet.address}</p>
+                      <CopyBtnLight value={wallet.address} />
+                    </div>
+                    <button onClick={loadBalances} disabled={loadingBal}
+                      className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
+                      {loadingBal ? '⏳ Loading…' : '🔄 Refresh Balance'}
+                    </button>
+                  </div>
                 </div>
+                <a href="https://faucet.circle.com" target="_blank" rel="noreferrer"
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold hover:opacity-90 transition-all">
+                  💧 Get Testnet USDC — faucet.circle.com
+                </a>
+                <a href={`https://testnet.arcscan.app/address/${wallet.address}`} target="_blank" rel="noreferrer"
+                  className="text-center py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-sm hover:text-slate-700 transition-colors">
+                  🔍 View on ArcScan ↗
+                </a>
               </div>
             </div>
 
-            {/* Wallet info + disconnect */}
-            <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 flex flex-col gap-4">
+            {/* RIGHT — wallet info + disconnect */}
+            <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 flex flex-col gap-5">
               <div className="flex items-center gap-2">
-                <span className="text-base">🗂️</span>
-                <p className="text-sm font-extrabold text-slate-700 uppercase tracking-wide">Wallet Info</p>
+                <span className="text-lg">🗂️</span>
+                <p className="text-base font-extrabold text-slate-800">Wallet Info</p>
               </div>
 
-              {/* Wallet ID row */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Wallet ID</p>
                 <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3">
                   <span className="font-mono text-sm text-slate-700 flex-1 truncate">{wallet.walletId}</span>
@@ -897,26 +901,24 @@ function CircleWalletSection() {
                 </div>
               </div>
 
-              {/* Network badge */}
               <div className="flex items-center justify-between bg-emerald-50 border-2 border-emerald-200 rounded-xl px-4 py-3">
                 <span className="text-sm text-emerald-700 font-bold">⭕ Circle Developer-Controlled</span>
                 <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">Arc Testnet</span>
               </div>
 
-              {/* Warning */}
-              <div className="flex items-start gap-2 bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-3">
-                <span className="text-base shrink-0">⚠️</span>
+              <div className="flex items-start gap-3 bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-4 flex-1">
+                <span className="text-xl shrink-0">⚠️</span>
                 <p className="text-sm text-amber-700 font-semibold leading-snug">
                   Copy your Wallet ID above before disconnecting so you can reconnect later.
                 </p>
               </div>
 
-              {/* Disconnect button */}
               <button onClick={handleDisconnect}
-                className="py-3.5 rounded-xl border-2 border-red-200 bg-white text-red-500 text-base font-extrabold hover:bg-red-50 hover:border-red-400 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                className="mt-auto py-4 rounded-xl border-2 border-red-200 bg-white text-red-500 text-base font-extrabold hover:bg-red-50 hover:border-red-400 transition-colors flex items-center justify-center gap-2 shadow-sm">
                 🔌 Disconnect Circle Wallet
               </button>
             </div>
+          </div>
 
             {/* Confirm disconnect dialog */}
             {showConfirm && (
@@ -945,7 +947,7 @@ function CircleWalletSection() {
                 </div>
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* ── Wallet active: Send tab ── */}
