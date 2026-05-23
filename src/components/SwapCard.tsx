@@ -182,7 +182,18 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
       const tokenInAddr  = TOKEN_ADDR[fromToken]
       const tokenOutAddr = TOKEN_ADDR[toToken]
       if (!tokenInAddr || !tokenOutAddr) {
-        throw new Error(`Swap only supports USDC, EURC, cirBTC on Arc Testnet.`)
+        throw new Error(`Swap only supports USDC, EURC, and cirBTC on Arc Testnet.\nETH and SOL swaps are not yet available.`)
+      }
+
+      // Circle Stablecoin Kit only supports USDC ↔ EURC pairs.
+      // cirBTC, ETH, SOL are not supported by the Circle Swap API on Arc Testnet.
+      const CIRCLE_SUPPORTED = new Set(['USDC', 'EURC'])
+      if (!CIRCLE_SUPPORTED.has(fromToken) || !CIRCLE_SUPPORTED.has(toToken)) {
+        throw new Error(
+          `${fromToken} → ${toToken} is not yet supported by Circle Swap Kit on Arc Testnet.\n` +
+          `Currently only USDC ↔ EURC swaps are available.\n` +
+          `cirBTC, ETH, and SOL pairs will be added when Circle expands Arc Testnet support.`
+        )
       }
 
       // Convert human amount to raw integer (6 decimals for USDC/EURC, 8 for cirBTC)
@@ -193,9 +204,9 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
       addStep('📡 Requesting swap route from Circle API…')
       const swapBody = JSON.stringify({
         tokenInAddress:  tokenInAddr,
-        tokenInChain:    'Arc_Testnet',
+        tokenInChain:    'ARC-TESTNET',
         tokenOutAddress: tokenOutAddr,
-        tokenOutChain:   'Arc_Testnet',
+        tokenOutChain:   'ARC-TESTNET',
         amount:          rawAmount,
         fromAddress:     address,
         toAddress:       address,
