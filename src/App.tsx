@@ -83,16 +83,17 @@ export default function App() {
 
             {/* ── TRADING INTERFACE — TOP ────────────────────────────────────── */}
             <div id="swap">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div>
-                  <p className="text-xs text-violet-600 font-bold uppercase tracking-widest mb-0.5">Live Trading</p>
-                  <h2 className="text-2xl font-extrabold text-slate-900">Stablecoin FX on Arc Testnet</h2>
-                </div>
-                {/* Pair selector */}
-                <div className="flex gap-2 flex-wrap">
+              <div className="mb-4">
+                <p className="text-xs text-violet-600 font-bold uppercase tracking-widest mb-0.5">Live Trading</p>
+                <h2 className="text-2xl font-extrabold text-slate-900">Stablecoin FX on Arc Testnet</h2>
+              </div>
+
+              <div className="flex gap-3">
+                {/* Pair selector — vertical left column */}
+                <div className="flex flex-col gap-1.5 shrink-0 w-[130px]">
                   {PAIRS.map(p => (
                     <button key={p} onClick={() => setPair(p)}
-                      className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all ${
+                      className={`w-full px-3 py-2 rounded-xl text-sm font-semibold border text-left transition-all ${
                         pair === p
                           ? 'bg-violet-600 border-violet-500 text-white shadow-sm'
                           : 'bg-white border-slate-200 text-slate-600 hover:border-violet-300 hover:text-slate-900'
@@ -101,19 +102,21 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Chart + Swap + OrderBook */}
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px_260px] gap-4">
-                <div className="flex flex-col gap-4 min-w-0">
-                  <PriceChart pair={pair} />
-                  <TransactionHistory pair={pair} myTxs={myTxs} />
-                </div>
-                <div className="min-w-0">
-                  <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
-                </div>
-                <div className="min-w-0">
-                  <OrderBook pair={pair} />
+                {/* Chart + Swap + OrderBook */}
+                <div className="flex-1 min-w-0">
+                  <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px_260px] gap-4">
+                    <div className="flex flex-col gap-4 min-w-0">
+                      <PriceChart pair={pair} />
+                      <TransactionHistory pair={pair} myTxs={myTxs} />
+                    </div>
+                    <div className="min-w-0">
+                      <SwapCard fromTokenProp={fromToken} toTokenProp={toToken} onSwapComplete={handleSwapComplete} />
+                    </div>
+                    <div className="min-w-0">
+                      <OrderBook pair={pair} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
