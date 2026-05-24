@@ -171,7 +171,7 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
       const TOKEN_ADDR: Record<string, `0x${string}`> = {
         USDC:   '0x3600000000000000000000000000000000000000',
         EURC:   '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
-        cirBTC: '0xa4bc51aF6aA6b5a7A3B24B30B37B7F90C20c0dF3',
+        cirBTC: '0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF',
       }
       const ERC20_APPROVE_ABI = [{
         name: 'approve', type: 'function', stateMutability: 'nonpayable',

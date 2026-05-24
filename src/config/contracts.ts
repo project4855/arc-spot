@@ -283,11 +283,13 @@ export const PERPS_ABI = [
 export const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
   USDC:   '0x3600000000000000000000000000000000000000',
   EURC:   '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
+  cirBTC: '0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF',
 }
 
 export const TOKEN_DECIMALS: Record<string, number> = {
-  USDC: 6,
-  EURC: 6,
+  USDC:   6,
+  EURC:   6,
+  cirBTC: 8,
 }
 
 // ── ArcLending ABI ────────────────────────────────────────────────────────────
