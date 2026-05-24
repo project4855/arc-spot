@@ -26,11 +26,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 
+  // Circle Kit Keys may be passed as full "KIT_KEY:id:secret" or just "id:secret"
+  // Try both formats: strip the "KIT_KEY:" prefix if present
+  const bearerToken = kitKey.startsWith('KIT_KEY:') ? kitKey.slice('KIT_KEY:'.length) : kitKey
+
   try {
     const upstream = await fetch(CIRCLE_SWAP_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${kitKey}`,
+        Authorization: `Bearer ${bearerToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(req.body),

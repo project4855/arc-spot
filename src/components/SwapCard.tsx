@@ -225,9 +225,11 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
         const isProxyMissing = resp.status === 404 || (resp.status === 500 && String(body.error ?? '').includes('CIRCLE_KIT_KEY not set'))
         if (isProxyMissing) {
           addStep('⚠️ Proxy unavailable (local dev) — calling Circle API directly…')
+          // Strip KIT_KEY: prefix if present — Circle Bearer token uses only id:secret
+          const localKey = VITE_KIT_KEY.startsWith('KIT_KEY:') ? VITE_KIT_KEY.slice('KIT_KEY:'.length) : VITE_KIT_KEY
           resp = await fetch('https://api.circle.com/v1/stablecoinKits/swap', {
             method:  'POST',
-            headers: { 'Authorization': `Bearer ${VITE_KIT_KEY}`, 'Content-Type': 'application/json' },
+            headers: { 'Authorization': `Bearer ${localKey}`, 'Content-Type': 'application/json' },
             body:    swapBody,
           })
         }
