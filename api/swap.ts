@@ -1,6 +1,6 @@
 // api/swap.ts — Vercel serverless proxy for Circle Stablecoin Kit swap endpoint.
-// The kit key lives in CIRCLE_KIT_KEY (server env, never sent to browser).
-// Frontend calls POST /api/swap with the same body it would send to Circle.
+// Circle server-to-server API calls use CIRCLE_API_KEY (TEST_API_KEY:...).
+// CIRCLE_KIT_KEY (KIT_KEY:...) is for client-side SDK only — NOT for direct API calls.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
@@ -15,26 +15,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const kitKey = process.env.CIRCLE_KIT_KEY
-  if (!kitKey) {
+  // Use API Key for server-to-server calls (Circle server APIs require TEST_API_KEY / API_KEY)
+  // Fall back to Kit Key if API Key not available
+  const apiKey = process.env.CIRCLE_API_KEY || process.env.CIRCLE_KIT_KEY
+  if (!apiKey) {
     return res.status(500).json({
-      error:
-        'CIRCLE_KIT_KEY is not set on the server. ' +
-        'Add it in Vercel → Project → Settings → Environment Variables ' +
-        '(key: CIRCLE_KIT_KEY, value: KIT_KEY:<id>:<secret>). ' +
-        'Do NOT use the VITE_ prefix — this variable must remain server-side only.',
+      error: 'CIRCLE_KIT_KEY not set — add CIRCLE_API_KEY or CIRCLE_KIT_KEY in Vercel env vars.',
     })
   }
-
-  // Circle Kit Keys may be passed as full "KIT_KEY:id:secret" or just "id:secret"
-  // Try both formats: strip the "KIT_KEY:" prefix if present
-  const bearerToken = kitKey.startsWith('KIT_KEY:') ? kitKey.slice('KIT_KEY:'.length) : kitKey
 
   try {
     const upstream = await fetch(CIRCLE_SWAP_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${bearerToken}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(req.body),
@@ -43,10 +37,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Forward status + body verbatim
     const text = await upstream.text()
     let data: unknown
-    try {
-      data = JSON.parse(text)
-    } catch {
-      data = { raw: text }
+    try { data = JSON.parse(text) } catch { data = { raw: text } }
+
+    // Log errors for debugging
+    if (!upstream.ok) {
+      console.error(`[api/swap] Circle returned ${upstream.status}:`, text.slice(0, 500))
     }
 
     return res.status(upstream.status).json(data)
