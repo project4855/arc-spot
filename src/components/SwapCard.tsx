@@ -185,12 +185,14 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
         throw new Error(`Token not supported on Arc Testnet.\nAvailable: USDC, EURC, cirBTC.`)
       }
 
-      // ETH and SOL are not on Arc Testnet as ERC-20 — block only those
-      const NOT_SUPPORTED = new Set(['ETH', 'SOL'])
-      if (NOT_SUPPORTED.has(fromToken) || NOT_SUPPORTED.has(toToken)) {
+      // Circle Stablecoin Kit only supports USDC ↔ EURC on Arc Testnet.
+      // cirBTC, ETH, SOL are not supported by the Circle Swap API.
+      const CIRCLE_SUPPORTED = new Set(['USDC', 'EURC'])
+      if (!CIRCLE_SUPPORTED.has(fromToken) || !CIRCLE_SUPPORTED.has(toToken)) {
         throw new Error(
-          `${fromToken} → ${toToken} is not yet supported on Arc Testnet.\n` +
-          `Currently available: USDC ↔ EURC ↔ cirBTC swaps.`
+          `${fromToken} → ${toToken} chưa được hỗ trợ bởi Circle Swap Kit trên Arc Testnet.\n` +
+          `Hiện chỉ hỗ trợ: USDC ↔ EURC.\n` +
+          `cirBTC swap sẽ được bổ sung khi Circle mở rộng hỗ trợ Arc Testnet.`
         )
       }
 
