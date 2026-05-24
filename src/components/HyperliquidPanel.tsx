@@ -11,7 +11,31 @@ import { usePerpTrade } from '../hooks/usePerpsContract'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AgentTab = 'jobs' | 'create' | 'myjobs' | 'nanopay'
+type AgentTab = 'marketplace' | 'jobs' | 'create' | 'myjobs' | 'nanopay'
+
+// ── AI Agent catalogue ────────────────────────────────────────────────────────
+
+const AGENT_CATALOGUE = [
+  { icon: '📈', name: 'Data Analysis',       sub: 'Monitor data',           price: 3.00, rating: 4.7,  reviews: 276, badge: 'Popular' },
+  { icon: '✍️', name: 'Content Writing',     sub: 'Analyze script writing', price: 4.50, rating: 4.7,  reviews: 492, badge: 'Top Rated' },
+  { icon: '💻', name: 'Python Coding',       sub: 'Analyze smart codes',    price: 6.00, rating: 4.66, reviews: 403, badge: null },
+  { icon: '🌐', name: 'Language Translation',sub: 'Speak and translate',    price: 2.00, rating: 4.7,  reviews: 159, badge: null },
+  { icon: '🖼️', name: 'Image Generation',   sub: 'Provide content',        price: 5.00, rating: 4.9,  reviews: 256, badge: 'New' },
+  { icon: '🛡️', name: 'AI Moderation',      sub: 'Monitor breaches',       price: 2.50, rating: 4.53, reviews: 330, badge: null },
+] as const
+
+function StarRating({ rating }: { rating: number }) {
+  const full  = Math.floor(rating)
+  const half  = rating - full >= 0.4
+  const empty = 5 - full - (half ? 1 : 0)
+  return (
+    <span className="flex items-center gap-0.5">
+      {Array(full).fill(0).map((_,i) => <span key={`f${i}`} className="text-amber-400 text-sm">★</span>)}
+      {half && <span className="text-amber-400 text-sm">½</span>}
+      {Array(empty).fill(0).map((_,i) => <span key={`e${i}`} className="text-slate-300 text-sm">★</span>)}
+    </span>
+  )
+}
 
 const STATUS_LABEL = ['Open', 'Funded', 'Submitted', 'Completed', 'Rejected', 'Expired'] as const
 type StatusName = typeof STATUS_LABEL[number]
@@ -254,7 +278,7 @@ export default function HyperliquidPanel() {
   const { balanceUSDC }  = usePerpTrade()
   const publicClient     = usePublicClient()
 
-  const [activeTab, setActiveTab] = useState<AgentTab>('jobs')
+  const [activeTab, setActiveTab] = useState<AgentTab>('marketplace')
   const [jobs, setJobs]           = useState<OnchainJob[]>([])
   const [myJobs, setMyJobs]       = useState<OnchainJob[]>([])
   const [loadingJobs, setLoadingJobs] = useState(false)
@@ -427,10 +451,11 @@ export default function HyperliquidPanel() {
   // ── Tabs ───────────────────────────────────────────────────────────────────
 
   const TABS: { key: AgentTab; label: string; icon: string }[] = [
-    { key: 'jobs',    label: 'Job Board',    icon: '📋' },
-    { key: 'create',  label: 'Post a Job',   icon: '➕' },
-    { key: 'myjobs',  label: 'My Jobs',      icon: '👤' },
-    { key: 'nanopay', label: 'Nanopayments', icon: '💸' },
+    { key: 'marketplace', label: 'Marketplace',   icon: '🏪' },
+    { key: 'jobs',        label: 'Job Board',     icon: '📋' },
+    { key: 'create',      label: 'Post a Job',    icon: '➕' },
+    { key: 'myjobs',      label: 'My Jobs',       icon: '👤' },
+    { key: 'nanopay',     label: 'Nanopayments',  icon: '💸' },
   ]
 
   return (
@@ -502,6 +527,128 @@ export default function HyperliquidPanel() {
           </button>
         ))}
       </div>
+
+      {/* ── AI Agent Marketplace ── */}
+      {activeTab === 'marketplace' && (
+        <div className="flex flex-col gap-6">
+
+          {/* Dark hero header */}
+          <div className="bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden">
+            {/* subtle glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(139,92,246,0.25),transparent)] pointer-events-none" />
+            <div className="flex items-start justify-between gap-4 relative">
+              <div>
+                <p className="text-violet-300 text-xs font-semibold tracking-widest uppercase mb-1">Arc Testnet · Powered by USDC</p>
+                <h2 className="text-white font-extrabold text-2xl leading-tight">AI Agent Marketplace</h2>
+                <p className="text-slate-300 text-sm mt-1.5 leading-relaxed max-w-xl">
+                  Deploy AI agents to perform digital tasks and earn USDC — seamlessly on Arc Testnet
+                </p>
+              </div>
+              {isReady && (
+                <div className="shrink-0 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-right">
+                  <p className="text-slate-300 text-[10px] font-semibold">Account Balance</p>
+                  <p className="text-white font-extrabold text-lg font-mono leading-none">{balanceUSDC.toFixed(2)}</p>
+                  <p className="text-violet-300 text-xs font-semibold">USDC</p>
+                </div>
+              )}
+            </div>
+
+            {/* Workflow bar */}
+            <div className="mt-5 flex items-center gap-2 flex-wrap relative">
+              {[
+                { icon: '🤖', label: 'Agent Deployment' },
+                { icon: '📋', label: 'Task Assignment' },
+                { icon: '⚙️', label: 'Autonomous Work' },
+                { icon: '💵', label: 'Payment in USDC' },
+              ].map((step, i, arr) => (
+                <div key={step.label} className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-lg px-3 py-1.5">
+                    <span className="text-base">{step.icon}</span>
+                    <span className="text-white text-xs font-semibold whitespace-nowrap">{step.label}</span>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <svg className="text-violet-400 shrink-0" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                      <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Agent cards grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {AGENT_CATALOGUE.map((agent) => (
+              <div key={agent.name}
+                className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-3 hover:border-violet-300 hover:shadow-md transition-all">
+                {/* Card top: icon + badge */}
+                <div className="flex items-start justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-2xl shrink-0">
+                    {agent.icon}
+                  </div>
+                  {agent.badge && (
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
+                      agent.badge === 'Popular'   ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                      agent.badge === 'Top Rated' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                      agent.badge === 'New'       ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                      'bg-slate-100 border-slate-200 text-slate-600'
+                    }`}>{agent.badge}</span>
+                  )}
+                </div>
+
+                {/* Name + subtitle */}
+                <div>
+                  <p className="text-slate-900 font-extrabold text-base leading-snug">{agent.name}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{agent.sub}</p>
+                </div>
+
+                {/* Rating + reviews */}
+                <div className="flex items-center gap-2">
+                  <StarRating rating={agent.rating} />
+                  <span className="text-slate-700 text-xs font-bold">{agent.rating.toFixed(2)}</span>
+                  <span className="text-slate-400 text-xs">({agent.reviews} reviews)</span>
+                </div>
+
+                {/* Price + deploy */}
+                <div className="flex items-center justify-between pt-1 mt-auto">
+                  <div>
+                    <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wide">Starting at</p>
+                    <p className="text-emerald-600 font-extrabold text-lg font-mono leading-none">
+                      ${agent.price.toFixed(2)} <span className="text-xs font-semibold text-emerald-500">USDC</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setForm(f => ({
+                        ...f,
+                        title: `${agent.name} — ${agent.sub}`,
+                        description: `Deploy the ${agent.name} AI agent to ${agent.sub.toLowerCase()}.`,
+                        budget: agent.price.toFixed(2),
+                      }))
+                      setActiveTab('create')
+                    }}
+                    className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-500 transition-colors shadow-sm">
+                    Deploy →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="bg-violet-50 border border-violet-200 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="text-violet-900 font-bold text-sm">Want to list your AI agent?</p>
+              <p className="text-violet-600 text-xs mt-0.5">Post a job on-chain and earn USDC when your agent completes tasks.</p>
+            </div>
+            <button onClick={() => setActiveTab('create')}
+              className="shrink-0 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-500 transition-colors shadow-sm">
+              Post a Job →
+            </button>
+          </div>
+
+        </div>
+      )}
 
       {/* ── Job Board ── */}
       {activeTab === 'jobs' && (
