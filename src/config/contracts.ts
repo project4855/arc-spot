@@ -150,6 +150,83 @@ export const AGENT_JOBS_ABI = [
   },
 ] as const
 
+// ── ArcDEX contract ───────────────────────────────────────────────────────────
+// Deployed: 2026-05-24  chain: Arc Testnet (5042002)
+// Order-book DEX: placeOrder → fillOrder — supports cirBTC/USDC, EURC/USDC, etc.
+export const ARC_DEX_ADDRESS = '0x8c584f23BAFc8D6d5EaFf35B2c34B10e988a09F7' as `0x${string}`
+
+// ── ArcToken contract ─────────────────────────────────────────────────────────
+// Deployed: 2026-05-24  chain: Arc Testnet (5042002)
+export const ARC_TOKEN_ADDRESS = '0x55e1a127e33C4Ccca470Ea9eE8F15683DEf2dCc1' as `0x${string}`
+
+export const ARC_DEX_ABI = [
+  // Read
+  {
+    name: 'orders',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'orderId', type: 'uint256' }],
+    outputs: [
+      { name: 'maker',      type: 'address' },
+      { name: 'sellToken',  type: 'address' },
+      { name: 'buyToken',   type: 'address' },
+      { name: 'sellAmount', type: 'uint256' },
+      { name: 'buyAmount',  type: 'uint256' },
+      { name: 'active',     type: 'bool'    },
+    ],
+  },
+  { name: 'nextOrderId', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'uint256' }] },
+  { name: 'feeBps',      type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'uint256' }] },
+  // Write
+  {
+    name: 'placeOrder',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'sellToken',  type: 'address' },
+      { name: 'buyToken',   type: 'address' },
+      { name: 'sellAmount', type: 'uint256' },
+      { name: 'buyAmount',  type: 'uint256' },
+    ],
+    outputs: [{ name: 'orderId', type: 'uint256' }],
+  },
+  {
+    name: 'fillOrder',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'orderId', type: 'uint256' }],
+    outputs: [],
+  },
+  {
+    name: 'cancelOrder',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'orderId', type: 'uint256' }],
+    outputs: [],
+  },
+  // Events
+  {
+    name: 'OrderPlaced',
+    type: 'event',
+    inputs: [
+      { name: 'orderId',    type: 'uint256', indexed: true  },
+      { name: 'maker',      type: 'address', indexed: true  },
+      { name: 'sellToken',  type: 'address', indexed: false },
+      { name: 'buyToken',   type: 'address', indexed: false },
+      { name: 'sellAmount', type: 'uint256', indexed: false },
+      { name: 'buyAmount',  type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    name: 'OrderFilled',
+    type: 'event',
+    inputs: [
+      { name: 'orderId', type: 'uint256', indexed: true },
+      { name: 'taker',   type: 'address', indexed: true },
+    ],
+  },
+] as const
+
 // ── ArcLending contract ───────────────────────────────────────────────────────
 export const LENDING_ADDRESS = '0x918C2DD0D65eA2550D0059f93A8D6EC9C76d780a' as `0x${string}`
 
