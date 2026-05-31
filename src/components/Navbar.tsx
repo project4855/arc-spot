@@ -3,6 +3,7 @@ import WalletConnector from './WalletConnector'
 
 const TABS = [
   { key: 'trade',     label: 'Trade'     },
+  { key: 'agent',     label: '🤖 AI Agent', highlight: true },
   { key: 'bridge',    label: 'Bridge'    },
   { key: 'lending',   label: 'Earn'      },
   { key: 'perps',     label: 'Perps'     },
@@ -63,7 +64,9 @@ export default function Navbar({ tab, onTabChange }: NavbarProps) {
                   'border-b-2 transition-colors',
                   active
                     ? 'border-[#F0B90B] text-[#1E2329] font-semibold'
-                    : 'border-transparent text-[#707A8A] hover:text-[#1E2329]',
+                    : (t as { highlight?: boolean }).highlight
+                      ? 'border-transparent text-violet-600 hover:text-violet-700 hover:bg-violet-50'
+                      : 'border-transparent text-[#707A8A] hover:text-[#1E2329]',
                 ].join(' ')}
               >
                 {t.label}

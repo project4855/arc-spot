@@ -197,14 +197,15 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
   const arcswapLiq = arcswapLiqRaw != null
     ? parseFloat(formatUnits(arcswapLiqRaw as bigint, toToken === 'cirBTC' ? 8 : 6))
     : null
-  const exceedsLiquidity = isDexRoute && arcswapLiq != null && fromAmount
-    ? parseFloat(toAmount || '0') > arcswapLiq
-    : false
 
   const toAmountDec = toToken === 'cirBTC' ? 8 : 6
   const toAmount = fromAmount
     ? (parseFloat(fromAmount) * getRate(fromToken, toToken)).toFixed(toAmountDec)
     : ''
+
+  const exceedsLiquidity = isDexRoute && arcswapLiq != null && fromAmount
+    ? parseFloat(toAmount || '0') > arcswapLiq
+    : false
 
   const handleFlip = useCallback(() => {
     setFromToken(toToken)
@@ -756,31 +757,33 @@ export default function SwapCard({ fromTokenProp = 'USDC', toTokenProp = 'EURC',
               Switch to Arc Testnet
             </button>
           ) : (
-            <button
-              onClick={handleSwap}
-              disabled={isSwapping || !fromAmount || parseFloat(fromAmount) <= 0 || exceedsLiquidity}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-500 hover:to-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base transition-all duration-200 shadow-lg hover:shadow-violet-500/25"
-            >
-              {isSwapping ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Swapping on-chain...
-                </span>
-              ) : exceedsLiquidity ? (
-                `⚠️ Vượt quá liquidity pool`
-              ) : (
-                `Swap ${fromToken} → ${toToken}`
+            <>
+              <button
+                onClick={handleSwap}
+                disabled={isSwapping || !fromAmount || parseFloat(fromAmount) <= 0 || exceedsLiquidity}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-500 hover:to-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base transition-all duration-200 shadow-lg hover:shadow-violet-500/25"
+              >
+                {isSwapping ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Swapping on-chain...
+                  </span>
+                ) : exceedsLiquidity ? (
+                  `⚠️ Vượt quá liquidity pool`
+                ) : (
+                  `Swap ${fromToken} → ${toToken}`
+                )}
+              </button>
+              {exceedsLiquidity && arcswapLiq !== null && (
+                <p className="text-xs text-red-500 text-center mt-1">
+                  Pool chỉ có {arcswapLiq.toFixed(toToken === 'cirBTC' ? 8 : 4)} {toToken} —
+                  giảm số lượng swap xuống.
+                </p>
               )}
-            </button>
-            {exceedsLiquidity && arcswapLiq !== null && (
-              <p className="text-xs text-red-500 text-center mt-1">
-                Pool chỉ có {arcswapLiq.toFixed(toToken === 'cirBTC' ? 8 : 4)} {toToken} —
-                giảm số lượng swap xuống.
-              </p>
-            )}
+            </>
           )}
         </div>
 

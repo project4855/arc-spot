@@ -15,6 +15,7 @@ import PredictionMarketPanel from './components/PredictionMarketPanel'
 import PortfolioPanel from './components/PortfolioPanel'
 import PaymentsPanel from './components/PaymentsPanel'
 import TradeBox from './components/TradeBox'
+import AgentPanel from './components/AgentPanel'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,9 +45,9 @@ function PairRow({ p, active, onClick, prices }: {
   )
 }
 
-type AppTab = 'trade' | 'bridge' | 'lending' | 'perps' | 'traders' | 'airdrops' | 'wallet' | 'predict' | 'portfolio' | 'payments'
+type AppTab = 'trade' | 'agent' | 'bridge' | 'lending' | 'perps' | 'traders' | 'airdrops' | 'wallet' | 'predict' | 'portfolio' | 'payments'
 
-const VALID_TABS: AppTab[] = ['trade', 'bridge', 'lending', 'perps', 'traders', 'airdrops', 'wallet', 'predict', 'portfolio', 'payments']
+const VALID_TABS: AppTab[] = ['trade', 'agent', 'bridge', 'lending', 'perps', 'traders', 'airdrops', 'wallet', 'predict', 'portfolio', 'payments']
 
 function getTabFromHash(): AppTab {
   const hash = window.location.hash.replace('#', '') as AppTab
@@ -940,6 +941,11 @@ export default function App() {
       ) : (
         /* ══════ OTHER TABS ══════ */
         <main className="flex-1 max-w-[1440px] mx-auto w-full px-4 xl:px-6 py-6 flex flex-col gap-6">
+          {tab === 'agent'     && (
+            <div className="flex-1 flex items-stretch py-4">
+              <AgentPanel />
+            </div>
+          )}
           {tab === 'bridge'    && <BridgePanel />}
           {tab === 'lending'   && <LendingPanel />}
           {tab === 'perps'     && <DerivativesPanel />}
